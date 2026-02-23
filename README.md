@@ -94,29 +94,47 @@ mendation system, Public API
 
 ### Proposed Project and Modules
 
-Points will be calculated based on decided modules as x/y (read as x points out of y maximum for all modules we have on possible implementation). 
+Points will be calculated based on decided modules as x/y (read as “x points out of y maximum for all modules we consider for possible implementation”).
+
+### Proposed Project and Modules
+
+Points will be calculated based on decided modules as x/y (read as “x points out of y maximum for all modules we consider for possible implementation”).
+
+#### Core Modules (High and Medium Priority)
+
+These are the modules we actively plan to implement for our Marketplace MVP. They are selected to provide a complete marketplace experience (frameworks, real‑time, uploads, users, roles, payments, notifications, and 3D previews).
 
 | Module Name | Description | Priority | Points | Page |
 | --- | --- | --- | --- | --- |
-| [Web Major 1](#web-major-1) | Use a Framework for Both Frontend and Backend | High | 2 | 12 |
-| [web Major 2](#web-major-2) | Implement real-time features using WebSockets or similar | High | 2 | 12 |
-| [Web Minor 10](#web-minor-10) | File Upload and Management System | High | 1 | 13 |
+| [Web Major 1](#web-major-1) | Use a framework for both frontend and backend | High | 2 | 12 |
+| [Web Major 2](#web-major-2) | Implement real-time features using WebSockets or similar | High | 2 | 12 |
+| [Web Minor 4](#web-minor-4) | Complete notification system for creation, update, and deletion actions | Medium | 1 | 12 |
+| [Web Minor 10](#web-minor-10) | File upload and management system | High | 1 | 13 |
 | [User Major 1](#user-major-1) | Standard user management and authentication | High | 2 | 14 |
-| [User Major 2](#user-major-2) | Advanced Permission systems | High | 2 | 14 |
+| [User Major 2](#user-major-2) | Advanced permission system (roles and access control) | High | 2 | 14 |
+| [Module of Choice](#module-of-choice) | Payment system for the Marketplace | High | 1–2 | 20 |
 | [DevOps Major 3](#devops-major-3) | Backend as microservices | High | 2 | 19 |
-| [Module of Choice](#module-of-choice)| Payment system for Marketplace | High | 1-2 | 20 | 
-| [Web Minor 4](#web-minor-4) | A complete notification system for all creation, update and delition | Medium | 1 | 12 |
-| [Gaming Major 5](#gaming-major-5) | Implemented Advanced 3D Graphics | Medium | 2 | 17 |
-| [User Minor 2](#user-minor-2) | Implement remote authentication with OAuth 2.0 (Google, Github, 42) | Low | 1 | 14 |
-| [User Minor 4](#user-minor-4) | User activity analytics and Insights dashboard | Low | 1 | 14 |
-| [AI Major 4](#ai-major-4) | Recommendation system using machine learning | Low | 2 | 15
-| [AI Minor 1](#ai-minor-1) | Content Moderation AI | Low | 1 | 15 |
-| [DevOps Major 1](#devops-major-1) | Infrastruct for log management using ELK | Low | 2 | 18 |
-| Total | 15-16 (High and Medium priority only) / 23 |
+| [Gaming Major 5](#gaming-major-5) | Advanced 3D graphics (shader previews) | Medium | 2 | 17 |
+| **Total** | **15–16 |  |  |  |
+
+#### Extra & Potential Alternative Modules
+
+These modules are candidates for later sprints or for replacing riskier modules if needed. They focus on improving user experience, integrations, analytics, and AI features for the Marketplace.
+
+| Module Name | Description | Priority | Points | Page |
+| --- | --- | --- | --- | --- |
+| [Web Major 3](#web-major-3) | Allow users to interact with each other (chat, profiles, friends) | Optional | 2 | 12 |
+| [Web Major 4](#web-major-4) | Public API with secured access, rate limiting, and documentation | Optional | 2 | 12 |
+| [Web Minor 9](#web-minor-9) | Advanced search with filters, sorting, and pagination | Optional | 1 | 12 |
+| [User Minor 2](#user-minor-2) | Implement remote authentication with OAuth 2.0 (Google, GitHub, 42) | Low | 1 | 14 |
+| [User Minor 4](#user-minor-4) | User activity analytics and insights dashboard | Low | 1 | 14 |
+| [AI Minor 1](#ai-minor-1) | Content moderation AI (auto‑flagging shaders and reviews) | Low | 1 | 15 |
 
 ### Full Description of Modules
 
-These are the full description of the modules chosen for this project, as we consider them essential for a complete Marketplace platform experience, especially one focused on a nice market of Graphical Assets and Shaders.
+These are the full descriptions of the modules chosen for this project, as defined in the official subject.~
+
+### Core Modules
 
 #### Web Major 1
 
@@ -164,50 +182,6 @@ tions.
 - Roles management (admin, user, guest, moderator, etc.).
 - Different views and actions based on user role.
 
-#### User Minor 2
-
-**Minor**: Implement remote authentication with OAuth 2.0 (Google, GitHub, 42,
-etc.).
-
-#### User Minor 4
-
-**Minor**: User activity analytics and insights dashboard.
-
-#### AI Major 4
-
-**Major**: Recommendation system using machine learning.
-- Personalized recommendations based on user behavior.
-- Collaborative filtering or content-based filtering.
-- Continuously improve recommendations over time.
-
-#### AI Minor 1
-
-**Minor**: Content moderation AI (auto moderation, auto deletion, auto warning,
-etc.)
-
-#### Gaming Major 5
-
-**Major**: Implement advanced 3D graphics using a library like Three.js or Baby-
-lon.js.
-- Create an immersive 3D environment.
-- Implement advanced rendering techniques.
-- Ensure smooth performance and user interaction.
-
-#### DevOps Major 1
-
-**Major**: Infrastructure for log management using ELK (Elasticsearch, Logstash,
-Kibana).
-- Elasticsearch to store and index logs.
-- Logstash to collect and transform logs.
-- Kibana for visualization and dashboards.
-
-#### DevOps Major 3
-
-**Major**: Backend as microservices.
-- Design loosely-coupled services with clear interfaces.
-- Use REST APIs or message queues for communication.
-- Each service should have a single responsibility.
-
 #### Module of Choice
 
 **Major**: Implement a custom module that is not listed above.
@@ -232,6 +206,59 @@ Kibana).
 choice".
 ◦ How each module was implemented.
 ◦ Which team member(s) worked on each module.]
+
+#### DevOps Major 3
+
+**Major**: Backend as microservices.
+- Design loosely-coupled services with clear interfaces.
+- Use REST APIs or message queues for communication.
+- Each service should have a single responsibility.
+
+#### Gaming Major 5
+
+**Major**: Implement advanced 3D graphics using a library like Three.js or Baby-
+lon.js.
+- Create an immersive 3D environment.
+- Implement advanced rendering techniques.
+- Ensure smooth performance and user interaction.
+
+### Extra & Potential Alternative Modules
+
+#### Web Major 3
+
+**Major**: Allow users to interact with other users. The minimum requirements are:
+- A basic chat system (send/receive messages between users).
+- A profile system (view user information).
+- A friends system (add/remove friends, see friends list).
+
+#### Web Major 4
+
+**Major**: A public API to interact with the database with a secured API key, rate
+limiting, documentation, and at least 5 endpoints:
+◦ GET /api/{something}
+◦ POST /api/{something}
+◦ PUT /api/{something}
+◦ DELETE /api/{something}
+
+#### Web Minor 9
+
+**Minor**: Implement advanced search functionality with filters, sorting, and pagina-
+tion.
+
+#### User Minor 2
+
+**Minor**: Implement remote authentication with OAuth 2.0 (Google, GitHub, 42,
+etc.).
+
+#### User Minor 4
+
+**Minor**: User activity analytics and insights dashboard.
+
+#### AI Minor 1
+
+**Minor**: Content moderation AI (auto moderation, auto deletion, auto warning,
+etc.)
+
 
 ## Individual Contributions
 
