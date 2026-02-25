@@ -1,0 +1,7 @@
+services:
+  frontend:
+    image: nginx:alpine
+    container_name: frontend
+    volumes:
+      - .:/usr/share/nginx/html:ro
+    restart: always
