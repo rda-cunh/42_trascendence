@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Transcendence Test</title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; line-height: 1.6; }
+        .card { border: 1px solid #ccc; padding: 20px; border-radius: 8px; background: #f9f9f9; }
+        .status { color: green; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Transcendence Project</h1>
+    <div class="card">
+        <h3>Backend Data:</h3>
+        <div id="data-container">Loading from API...</div>
+    </div>
+
+    <script>
+        async function fetchData() {
+            try {
+                // We use /api/user-data because the Gateway handles the routing
+                const response = await fetch('/api/user-data');
+                const data = await response.json();
+
+                document.getElementById('data-container').innerHTML = `
+                    <p><strong>Content:</strong> ${data.database_content}</p>
+                    <p><strong>Processed by:</strong> ${data.processed_by}</p>
+                    <p class="status">Status: ${data.status}</p>
+                `;
+            } catch (error) {
+                document.getElementById('data-container').innerHTML =
+                    '<p style="color:red">Error connecting to Backend</p>';
+                console.error('Error:', error);
+            }
+        }
+        fetchData();
+    </script>
+</body>
+</html>

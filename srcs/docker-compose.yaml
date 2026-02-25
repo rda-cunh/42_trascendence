@@ -1,0 +1,5 @@
+include:
+  - ./gateway/docker-compose.yaml
+  - ./database/docker-compose.yaml
+  - ./core-backend/docker-compose.yaml
+  - ./frontend/docker-compose.yaml
