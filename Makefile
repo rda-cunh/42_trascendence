@@ -1,93 +1,124 @@
-# **************************************************************************** #
-#                                   VARIABLES                                  #
-# **************************************************************************** #
+# ===================================================================================
+# TRANSCENDENCE DEPLOYMENT TOOL
+# ===================================================================================
+# USAGE:
+#   make           - Full deployment (Setup deps -> Sync files -> Run)
+#   make dev       - Full deployment and immediately attach to logs
+#   make stop      - Stop the containers
+#   make status    - Check Docker stats on the target (Local or Remote)
+#   make logs      - Attach to logs without redeploying
+#   make re        - Rebuild and redeploy (Same as fclean + all)
+#   make ssh-setup - Setup SSH keys for remote server access using ssh-copy-id
+#                      (Requires root password and 'PermitRootLogin yes' on target)
+#   make ssh-wipe  - Dangerous: Wipes all SSH keys from target's root account
+#   make purge     - Dangerous: Nukes Docker, files, and SSH keys on target
+# ===================================================================================
 
-NAME		= transcendence
-SRCS		= ./srcs
-COMPOSE		= $(SRCS)/docker-compose.yml
-DATA_PATH   = ~/data
-HOST_URL	= transcendence.42.fr
+include .env
 
-# **************************************************************************** #
-#                                     RULES                                    #
-# **************************************************************************** #
+ifeq ($(strip $(SERVER)),)
+    EXEC = bash -c
+    COPY = null
+    PRE_CMD =
+    SERVER = local
+else
+    EXEC = ssh -t -q -o StrictHostKeyChecking=no root@$(strip $(SERVER))
+    COPY = scp -r . root@$(strip $(SERVER)):/tmp/$(PROJECT_NAME)
+    PRE_CMD = cd /tmp/$(PROJECT_NAME) &&
+endif
 
-# default target
-all: up
+all: check-root check-env ssh-check setup-deps sync-files run
 
-# create dirs, add host, build and start containers
-up: create_dirs add_host
-	@echo "Building and starting containers..."
-	@docker compose -f $(COMPOSE) -p $(NAME) up --build -d
-	@echo "✓ Transcendence is running at https://$(HOST_URL)"
+dev: all logs
 
-# stop all containers
-down:
-	@echo "Stopping containers..."
-	@docker compose -f $(COMPOSE) -p $(NAME) down
-	@echo "✓ Containers stopped"
-
-# start existing containers without rebuilding
-start:
-	@docker compose -f $(COMPOSE) -p $(NAME) start
-	@echo "✓ Containers started"
-
-# stop containers without removing them
-stop:
-	@docker compose -f $(COMPOSE) -p $(NAME) stop
-	@echo "✓ Containers stopped"
-
-# restart the infrastructure (down + up)
-restart: down up
-
-# create data directories for persistent volumes
-create_dirs:
-	@mkdir -p ~/data/database
-	@mkdir -p ~/data/wordpress_files
-	@echo "✓ Data directories created"
-
-# add domain to /etc/hosts if not already present
-add_host:
-	@if ! grep -q "$(HOST_URL)" /etc/hosts; then \
-		echo "127.0.0.1 $(HOST_URL)" | sudo tee -a /etc/hosts > /dev/null; \
-		echo "✓ Host entry added"; \
-	fi
-
-# remove domain from /etc/hosts
-remove_host:
-	@sudo sed -i "/$(HOST_URL)/d" /etc/hosts
-	@echo "✓ Host entry removed"
-
-# stop containers and remove volumes
-clean: down
-	@echo "Removing containers and volumes..."
-	@docker compose -f $(COMPOSE) -p $(NAME) down -v
-	@echo "✓ Cleanup complete"
-
-# complete cleanup: remove images, volumes, data, and host entry
-fclean: clean remove_host
-	@echo "Removing images and data..."
-	@docker system prune -af --volumes
-	@sudo rm -rf $(DATA_PATH)
-	@echo "✓ Full cleanup complete"
-
-# rebuild everything from scratch (fclean + all)
 re: fclean all
 
-# display status of all Docker resources
-status:
-	@echo "\n=== CONTAINERS ==="
-	@docker compose -f $(COMPOSE) -p $(NAME) ps -a
-	@echo "\n=== IMAGES ==="
-	@docker images | grep $(NAME)
-	@echo "\n=== VOLUMES ==="
-	@docker volume ls | grep $(NAME)
-	@echo "\n=== NETWORKS ==="
-	@docker network ls | grep $(NAME)
+check-root:
+	@if [ "$$(id -u)" -ne 0 ]; then \
+		echo "Error: This Makefile must be run as root priviliges."; \
+		exit 1; \
+	fi
 
-# follow container logs in real-time
-logs:
-	@docker compose -f $(COMPOSE) -p $(NAME) logs -f #tail="100"
+check-env:
+	@if [ -z "$(PROJECT_NAME)" ]; then echo "Error: PROJECT_NAME not set"; exit 1; fi
+	@if [ -z "$(COMPOSE_FILE)" ]; then echo "Error: COMPOSE_FILE not set"; exit 1; fi
 
-.PHONY: all up down start stop restart create_dirs add_host remove_host \
-        clean fclean re status logs
+ssh-check:
+	@if [ "$(SERVER)" != "local" ]; then \
+		if ! ssh -q -o BatchMode=yes -o ConnectTimeout=3 -o StrictHostKeyChecking=no root@$(SERVER) "exit" 2>/dev/null; then \
+			printf "\nSSH connection failed to $(SERVER).\n"; \
+			printf "Manually copy your public key to the remote machine root account (/root/.ssh/authorized_keys)\n"; \
+			printf "or ensure 'PermitRootLogin yes' is set in the remote SSH config\n"; \
+			printf "and run 'sudo make ssh-setup' to provide the root password.\n\n"; \
+			exit 1; \
+		fi \
+	fi
+
+ssh-setup:
+	@if [ "$(SERVER)" != "local" ]; then \
+		if [ ! -f ~/.ssh/id_rsa ]; then \
+			ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""; \
+		fi; \
+		ssh-copy-id -i ~/.ssh/id_rsa.pub root@$(SERVER); \
+	fi
+
+setup-deps:
+	@$(EXEC) "if ! command -v docker >/dev/null 2>&1; then \
+		apt-get update && \
+		apt-get install -y ca-certificates curl && \
+		install -m 0755 -d /etc/apt/keyrings && \
+		curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc && \
+		chmod a+r /etc/apt/keyrings/docker.asc && \
+		printf \"Types: deb\nURIs: https://download.docker.com/linux/debian\nSuites: \$$(. /etc/os-release && echo \"\$$VERSION_CODENAME\")\nComponents: stable\nSigned-By: /etc/apt/keyrings/docker.asc\n\" | tee /etc/apt/sources.list.d/docker.sources > /dev/null && \
+		apt-get update && \
+		apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin; \
+	fi"
+
+sync-files: remove-files
+	@if [ "$(SERVER)" != "local" ]; then \
+		$(EXEC) "mkdir -p /tmp/$(PROJECT_NAME)"; \
+		$(COPY); \
+	fi
+
+remove-files:
+	@if [ "$(SERVER)" != "local" ]; then \
+  		$(EXEC) "rm -rf /tmp/$(PROJECT_NAME)"; \
+	fi
+
+run:
+	@$(EXEC) "$(PRE_CMD) docker compose -f $(COMPOSE_FILE) up -d"
+
+logs: check-root
+	@$(EXEC) "$(PRE_CMD) docker compose -f $(COMPOSE_FILE) logs -f || true"
+
+status: check-root
+	@$(EXEC) "$(PRE_CMD) \
+		printf '\n=== CONTAINERS ===\n' && docker compose -f $(COMPOSE_FILE) ps -a; \
+		printf '\n=== IMAGES ===\n' && docker images 2>/dev/null || true; \
+		printf '\n=== VOLUMES ===\n' && docker volume ls 2>/dev/null || true; \
+		printf '\n=== NETWORKS ===\n' && docker network ls 2>/dev/null || true"
+
+stop: check-root
+	@$(EXEC) "$(PRE_CMD) docker compose -f $(COMPOSE_FILE) down"
+
+uninstall-docker: check-root
+	@$(EXEC) "apt-get remove -y docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc || true"
+	@$(EXEC) "apt-get purge -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin"
+	@$(EXEC) "rm -rf /var/lib/docker /etc/apt/keyrings/docker.asc"
+
+ssh-wipe: check-root
+	@if [ "$(SERVER)" != "local" ]; then \
+		echo "⚠️  WARNING: This will remove authorized_keys on $(SERVER)."; \
+	    read -p "Are you sure you want to proceed? [y/N] " ans; \
+		if [ "$$ans" = "y" ] || [ "$$ans" = "Y" ]; then \
+			$(EXEC) "[ -f ~/.ssh/authorized_keys ] && rm ~/.ssh/authorized_keys || echo 'No keys found to delete.'"; \
+		else echo "Wipe cancelled."; \
+		fi \
+	fi
+
+fclean: stop
+	@$(EXEC) "$(PRE_CMD) docker compose -f $(COMPOSE_FILE) down -v --rmi all --remove-orphans"
+
+purge: fclean uninstall-docker remove-files ssh-wipe
+
+.PHONY: all dev re check-root check-env ssh-check ssh-setup setup-deps sync-files remove-files run logs status stop uninstall-docker ssh-wipe fclean purge

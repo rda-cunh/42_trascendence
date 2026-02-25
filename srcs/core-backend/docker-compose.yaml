@@ -1,0 +1,9 @@
+services:
+  core-backend:
+    container_name: core-backend
+    build: ./app
+    environment:
+      DATA_SERVICE_URL: "http://data-service:5000/data"
+    depends_on:
+      - data-service
+    restart: always
