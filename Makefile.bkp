@@ -1,0 +1,93 @@
+# **************************************************************************** #
+#                                   VARIABLES                                  #
+# **************************************************************************** #
+
+NAME		= transcendence
+SRCS		= ./srcs
+COMPOSE		= $(SRCS)/docker-compose.yml
+DATA_PATH   = ~/data
+HOST_URL	= transcendence.42.fr
+
+# **************************************************************************** #
+#                                     RULES                                    #
+# **************************************************************************** #
+
+# default target
+all: up
+
+# create dirs, add host, build and start containers
+up: create_dirs add_host
+	@echo "Building and starting containers..."
+	@docker compose -f $(COMPOSE) -p $(NAME) up --build -d
+	@echo "✓ Transcendence is running at https://$(HOST_URL)"
+
+# stop all containers
+down:
+	@echo "Stopping containers..."
+	@docker compose -f $(COMPOSE) -p $(NAME) down
+	@echo "✓ Containers stopped"
+
+# start existing containers without rebuilding
+start:
+	@docker compose -f $(COMPOSE) -p $(NAME) start
+	@echo "✓ Containers started"
+
+# stop containers without removing them
+stop:
+	@docker compose -f $(COMPOSE) -p $(NAME) stop
+	@echo "✓ Containers stopped"
+
+# restart the infrastructure (down + up)
+restart: down up
+
+# create data directories for persistent volumes
+create_dirs:
+	@mkdir -p ~/data/database
+	@mkdir -p ~/data/wordpress_files
+	@echo "✓ Data directories created"
+
+# add domain to /etc/hosts if not already present
+add_host:
+	@if ! grep -q "$(HOST_URL)" /etc/hosts; then \
+		echo "127.0.0.1 $(HOST_URL)" | sudo tee -a /etc/hosts > /dev/null; \
+		echo "✓ Host entry added"; \
+	fi
+
+# remove domain from /etc/hosts
+remove_host:
+	@sudo sed -i "/$(HOST_URL)/d" /etc/hosts
+	@echo "✓ Host entry removed"
+
+# stop containers and remove volumes
+clean: down
+	@echo "Removing containers and volumes..."
+	@docker compose -f $(COMPOSE) -p $(NAME) down -v
+	@echo "✓ Cleanup complete"
+
+# complete cleanup: remove images, volumes, data, and host entry
+fclean: clean remove_host
+	@echo "Removing images and data..."
+	@docker system prune -af --volumes
+	@sudo rm -rf $(DATA_PATH)
+	@echo "✓ Full cleanup complete"
+
+# rebuild everything from scratch (fclean + all)
+re: fclean all
+
+# display status of all Docker resources
+status:
+	@echo "\n=== CONTAINERS ==="
+	@docker compose -f $(COMPOSE) -p $(NAME) ps -a
+	@echo "\n=== IMAGES ==="
+	@docker images | grep $(NAME)
+	@echo "\n=== VOLUMES ==="
+	@docker volume ls | grep $(NAME)
+	@echo "\n=== NETWORKS ==="
+	@docker network ls | grep $(NAME)
+
+# follow container logs in real-time
+logs:
+	@docker compose -f $(COMPOSE) -p $(NAME) logs -f #tail="100"
+
+.PHONY: all up down start stop restart create_dirs add_host remove_host \
+        clean fclean re status logs

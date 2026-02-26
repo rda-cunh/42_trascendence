@@ -1,0 +1,24 @@
+services:
+  database:
+    container_name: database
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: transcendence_db
+    # This internal script creates the table if it doesn't exist
+    volumes:
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    restart: always
+
+  data-service:
+    container_name: data-service
+    build: ./data-service
+    environment:
+      DB_HOST: database
+      DB_NAME: transcendence_db
+      DB_USER: user
+      DB_PASS: password
+    depends_on:
+      - database
+    restart: always
