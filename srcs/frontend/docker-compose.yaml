@@ -1,7 +1,7 @@
 services:
   frontend:
-    image: nginx:alpine
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: frontend
-    volumes:
-      - .:/usr/share/nginx/html:ro
     restart: always
