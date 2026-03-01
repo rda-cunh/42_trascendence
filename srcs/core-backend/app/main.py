@@ -1,8 +1,8 @@
 import os
 import requests
-from flask import Flask, jsonify
+from django import Django
 
-app = Flask(__name__)
+app = Django(__name__)
 
 # The internal URL of our data-service
 DATA_SERVICE_URL = os.getenv("DATA_SERVICE_URL")
