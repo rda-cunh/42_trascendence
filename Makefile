@@ -1,18 +1,18 @@
-# ===================================================================================
+# ======================================================================================
 # TRANSCENDENCE DEPLOYMENT TOOL
-# ===================================================================================
+# ======================================================================================
 # USAGE:
-#   make           - Full deployment (Setup deps -> Sync files -> Run)
-#   make dev       - Full deployment and immediately attach to logs
-#   make stop      - Stop the containers
-#   make status    - Check Docker stats on the target (Local or Remote)
-#   make logs      - Attach to logs without redeploying
-#   make re        - Rebuild and redeploy (Same as fclean + all)
-#   make ssh-setup - Setup SSH keys for remote server access using ssh-copy-id
-#                      (Requires root password and 'PermitRootLogin yes' on target)
-#   make ssh-wipe  - Dangerous: Wipes all SSH keys from target's root account
-#   make purge     - Dangerous: Nukes Docker, files, and SSH keys on target
-# ===================================================================================
+#   make              - Full deployment (Setup deps -> Sync files -> Run)
+#   make dev          - Full deployment and immediately attach to logs
+#   make stop         - Stop the containers
+#   make status       - Check Docker stats on the target (Local or Remote)
+#   make logs         - Attach to logs without redeploying
+#   make re           - Rebuild and redeploy (Same as fclean + all)
+#   make ssh-setup    - Setup SSH keys for remote server access using ssh-copy-id
+#                         (Requires root password and 'PermitRootLogin yes' on target)
+#   make ssh-wipe     - Dangerous: Wipes all SSH keys from target's root account
+#   make purge        - Dangerous: Nukes Docker, files, and SSH keys on target
+# ======================================================================================
 
 include .env
 
@@ -27,7 +27,7 @@ else
     PRE_CMD = cd /tmp/$(PROJECT_NAME) &&
 endif
 
-all: check-root check-env ssh-check setup-deps sync-files run
+all: run
 
 dev: all logs
 
@@ -85,11 +85,11 @@ remove-files:
   		$(EXEC) "rm -rf /tmp/$(PROJECT_NAME)"; \
 	fi
 
-run:
-	@$(EXEC) "$(PRE_CMD) docker compose -f $(COMPOSE_FILE) up -d"
+run: check-root check-env ssh-check setup-deps sync-files
+	@$(EXEC) "$(PRE_CMD) docker compose --env-file .env -f $(COMPOSE_FILE) up -d"
 
 logs: check-root
-	@$(EXEC) "$(PRE_CMD) docker compose -f $(COMPOSE_FILE) logs -f || true"
+	@$(EXEC) "$(PRE_CMD) docker compose --env-file .env -f $(COMPOSE_FILE) logs -f || true"
 
 status: check-root
 	@$(EXEC) "$(PRE_CMD) \
@@ -99,7 +99,7 @@ status: check-root
 		printf '\n=== NETWORKS ===\n' && docker network ls 2>/dev/null || true"
 
 stop: check-root
-	@$(EXEC) "$(PRE_CMD) docker compose -f $(COMPOSE_FILE) down"
+	@$(EXEC) "$(PRE_CMD) docker compose --env-file .env -f $(COMPOSE_FILE) down"
 
 uninstall-docker: check-root
 	@$(EXEC) "apt-get remove -y docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc || true"
@@ -117,8 +117,8 @@ ssh-wipe: check-root
 	fi
 
 fclean: stop
-	@$(EXEC) "$(PRE_CMD) docker compose -f $(COMPOSE_FILE) down -v --rmi all --remove-orphans"
+	@$(EXEC) "$(PRE_CMD) docker compose --env-file .env -f $(COMPOSE_FILE) down -v --rmi all --remove-orphans"
 
 purge: fclean uninstall-docker remove-files ssh-wipe
 
-.PHONY: all dev re check-root check-env ssh-check ssh-setup setup-deps sync-files remove-files run logs status stop uninstall-docker ssh-wipe fclean purge
+.PHONY: all re check-root check-env ssh-check ssh-setup setup-deps sync-files remove-files run logs status stop uninstall-docker ssh-wipe fclean purge

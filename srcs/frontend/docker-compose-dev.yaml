@@ -1,0 +1,19 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: frontend
+    ports:
+      - "5173:5173"
+      - "24678:24678"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    working_dir: /app
+    command: npm run dev
+    environment:
+      - VITE_API_URL=http://localhost:3000/api
+      - NODE_ENV=development
+    restart: unless-stopped
+    tty: true

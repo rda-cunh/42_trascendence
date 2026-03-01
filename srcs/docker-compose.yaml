@@ -2,4 +2,4 @@ include:
   - ./gateway/docker-compose.yaml
   - ./database/docker-compose.yaml
   - ./core-backend/docker-compose.yaml
-  - ./frontend/docker-compose.yaml
+  - ./frontend/docker-compose${FRONTEND_MODE:+-${FRONTEND_MODE}}.yaml
