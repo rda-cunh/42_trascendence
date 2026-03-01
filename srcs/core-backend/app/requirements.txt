@@ -1,2 +1,5 @@
-flask
 requests
+Django
+djangorestframework
+#gunicorn #may be useful
+#psycopg #missing for postgres, or other for database integration
