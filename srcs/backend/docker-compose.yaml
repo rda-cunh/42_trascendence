@@ -1,6 +1,6 @@
 services:
   core-backend:
-    container_name: core-backend
+    container_name: backend
     build: ./app
     environment:
       DATA_SERVICE_URL: "http://data-service:5000/data"

@@ -33,11 +33,12 @@ dev: all logs
 
 re: fclean all
 
+# CANNOT FORCE ROOT ON 42 MACHINES
 check-root:
-	@if [ "$$(id -u)" -ne 0 ]; then \
-		echo "Error: This Makefile must be run as root priviliges."; \
-		exit 1; \
-	fi
+#	@if [ "$$(id -u)" -ne 0 ]; then \
+#		echo "Error: This Makefile must be run as root priviliges."; \
+#		exit 1; \
+#	fi
 
 check-env:
 	@if [ -z "$(PROJECT_NAME)" ]; then echo "Error: PROJECT_NAME not set"; exit 1; fi

@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 RUN apt-get update && apt-get install -y curl wget \
 	&& rm -rf /var/lib/apt/lists/*
@@ -14,4 +14,4 @@ COPY . .
 # may be changed for other default port for communication
 EXPOSE 8000
 
-CMD ["python", "main.py"]
+CMD python3 ./manage.py runserver 0.0.0.0:8000

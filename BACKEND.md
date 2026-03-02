@@ -107,15 +107,6 @@ For the overall design of how the APIs will work, here is a breakdown of the mos
 | GET | /api/orders/{id} | Get order details | `ID in URL` | `{"order_id":5501,"status":"created","currency":"EUR","total":62.5,"items":[{"listing_id":210,"title":"Mechanical Keyboard","unit_price":25.0,"quantity":2},{"listing_id":2,"title":"Keycap Set","unit_price":12.5,"quantity":1}]` |
 | PATCH | /api/orders/{id} | Update order (status transitions) | `Header: Authorization: Bearer JWT_STRING; Body: {"status":"cancelled"}` | `{"status":"Updated","order_id":5501,"new_status":"cancelled"}` |
 
-### Messages
-
-### Messages
-
-| Method | Endpoint | Purpose | Request Body | Success Response |
-| --- | --- | --- | --- | --- |
-| GET | /api/messages | List my message threads | `Header: Authorization: Bearer JWT_STRING; Optional params: ?page=1` | `{"page":1,"page_size":20,"total":2,"items":[{"thread_id":9001,"with_user":"Erik","last_message":"Is this still available?","updated_at":"2026-02-25T13:55:10Z"},{"thread_id":9002,"with_user":"Mina","last_message":"Thanks!","updated_at":"2026-02-24T18:02:44Z"}]}` |
-| GET | /api/messages/{id} | Get a specific thread + messages | `Header: Authorization: Bearer JWT_STRING; ID in URL (e.g. /api/messages/9001)` | `{"thread_id":9001,"participants":[{"username":"dev42"},{"username":"Erik"}],"messages":[{"id":1,"from":"dev42","to":"Erik","content":"Hi! Is it available?","sent_at":"2026-02-25T13:40:00Z"},{"id":2,"from":"Erik","to":"dev42","content":"Yes, still available.","sent_at":"2026-02-25T13:42:10Z"}]}` |
-| POST | /api/messages/send | Send a message (create or append to thread) | `Header: Authorization: Bearer JWT_STRING; Body: {"to_user":"Erik","thread_id":9001,"content":"Great—can you ship to Porto?"}` | `{"status":"sent","message_id":3,"thread_id":9001,"sent_at":"2026-02-25T13:57:22Z"}` |
 
 ### Conventions
 
