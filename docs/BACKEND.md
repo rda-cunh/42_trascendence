@@ -161,6 +161,8 @@ As it is important to keep separations, even for small projects, the proposed la
 
 - [42Network APIs](https://api.intra.42.fr/apidoc)
 - [Django Official Documentation](https://docs.djangoproject.com/en/6.0/)
+- [Django in 1 Hour](https://www.youtube.com/watch?v=rHux0gMZ3Eg)
+- [Django Crash Course](https://www.youtube.com/watch?v=u1GnZfDw5LU)
 - [DRF Official Page](https://www.django-rest-framework.org/)
 - [What is Django Rest Framework (in Portuguese)](https://pythonacademy.com.br/blog/o-que-e-o-django-rest-framework)
 - [Build a Backend Rest API with Django & Python](https://www.youtube.com/watch?v=mNwAyMmGKoI&list=PL8GFhcuc_fW4cxdkRtWIlln1DQ3CZwQen)

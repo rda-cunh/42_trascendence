@@ -115,7 +115,7 @@ We will build the product in three main layers: **base platform**, **core market
 | Layer | Technology | Status | Reasoning |
 |---|---|---|---|
 | Frontend | React + Vite | Confirmed | Strong ecosystem, component model, fast dev experience with Vite. |
-| Backend | Node.js + NestJS | To confirm with rapcampo | Opinionated framework with DI, modules, and good support for REST/WebSockets. |
+| Backend | Django + DRF | Confirmed | Opinionated framework with DI, modules, and good support for REST/WebSockets. |
 | Backend (AI/ML) | Python microservice(s) | Optional / TBD | May be needed for data science modules; to confirm with lmaes. |
 | Database | PostgreSQL | To confirm with lmaes | Relational schema fits marketplace data; strong reliability and tooling. |
 | ORM | Prisma or TypeORM | TBD | Simplifies schema management and migrations. |
