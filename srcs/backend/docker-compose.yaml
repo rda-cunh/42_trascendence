@@ -1,5 +1,5 @@
 services:
-  core-backend:
+  backend:
     container_name: backend
     build: ./app
     environment:
