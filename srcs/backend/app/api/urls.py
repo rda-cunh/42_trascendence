@@ -16,7 +16,11 @@ Including another URLconf
 """
 from django.urls import path
 from .views import listing_detail
+from .views import listing_full
 
 urlpatterns = [
         path("api/listings/<int:id>/", listing_detail),
+        path("api/listings/", listing_full),
+        # path("api/orders/<int:id>/", listing_detail),
+        # path("api/orders/", listing_detail),
 ]
