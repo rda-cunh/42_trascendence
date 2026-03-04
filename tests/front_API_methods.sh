@@ -9,60 +9,38 @@ METHOD=("GET" "DELETE" "POST" "PATCH")
 DOMAIN="http://127.0.0.1/api/"
 DIR="api_tests/"
 
-echo -e "\e[1;31m/api/listings - GET out > listing_get.html\e[0m"
+run_test(){
+	local method_index=$1
+	local endpoint=$2
+	local output_file=$3
+	local method=${METHODS[$method_index]}
+	echo -e "\e[1;31m/api/${endpoint} - ${method}\e[0m"
+	${CURL} ${method} ${DOMAIN}${endpoint} > ${DIR}${output_file}.html
+}
 
-${CURL} ${METHOD[0]} ${DOMAIN}listings/ > ${DIR}listings_get.html
+# listings
+# listings/id/
+# orders
+# orders/id/
+# auth/login/
+# auth/register/
+# auth/profile/
+# user/id/
 
-echo -e "\e[1;31mi/api/listings - POST out > listing_post.html\e[0m"
-
-${CURL} ${METHOD[2]} ${DOMAIN}listings/ > ${DIR}listings_post.html
-
-echo -e "\e[1;31mi/api/listings/{id} - GET out > id_listing_get.html\e[0m"
-
-${CURL} ${METHOD[0]} ${DOMAIN}listings/1/ > ${DIR}id_listings_get.html
-
-echo -e "\e[1;31mi/api/listings/{id} - PATCH out > id_listing_patch.html\e[0m"
-
-${CURL} ${METHOD[3]} ${DOMAIN}listings/1/ > ${DIR}listings_patch.html
-
-echo -e "\e[1;31mi/api/listings/{id} - DELETE out > id_listing_delete.html\e[0m"
-
-${CURL} ${METHOD[1]} ${DOMAIN}listings/1/ > ${DIR}listings_delete.html
-
-echo -e "\e[1;31mi/api/orders/{id} - GET out > id_orders_get.html\e[0m"
-
-${CURL} ${METHOD[0]} ${DOMAIN}orders/1/ > ${DIR}id_orders_get.html
-
-echo -e "\e[1;31mi/api/orders/{id} - PATCH out > id_orders_patch.html\e[0m"
-
-${CURL} ${METHOD[3]} ${DOMAIN}orders/1/ > ${DIR}id_orders_patch.html
-
-echo -e "\e[1;31mi/api/orders/ - POST out > orders_post.html\e[0m"
-
-${CURL} ${METHOD[2]} ${DOMAIN}orders/ > ${DIR}orders_post.html
-
-echo -e "\e[1;31mi/api/orders/ - GET out > orders_get.html\e[0m"
-
-${CURL} ${METHOD[0]} ${DOMAIN}orders/ > ${DIR}orders_get.html
-
-echo -e "\e[1;31mi/api/auth/profile - GET out > auth_profile_get.html\e[0m"
-
-${CURL} ${METHOD[0]} ${DOMAIN}auth/profile/ > ${DIR}auth_profile_get.html
-
-echo -e "\e[1;31mi/api/auth/login - POST out > auth_login_post.html\e[0m"
-
-${CURL} ${METHOD[2]} ${DOMAIN}auth/login/ > ${DIR}auth_login_post.html
-
-echo -e "\e[1;31mi/api/auth/login - DELETE out > auth_login_delete.html\e[0m"
-
-${CURL} ${METHOD[1]} ${DOMAIN}auth/login/ > ${DIR}auth_login_delete.html
-
-echo -e "\e[1;31mi/api/auth/register - POST out > auth_register_post.html\e[0m"
-
-${CURL} ${METHOD[0]} ${DOMAIN}auth/register/ > ${DIR}auth_register_post.html
-
-echo -e "\e[1;31mi/api/auth/register - DELETE out > auth_register_delete.html\e[0m"
-
-${CURL} ${METHOD[1]} ${DOMAIN}auth/register/ > ${DIR}auth_register_delete.html
+run_test 0 "listings/" "listings_get"
+run_test 2 "listings/" "listings_post"
+run_test 0 "listings/1/" "id_listings_get"
+run_test 3 "listings/1/" "id_listings_patch"
+run_test 2 "listings/1" "id_listings_delete"
+run_test 0 "orders/" "orders_get"
+run_test 2 "orders/" "orders_post"
+run_test 0 "orders/1/" "id_orders_get"
+run_test 3 "orders/1/" "id_orders_patch"
+run_test 0 "auth/profile/" "auth_profile_get"
+run_test 2 "auth/login/" "auth_login_post"
+run_test 1 "auth/login/" "auth_login_delete"
+run_test 2 "auth/register/" "auth_register_post"
+run_test 1 "auth/register/" "auth_register_delete"
+run_test 0 "user/1/" "user_id"
 
 echo "done!"
