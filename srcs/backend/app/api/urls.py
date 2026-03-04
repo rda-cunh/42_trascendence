@@ -16,12 +16,16 @@ Including another URLconf
 """
 from django.urls import path
 from .views import listing_id, listing_full
-from .views import user_id
+from .views import user_id, user_create, user_session, user_profile
+from .views import order_create, order_id
 
 urlpatterns = [
         path("api/listings/<int:id>/", listing_id.as_view()),
         path("api/listings/", listing_full.as_view()),
         path("api/user/<int:id>/", user_id.as_view()),
-        # path("api/user/", add_user),
-        # path("api/orders/", listing_detail),
+        path("api/auth/register", user_create.as_view()),
+        path("api/auth/login", user_session.as_view()),
+        path("api/auth/profile", user_profile.as_view()),
+        path("api/orders/", order_create.as_view()),
+        path("api/orders/<int:id>/", order_id.as_view()),
 ]

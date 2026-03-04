@@ -3,6 +3,64 @@ from rest_framework.response import Response
 # from .models import Product
 # from .serializers import ProductSerializer
 
+
+# Auth API
+
+
+class user_create(APIView):
+    def post(self, request):
+        # This api should have [user] [email] [passhash]
+        data = {
+                "Message": "User created Sucessfully", "user_id": 101,
+                }
+        return (data)
+
+    def delete(self, request):
+        # This api should have JWT_String, passhash, user id
+        data = {
+                "Message": "User account has been terminated",
+                }
+        return (data)
+
+
+class user_session(APIView):
+    def post(self, request):
+        # this api should have email and passhash
+        data = {
+            "token": "JWT_STRING", "status": "Login Successful",
+                }
+        return (data)
+
+    def delete(self, request):
+        # this api should have JWT_STRING
+        return ({"Message": "Logged out"})
+
+
+class user_profile(APIView):
+    def get(self, request):
+        # api should have JWT_STRING if does not match, different information is provided
+        data = {
+                "user_info": {
+                    "username": "Rapcampo",
+                    "email": "example@42.com",
+                    "billing address": "Avenida dos aliados, 42, 4000-000",
+                    "avatar": "url",
+                    "user_id": 1,
+                    "Products_owned": [1, 2, 5, 6],
+                    "Current_order": 1,  # unique order ids may be interesting here
+                    "Order_history": [2, 4, 5],
+                    },
+                }
+        return (data)
+
+    def patch(self, request):
+        # api should probably receive all user info that needs to be edited
+        return ({"Status": "User profile has been updated successfully"})
+
+    def delete(self, request):
+        # api should probably receive all user info that needs to be deleted
+        return ({"Status": "User profile has been updated successfully"})
+
 # Product listings API
 
 
@@ -72,6 +130,10 @@ class listing_full(APIView):
         return Response({"items": len(data), "results": data})
 
 
+# this is a proper product class implementation using models and serializers
+# may need to interact better with data service API.
+
+
 '''
 @api_view(["GET"])
 def listing_detail(request, id):
@@ -95,6 +157,54 @@ def listing_full(request):
 '''
 
 
+class order_create(APIView):
+    def get(self, request):
+        # This API should have JWT_STRING, ?page=num&status=created
+        # return a list or old orders
+        data = {
+                {"page": 1, "page_size": 10, "total": 3,
+                 "items": [
+                     {"order_id": 5501, "status": "created", "total": 62.5,
+                      "currency": "EUR", "created_at": "2026-02-25T14:12:30Z"},
+                     {"order_id": 5498, "status": "shipped", "total": 25.0,
+                      "currency": "EUR",
+                      "created_at": "2026-02-20T09:05:11Z"},
+                     ]},
+                }
+        return (data)
+
+    def post(self, request):
+        # this API should have JWT_STRING and list of items [id] and quantatity
+        # should also have billing address and name
+        data = {
+                "status": "created",
+                "order_id": 5501,
+                "total": 62.5,
+                "currency": "EUR",
+                }
+        return (data)
+
+
+class order_id(APIView):
+    def get(self, request):
+        # order id is needed, nothing else
+        data = {
+                "order_id": 5501, "status": "created", "currency": "EUR",
+                "total": 62.5, "items": [
+                    {"listing_id": 210, "title": "Mechanical Keyboard", "unit_price": 25.0,
+                     "quantity": 2},
+                    {"listing_id": 2, "title": "Keycap Set", "unit_price": 12.5, "quantity": 1},
+                    ]
+
+
+                }
+        return (data)
+
+    def PATCH(self, request):
+        # this API needs JWT_STRING, order id and a status change, cancelled, delayed,etc
+        return ({"message": "Updated", "order_id": 5501, "new_status": "cancelled"})
+
+
 # USER API interfaces
 
 
@@ -104,7 +214,5 @@ class user_id(APIView):
         user_data = {
                 "Name": "Erik",
                 "Products_owned": [1, 2, 5, 6],
-                "Current_order": 1,  # unique order ids may be interesting here
-                "Order_history": [2, 4, 5],
                 }
         return Response(user_data)
