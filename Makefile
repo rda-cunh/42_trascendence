@@ -8,6 +8,7 @@
 #   make status       - Check Docker stats on the target (Local or Remote)
 #   make logs         - Attach to logs without redeploying
 #   make re           - Rebuild and redeploy (Same as fclean + all)
+#   make setup-docker - Install Docker on the target machine (Requires root)
 #   make ssh-setup    - Setup SSH keys for remote server access using ssh-copy-id
 #                         (Requires root password and 'PermitRootLogin yes' on target)
 #   make ssh-wipe     - Dangerous: Wipes all SSH keys from target's root account
@@ -35,10 +36,10 @@ re: fclean all
 
 # CANNOT FORCE ROOT ON 42 MACHINES
 check-root:
-#	@if [ "$$(id -u)" -ne 0 ]; then \
-#		echo "Error: This Makefile must be run as root priviliges."; \
-#		exit 1; \
-#	fi
+	@if [ "$$(id -u)" -ne 0 ]; then \
+		echo "Error: You must run this command as root or with 'sudo'."; \
+		exit 1; \
+	fi
 
 check-env:
 	@if [ -z "$(PROJECT_NAME)" ]; then echo "Error: PROJECT_NAME not set"; exit 1; fi
@@ -63,7 +64,19 @@ ssh-setup:
 		ssh-copy-id -i ~/.ssh/id_rsa.pub root@$(SERVER); \
 	fi
 
-setup-deps:
+check-docker:
+	@$(EXEC) 'if ! command -v docker >/dev/null 2>&1; then \
+       printf "\nError: Docker is not installed on $(SERVER).\n"; \
+       printf "Please run: sudo make setup-docker\n\n"; \
+       exit 1; \
+    fi'
+	@$(EXEC) 'if ! docker info >/dev/null 2>&1; then \
+       printf "\nError: You do not have permission to run Docker on $(SERVER).\n"; \
+       printf "Please run with sudo or add your user to the docker group.\n\n"; \
+       exit 1; \
+    fi'
+
+setup-docker: check-root
 	@$(EXEC) "if ! command -v docker >/dev/null 2>&1; then \
 		apt-get update && \
 		apt-get install -y ca-certificates curl && \
@@ -86,20 +99,20 @@ remove-files:
   		$(EXEC) "rm -rf /tmp/$(PROJECT_NAME)"; \
 	fi
 
-run: check-root check-env ssh-check setup-deps sync-files
+run: check-docker check-env ssh-check sync-files
 	@$(EXEC) "$(PRE_CMD) docker compose --env-file .env -f $(COMPOSE_FILE) up -d"
 
-logs: check-root
+logs: check-docker
 	@$(EXEC) "$(PRE_CMD) docker compose --env-file .env -f $(COMPOSE_FILE) logs -f || true"
 
-status: check-root
+status: check-docker
 	@$(EXEC) "$(PRE_CMD) \
 		printf '\n=== CONTAINERS ===\n' && docker compose -f $(COMPOSE_FILE) ps -a; \
 		printf '\n=== IMAGES ===\n' && docker images 2>/dev/null || true; \
 		printf '\n=== VOLUMES ===\n' && docker volume ls 2>/dev/null || true; \
 		printf '\n=== NETWORKS ===\n' && docker network ls 2>/dev/null || true"
 
-stop: check-root
+stop: check-docker
 	@$(EXEC) "$(PRE_CMD) docker compose --env-file .env -f $(COMPOSE_FILE) down"
 
 uninstall-docker: check-root
@@ -122,4 +135,4 @@ fclean: stop
 
 purge: fclean uninstall-docker remove-files ssh-wipe
 
-.PHONY: all re check-root check-env ssh-check ssh-setup setup-deps sync-files remove-files run logs status stop uninstall-docker ssh-wipe fclean purge
+.PHONY: all re check-root check-docker check-env ssh-check ssh-setup setup-docker sync-files remove-files run logs status stop uninstall-docker ssh-wipe fclean purge
