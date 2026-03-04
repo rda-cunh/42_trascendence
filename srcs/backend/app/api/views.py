@@ -22,15 +22,15 @@ class listing_id(APIView):
                 }
         return Response(data)
 
-    def patch(self, request, name, descritpion, price, currency, assets):
-        return Response({"status": "Product updated sucessfully"})
+    def patch(self, request, id):
+        return Response({"status": f"Product {id} updated sucessfully"})
 
     def delete(self, request, id):
-        return Response({"status": "Product deleted sucessfully"})
+        return Response({"status": f"Product {id} deleted sucessfully"})
 
 
 class listing_full(APIView):
-    def post(self, request, name, descritpion, price, currency, assets):
+    def post(self, request):
         return Response({"product_id": 1})
 
     def get(self, request):
