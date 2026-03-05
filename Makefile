@@ -34,6 +34,7 @@ dev: all logs
 
 re: fclean all
 
+# CANNOT FORCE ROOT ON 42 MACHINES
 check-root:
 	@if [ "$$(id -u)" -ne 0 ]; then \
 		echo "Error: You must run this command as root or with 'sudo'."; \
