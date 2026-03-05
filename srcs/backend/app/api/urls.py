@@ -20,12 +20,12 @@ from .views import user_id, user_create, user_session, user_profile
 from .views import order_create, order_id
 
 urlpatterns = [
-        path("api/listings/<int:id>/", listing_id.as_view()),
-        path("api/listings/", listing_full.as_view()),
-        path("api/user/<int:id>/", user_id.as_view()),
-        path("api/auth/register/", user_create.as_view()),
-        path("api/auth/login/", user_session.as_view()),
-        path("api/auth/profile/", user_profile.as_view()),
-        path("api/orders/", order_create.as_view()),
-        path("api/orders/<int:id>/", order_id.as_view()),
+        path("listings/<int:id>/", listing_id.as_view()),
+        path("listings/", listing_full.as_view()),
+        path("user/<int:id>/", user_id.as_view()),
+        path("auth/register/", user_create.as_view()),
+        path("auth/login/", user_session.as_view()),
+        path("auth/profile/", user_profile.as_view()),
+        path("orders/", order_create.as_view()),
+        path("orders/<int:id>/", order_id.as_view()),
 ]
