@@ -13,14 +13,14 @@ class user_create(APIView):
         data = {
                 "Message": "User created Sucessfully", "user_id": 101,
                 }
-        return (data)
+        return Response(data)
 
     def delete(self, request):
         # This api should have JWT_String, passhash, user id
         data = {
                 "Message": "User account has been terminated",
                 }
-        return (data)
+        return Response(data)
 
 
 class user_session(APIView):
@@ -29,11 +29,11 @@ class user_session(APIView):
         data = {
             "token": "JWT_STRING", "status": "Login Successful",
                 }
-        return (data)
+        return Response(data)
 
     def delete(self, request):
         # this api should have JWT_STRING
-        return ({"Message": "Logged out"})
+        return Response({"Message": "Logged out"})
 
 
 class user_profile(APIView):
@@ -51,15 +51,15 @@ class user_profile(APIView):
                     "Order_history": [2, 4, 5],
                     },
                 }
-        return (data)
+        return Response(data)
 
     def patch(self, request):
         # api should probably receive all user info that needs to be edited
-        return ({"Status": "User profile has been updated successfully"})
+        return Response({"Status": "User profile has been updated successfully"})
 
     def delete(self, request):
         # api should probably receive all user info that needs to be deleted
-        return ({"Status": "User profile has been updated successfully"})
+        return Response({"Status": "User profile has been updated successfully"})
 
 # Product listings API
 
@@ -162,16 +162,16 @@ class order_create(APIView):
         # This API should have JWT_STRING, ?page=num&status=created
         # return a list or old orders
         data = {
-                {"page": 1, "page_size": 10, "total": 3,
+                "page": 1, "page_size": 10, "total": 3,
                  "items": [
                      {"order_id": 5501, "status": "created", "total": 62.5,
                       "currency": "EUR", "created_at": "2026-02-25T14:12:30Z"},
                      {"order_id": 5498, "status": "shipped", "total": 25.0,
                       "currency": "EUR",
                       "created_at": "2026-02-20T09:05:11Z"},
-                     ]},
+                     ],
                 }
-        return (data)
+        return Response(data)
 
     def post(self, request):
         # this API should have JWT_STRING and list of items [id] and quantatity
@@ -182,14 +182,14 @@ class order_create(APIView):
                 "total": 62.5,
                 "currency": "EUR",
                 }
-        return (data)
+        return Response(data)
 
 
 class order_id(APIView):
-    def get(self, request):
+    def get(self, request, id):
         # order id is needed, nothing else
         data = {
-                "order_id": 5501, "status": "created", "currency": "EUR",
+                "order_id": id, "status": "created", "currency": "EUR",
                 "total": 62.5, "items": [
                     {"listing_id": 210, "title": "Mechanical Keyboard", "unit_price": 25.0,
                      "quantity": 2},
@@ -198,11 +198,11 @@ class order_id(APIView):
 
 
                 }
-        return (data)
+        return Response(data)
 
-    def PATCH(self, request):
+    def patch(self, request, id):
         # this API needs JWT_STRING, order id and a status change, cancelled, delayed,etc
-        return ({"message": "Updated", "order_id": 5501, "new_status": "cancelled"})
+        return Response({"message": "Updated", "order_id": id, "new_status": "cancelled"})
 
 
 # USER API interfaces

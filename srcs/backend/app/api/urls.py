@@ -23,9 +23,9 @@ urlpatterns = [
         path("api/listings/<int:id>/", listing_id.as_view()),
         path("api/listings/", listing_full.as_view()),
         path("api/user/<int:id>/", user_id.as_view()),
-        path("api/auth/register", user_create.as_view()),
-        path("api/auth/login", user_session.as_view()),
-        path("api/auth/profile", user_profile.as_view()),
+        path("api/auth/register/", user_create.as_view()),
+        path("api/auth/login/", user_session.as_view()),
+        path("api/auth/profile/", user_profile.as_view()),
         path("api/orders/", order_create.as_view()),
         path("api/orders/<int:id>/", order_id.as_view()),
 ]
