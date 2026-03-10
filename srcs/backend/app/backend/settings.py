@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -92,6 +93,27 @@ DATABASES = {
     }
 }
 
+REST_FRAMEWORK = {
+        'DEFAULT_PERMISSION_CLASSES': (
+            'rest_framework.permissions.IsAuthenticated',
+        ),
+        'DEFAULT_AUTHENTICATION_CLASSES': (
+            'rest_framework_simplejwt.authentication.JWTAuthentication',
+        ),
+}
+
+
+# testing JWT auth not sure what will need specifically yet may need postman for testing
+
+SIMPLE_JWT = {
+        'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+        'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+        'SLIDING_TOKEN_LIFETIME': timedelta(days=30),
+        'SLIDING_TOKEN_REFRESH_LIFETIME_LATE_USER': timedelta(days=1),
+        'SLIDING_TOKEN_LIFETIME_LATE_USER': timedelta(days=30),
+        'AUTH_HEADER_TYPES': ('Bearer',),
+        'BLACKLIST_AFTER_ROTATION': True,
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -102,6 +124,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_lenght': 10,
+            }
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
