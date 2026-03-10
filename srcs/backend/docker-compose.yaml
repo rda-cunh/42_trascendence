@@ -2,8 +2,8 @@ services:
   backend:
     container_name: backend
     build: ./app
-    environment:
-      DATA_SERVICE_URL: "http://data-service:5000/data"
+    env_file:
+      - .env
     depends_on:
       - data-service
     restart: always
