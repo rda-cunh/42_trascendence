@@ -1,2 +1,7 @@
-flask
-psycopg2-binary
+fastapi
+uvicorn
+pymysql
+cryptography
+pydantic
+pydantic-settings
+python-dotenv
