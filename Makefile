@@ -167,4 +167,4 @@ fclean: stop
 
 purge: fclean uninstall-docker remove-files ssh-wipe
 
-.PHONY: all re check-root check-docker check-env ssh-check ssh-setup setup-docker sync-files remove-files run logs status stop uninstall-docker ssh-wipe fclean purge
+.PHONY: all re check-root check-docker check-env ssh-check ssh-setup setup-docker sync-files remove-files run logs status stop uninstall-docker ssh-wipe database-backup database-restore network-create fclean purge
