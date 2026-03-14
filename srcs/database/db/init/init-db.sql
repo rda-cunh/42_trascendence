@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(255) NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   phone VARCHAR(30) NULL DEFAULT NULL,
-  status ENUM('Active','Suspended','Baned','deactivated') NOT NULL DEFAULT 'Active',
+  status ENUM('Active','Suspended','Banned','Deactivated') NOT NULL DEFAULT 'Active',
   avatar_url VARCHAR(255),
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS products (
   slug VARCHAR(255) NOT NULL,
   description TEXT NULL DEFAULT NULL COMMENT 'Product description',
   price DECIMAL(12,2) NOT NULL,
-  status ENUM('draft', 'active', 'paused', 'deleted') NOT NULL DEFAULT 'draft',
+  status ENUM('Draft', 'Active', 'Paused', 'Deleted') NOT NULL DEFAULT 'Active',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS product_images (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_product_images_product (product_id),
-  CONSTRAINT fk_product_images_product FOREIGN KEY (product_id) REFERENCES product (id)
+  CONSTRAINT fk_product_images_product FOREIGN KEY (product_id) REFERENCES products (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS orders (
@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS order_items (
   KEY idx_order_items_product (product_id),
   KEY idx_order_items_seller (seller_id),
   CONSTRAINT fk_order_items_order FOREIGN KEY (order_id) REFERENCES orders (id),
-  CONSTRAINT fk_order_items_product FOREIGN KEY (product_id) REFERENCES product (id),
+  CONSTRAINT fk_order_items_product FOREIGN KEY (product_id) REFERENCES products (id),
   CONSTRAINT fk_order_items_seller FOREIGN KEY (seller_id) REFERENCES users (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS product_reviews (
   KEY idx_review_product (product_id),
   KEY idx_review_buyer (buyer_id),
   CONSTRAINT chk_rating CHECK (review BETWEEN 1 AND 5),
-  CONSTRAINT fk_review_product FOREIGN KEY (product_id) REFERENCES product (id),
+  CONSTRAINT fk_review_product FOREIGN KEY (product_id) REFERENCES products (id),
   CONSTRAINT fk_review_buyer FOREIGN KEY (buyer_id) REFERENCES users (id),
   CONSTRAINT fk_review_order_items FOREIGN KEY (order_items_id) REFERENCES order_items (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS payments (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   order_id BIGINT UNSIGNED NOT NULL,
   provider VARCHAR(255) NOT NULL,
-  method ENUM('Multibanco','Transfer','Paypal','Credit_card', 'Debit_card', 'other') NOT NULL,
+  method ENUM('Multibanco','Transfer','Paypal','Credit_card', 'Debit_card', 'Other') NOT NULL,
   status ENUM('Pending','Approved','Failed','Refused') NOT NULL DEFAULT 'Pending',
   amount DECIMAL (12,2) NOT NULL,
   paid_at TIMESTAMP NULL DEFAULT NULL,
