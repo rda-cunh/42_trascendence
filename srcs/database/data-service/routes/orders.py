@@ -4,7 +4,7 @@ from models.order import OrderCreate, OrderItemCreate, OrderResponse, OrderItemR
 import uuid
 from decimal import Decimal
 
-router = APIRouter(prefix='/orders', tags=['Orders'])
+router = APIRouter(prefix='/api/orders', tags=['Orders'])
 
 # Generate uniq code for orders
 def generate_order_code() -> str:

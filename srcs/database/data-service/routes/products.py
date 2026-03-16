@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from database import get_db_dep
 from models.product import ProductCreate, ProductImagesCreate, ProductUpdate, ProductResponse, ProductImagesResponse
 
-router = APIRouter(prefix='/products', tags=['Products'])
+router = APIRouter(prefix='/api/listings', tags=['Products'])
 
-# POST /products
+# POST /listings
 @router.post('/', response_model=ProductResponse, status_code=201)
 def	create_product(product_in: ProductCreate, seller_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
@@ -24,7 +24,7 @@ def	create_product(product_in: ProductCreate, seller_id: int, db=Depends(get_db_
 	cursor.execute('SELECT * FROM products WHERE id = %s', (new_id,))
 	return ProductResponse(**cursor.fetchone())
 
-# GET /products (with filter ?search or ?limit or ?skip)
+# GET /listings (with filter ?search or ?limit or ?skip)
 @router.get('/', response_model=list[ProductResponse])
 def	list_products(
 	skip:		int = 0,
@@ -56,7 +56,7 @@ def	list_products(
 	cursor.execute(sql, params)
 	return [ProductResponse(**row) for row in cursor.fetchall()]
 
-# GET /products/seller/{seller_id}
+# GET /listings/seller/{seller_id}
 @router.get('/seller/{seller_id}', response_model=list[ProductResponse])
 def get_seller_products(seller_id: int, db=Depends(get_db_dep)):
 	print("Test")
@@ -68,11 +68,11 @@ def get_seller_products(seller_id: int, db=Depends(get_db_dep)):
 	rows = cursor.fetchall()
 	return [ProductResponse(**row) for row in rows]
 
-# PATCH /products/{id}
+# PATCH /listings/{id}
 # TO DO
 
 
-# DELETE /products/{id}
+# DELETE /listings/{id}
 @router.delete('/{product_id}', status_code=204)
 def delete_product(product_id: int, db=Depends(get_db_dep)):
 	con, cursor = db

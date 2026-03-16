@@ -4,7 +4,7 @@ import hashlib
 from database import get_db_dep
 from models.user import UserCreate, UserAddressCreate, UserUpdate,UserAddressUpdate, UserResponse, UserAddressResponse
 
-router = APIRouter(prefix='/users', tags=['Users'])
+router = APIRouter(prefix='/api/users', tags=['Users'])
 
 def hash_pw(pw: str) -> str:
 	return hashlib.sha256(pw.encode()).hexdigest()
