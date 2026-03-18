@@ -99,7 +99,7 @@ remove-files:
   		$(EXEC) "rm -rf /tmp/$(PROJECT_NAME)"; \
 	fi
 
-run: check-docker check-env ssh-check sync-files
+run: check-docker check-env ssh-check sync-files network-create
 	@$(EXEC) "$(PRE_CMD) docker compose --env-file .env -f $(COMPOSE_FILE) up -d"
 
 logs: check-docker
@@ -130,9 +130,41 @@ ssh-wipe: check-root
 		fi \
 	fi
 
+DATABASE_PATH = ./srcs/database
+include $(DATABASE_PATH)/.env
+export
+
+# Make a backup .sql file
+database-backup:
+	@docker exec -e MYSQL_PWD=$(DB_ROOT_PASSWORD) $(DB_CONTAINER_NAME) \
+	mysqldump -u root $(DB_NAME) \
+	> $(DATABASE_PATH)/db/backup/$(DB_NAME)_$$(date +%Y%m%d_%H%M%S).sql
+
+# Select a backup to restore
+database-restore:
+	@files=$$(ls -t $(DATABASE_PATH)/db/backup/*.sql | xargs -n1 basename); \
+	echo "Available backups:"; \
+	echo "$$files"; \
+	echo ""; \
+	read -p "Backup file: " file; \
+	fullpath="$$DATABASE_PATH/db/backup/$$file"; \
+	if [ ! -f "$$fullpath" ]; then \
+		echo "File doesn't exists: $$file"; \
+		exit 1; \
+	fi; \
+	echo "Restoring $$file..."; \
+	docker exec -i \
+	-e MYSQL_PWD=$(DB_ROOT_PASSWORD) \
+	$(DB_CONTAINER_NAME) \
+	mysql -u root $(DB_NAME) \
+	< $$fullpath
+
+network-create:
+	@docker network inspect shared-network >/dev/null 2>&1 || docker network create shared-network
+
 fclean: stop
 	@$(EXEC) "$(PRE_CMD) docker compose --env-file .env -f $(COMPOSE_FILE) down -v --rmi all --remove-orphans"
 
 purge: fclean uninstall-docker remove-files ssh-wipe
 
-.PHONY: all re check-root check-docker check-env ssh-check ssh-setup setup-docker sync-files remove-files run logs status stop uninstall-docker ssh-wipe fclean purge
+.PHONY: all re check-root check-docker check-env ssh-check ssh-setup setup-docker sync-files remove-files run logs status stop uninstall-docker ssh-wipe database-backup database-restore network-create fclean purge

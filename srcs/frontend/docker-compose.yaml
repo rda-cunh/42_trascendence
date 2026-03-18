@@ -5,3 +5,5 @@ services:
       dockerfile: Dockerfile
     container_name: frontend
     restart: always
+    networks:
+      - shared-network
