@@ -1,24 +1,46 @@
 services:
+
   database:
-    container_name: database
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: transcendence_db
-    # This internal script creates the table if it doesn't exist
-    volumes:
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    image: mysql:8.4
+    container_name: ${DB_CONTAINER_NAME}
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+      start_period: 30s
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d
+    env_file:
+      - .env
+    environment:
+      MYSQL_ROOT_PASSWORD:  ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE:       ${DB_NAME}
+      MYSQL_USER:           ${DB_USER}
+      MYSQL_PASSWORD:       ${DB_PASSWORD}
+    networks:
+      - shared-network
 
   data-service:
-    container_name: data-service
     build: ./data-service
+    container_name: ${SERVICE_CONTAINER_NAME}
+    restart: unless-stopped
+    expose:
+      - "9000"
+    # ports:
+    #   - "9000:9000"
+    depends_on:
+      database:
+        condition: service_healthy
     environment:
       DB_HOST: database
-      DB_NAME: transcendence_db
-      DB_USER: user
-      DB_PASS: password
-    depends_on:
-      - database
-    restart: always
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    networks:
+      - shared-network
+
+volumes:
+  db_data:
