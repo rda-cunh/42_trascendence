@@ -1,5 +1,7 @@
 requests
 Django
 djangorestframework
+channels    #for websockets (chat)
+daphne      #ASGI server
 #gunicorn #may be useful
 #psycopg #missing for postgres, or other for database integration
