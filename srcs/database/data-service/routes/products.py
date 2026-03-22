@@ -69,7 +69,24 @@ def get_seller_products(seller_id: int, db=Depends(get_db_dep)):
 	return [ProductResponse(**row) for row in rows]
 
 # PATCH /listings/{id}
-# TO DO
+@router.patch('/{product_id}', response_model=ProductResponse)
+def update_products(product_id: int, product_in: ProductUpdate, db=Depends(get_db_dep)):
+	conn, cursor = db
+	cursor.execute('SELECT * FROM products WHERE id = %s', (product_id,))
+	if not cursor.fetchone():
+		raise HTTPException(status_code=404, detail='Product not found')
+	update_data = product_in.model_dump(exclude_unset=True)
+	if not update_data:
+		raise HTTPException(status_code=400, detail='No fields to update')
+	set_clause = ', '.join(f'{k} = %s' for k in update_data.keys())
+	values = list(update_data.values()) + [product_id]
+
+	cursor.execute(
+		f'UPDATE products SET {set_clause} WHERE id = %s',
+		values
+	)
+	cursor.execute('SELECT * FROM products WHERE id = %s', (product_id,))
+	return ProductResponse(**cursor.fetchone())
 
 
 # DELETE /listings/{id}

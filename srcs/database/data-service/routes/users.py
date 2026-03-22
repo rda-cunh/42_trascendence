@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 import pymysql
 import hashlib
 from database import get_db_dep
-from models.user import UserCreate, UserAddressCreate, UserUpdate,UserAddressUpdate, UserResponse, UserAddressResponse
+from models.user import UserCreate, UserAddressCreate, UserUpdate, UserPasswordUpdate,UserAddressUpdate, UserResponse, UserAddressResponse
 
 router = APIRouter(prefix='/api/users', tags=['Users'])
 
@@ -62,8 +62,39 @@ def	get_user(user_id: int, db=Depends(get_db_dep)):
 	return UserResponse(**user)
 
 # PATCH /users/{id}
-# TO DO
+@router.patch('/{user_id}', response_model=UserResponse)
+def update_user(user_id: int, user_in: UserUpdate, db=Depends(get_db_dep)):
+	conn, cursor = db
+	cursor.execute('SELECT * FROM users WHERE id = %s', (user_id, ))
+	if not cursor.fetchone():
+		raise HTTPException(status_code=404, detail='User not found')
+	update_data = user_in.model_dump(exclude_unset=True)
+	if not update_data:
+		raise HTTPException(status_code=400, detail='No fields to update')
+	set_clause = ', '.join(f'{k} = %s' for k in update_data.keys())
+	values = list(update_data.values()) + [user_id]
+	cursor.execute(
+		f'UPDATE users SET {set_clause} WHERE id = %s',
+		values
+	)
 
+	cursor.execute('SELECT * FROM users WHERE id = %s', (user_id,))
+	return UserResponse(**cursor.fetchone())
+
+# PATCH /users/{id}/password
+@router.patch('/{user_id}/password', response_model=UserResponse)
+def update_user_password(user_id: int, user_in: UserPasswordUpdate, db=Depends(get_db_dep)):
+	conn, cursor = db
+	cursor.execute('SELECT password_hash FROM users WHERE id = %s', (user_id, ))
+	user = cursor.fetchone()
+	if not user:
+		raise HTTPException(status_code=404, detail='User not found')
+	if user['password_hash'] != hash_pw(user_in.oldPass):
+		raise HTTPException(status_code=400, detail="Password doesn't match")
+	
+	cursor.execute('UPDATE users SET password_hash = %s WHERE id = %s', (hash_pw(user_in.newPass), user_id))
+	cursor.execute('SELECT * FROM users WHERE id = %s', (user_id,))
+	return UserResponse(**cursor.fetchone())
 
 # DELETE /users/{id}
 @router.delete('/{user_id}', status_code=204)
@@ -72,8 +103,6 @@ def delete_user(user_id: int, db=Depends(get_db_dep)):
 	cursor.execute('DELETE FROM users WHERE id = %s', (user_id,))
 	if cursor.rowcount == 0:
 		raise HTTPException(status_code=404, detail='User not found')
-
-
 
 # USER ADDRESS
 
@@ -114,7 +143,24 @@ def get_user_address(user_id: int, db=Depends(get_db_dep)):
 	return UserAddressResponse(**address)
 
 # PATCH /users/{id}/address
-# TO DO
+@router.patch('/{user_id}/address', response_model=UserAddressResponse)
+def update_user_address(user_id: int, user_in: UserAddressUpdate, db=Depends(get_db_dep)):
+	conn, cursor = db
+	cursor.execute('SELECT * FROM users_address WHERE users_id = %s', (user_id, ))
+	if not cursor.fetchone():
+		raise HTTPException(status_code=404, detail='Address not found')
+	update_data = user_in.model_dump(exclude_unset=True)
+	if not update_data:
+		raise HTTPException(status_code=400, detail='No fields to update')
+	set_clause = ', '.join(f'{k} = %s' for k in update_data.keys())
+	values = list(update_data.values()) + [user_id]
+	cursor.execute(
+		f'UPDATE users_address SET {set_clause} WHERE users_id = %s',
+		values
+	)
+
+	cursor.execute('SELECT * FROM users_address WHERE users_id = %s', (user_id,))
+	return UserAddressResponse(**cursor.fetchone())
 
 # DELETE /users/{id}/address
 @router.delete('/{user_id}/address', status_code=204)

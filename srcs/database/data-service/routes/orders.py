@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from database import get_db_dep
-from models.order import OrderCreate, OrderItemCreate, OrderResponse, OrderItemResponse
+from models.order import OrderCreate, OrderItemCreate, OrderResponse, OrderItemResponse, OrderUpdate
 import uuid
 from decimal import Decimal
 
@@ -92,4 +92,23 @@ def get_buyer_orders(buyer_id: int, db=Depends(get_db_dep)):
 	
 	return [OrderResponse(**o) for o in orders]
 
+# PATCH /orders{order_id}
+@router.patch('/{order_id}', response_model=OrderResponse)
+def update_orders(order_id: int, order_in: OrderUpdate, db=Depends(get_db_dep)):
+	conn, cursor = db
+	cursor.execute('SELECT * FROM orders WHERE id = %s', (order_id,))
+	if not cursor.fetchone():
+		raise HTTPException(status_code=404, detail='Order not found')
+	update_data = order_in.model_dump(exclude_unset=True)
+	if not update_data:
+		raise HTTPException(status_code=400, detail='No fields to update')
+	set_clause = ', '.join(f'{k} = %s' for k in update_data.keys())
+	values = list(update_data.values()) + [order_id]
+
+	cursor.execute(
+		f'UPDATE orders SET {set_clause} WHERE id = %s',
+		values
+	)
+	cursor.execute('SELECT * FROM orders WHERE id = %s', (order_id,))
+	return OrderResponse(**cursor.fetchone())
 

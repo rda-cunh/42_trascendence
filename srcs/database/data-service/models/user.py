@@ -21,9 +21,14 @@ class UserCreate(UserBase):
 
 class UserUpdate(BaseModel):
 	name:		Optional[str] = None
+	email:		Optional[str] = None
 	phone:		Optional[str] = None
 	avatar_url:	Optional[str] = None
 	status:		Optional[UserStatus] = None
+
+class UserPasswordUpdate(BaseModel):
+	oldPass:	str
+	newPass:	str
 
 class UserResponse(UserBase):
 	id:			int
