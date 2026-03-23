@@ -1,11 +1,55 @@
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router";
-import { mockListings } from "../data/mockListings";
+import { Listing } from "../data/mockListings";
 import { MapPin, User, Calendar, Tag, Package, ArrowLeft, MessageCircle, Download } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 
 export function ProductDetail() {
   const { id } = useParams();
-  const listing = mockListings.find((item) => item.id === id);
+  const [listing, setListing] = useState<Listing | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setIsLoading(true);
+    fetch(`/api/listings/${id}/`)
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        if (data && data.listing) {
+          const item = data.listing;
+          setListing({
+            id: String(item.product_id),
+            title: item.name || "Untitled",
+            price: item.price || 0,
+            description: item.description || "",
+            category: item.category || "3D Models",
+            condition: item.status || "New",
+            location: "Digital Download",
+            seller: "Creator Studio",
+            image: item.image || "https://images.unsplash.com/photo-1636189239307-9f3a701f30a8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHwzRCUyMGdhbWUlMjBjaGFyYWN0ZXIlMjBtb2RlbHxlbnwxfHx8fDE3NzE4MDMxNDl8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+            postedDate: new Date().toISOString().split('T')[0],
+          });
+        }
+      })
+      .catch(err => {
+        console.error("Failed to fetch listing:", err);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center transition-colors">
+        <div className="text-center">
+          <p className="text-gray-500 dark:text-gray-400 text-lg">Loading asset...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!listing) {
     return (

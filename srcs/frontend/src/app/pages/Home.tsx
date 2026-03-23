@@ -1,11 +1,45 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ProductCard } from "../components/ProductCard";
-import { mockListings } from "../data/mockListings";
+import { Listing } from "../data/mockListings";
 import { Search, SlidersHorizontal } from "lucide-react";
 
 export function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setIsLoading(true);
+    fetch('/api/listings/')
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        if (data && data.results) {
+          const apiListings: Listing[] = data.results.map((item: any) => ({
+            id: String(item.product_id),
+            title: item.name || "Untitled",
+            price: item.price || 0,
+            description: item.description || "",
+            category: item.category || "3D Models",
+            condition: item.status || "New",
+            location: "Digital Download",
+            seller: "Creator Studio",
+            image: item.image || "https://images.unsplash.com/photo-1636189239307-9f3a701f30a8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHwzRCUyMGdhbWUlMjBjaGFyYWN0ZXIlMjBtb2RlbHxlbnwxfHx8fDE3NzE4MDMxNDl8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+            postedDate: new Date().toISOString().split('T')[0],
+          }));
+          setListings(apiListings);
+        }
+      })
+      .catch(err => {
+        console.error("Failed to fetch listings:", err);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, []);
 
   const categories = [
     "All",
@@ -18,7 +52,7 @@ export function Home() {
     "UI/UX",
   ];
 
-  const filteredListings = mockListings.filter((listing) => {
+  const filteredListings = listings.filter((listing) => {
     const matchesSearch = listing.title
       .toLowerCase()
       .includes(searchQuery.toLowerCase()) ||
@@ -86,7 +120,11 @@ export function Home() {
         </div>
 
         {/* Listings Grid */}
-        {filteredListings.length > 0 ? (
+        {isLoading ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 dark:text-gray-400 text-lg">Loading assets...</p>
+          </div>
+        ) : filteredListings.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredListings.map((listing) => (
               <ProductCard key={listing.id} listing={listing} />
