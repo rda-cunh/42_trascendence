@@ -2,6 +2,8 @@ from rest_framework.decorators import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
+from rest_framework.exceptions import APIException
+from . import serializers
 import requests
 # from .serializers import ProductSerializer
 
@@ -13,17 +15,37 @@ DATA_SERVICE = "http://data-service:9000/api/"
 class user_create(APIView):
     def post(self, request):
         # This api should have [user] [email] [passhash]
-        data = {
-                "Message": "User created Sucessfully", "user_id": 101,
-                }
-        return Response(data)
+        serializer = serializers.userCreate(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            upstream = requests.get(
+                    f"{DATA_SERVICE}/users/{id}/",
+                    request.data,
+                    timeout=5,
+            )
+            return Response(upstream.json(), status=upstream.status_code)
+        except requests.RequestException as e:
+            return Response({"error": "Data service unreachable",
+                             "details": str(e)},
+                            status=status.HTTP_502_BAD_GATEWAY)
 
     def delete(self, request):
         # This api should have JWT_String, passhash, user id
-        data = {
-                "Message": "User account has been terminated",
-                }
-        return Response(data)
+        serializer = serializers.userDelete(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            upstream = requests.get(
+                    f"{DATA_SERVICE}/users/{id}/",
+                    request.data,
+                    timeout=5,
+            )
+            return Response(upstream.json(), status=upstream.status_code)
+        except requests.RequestException as e:
+            return Response({"error": "Data service unreachable",
+                             "details": str(e)},
+                            status=status.HTTP_502_BAD_GATEWAY)
 
 
 class user_session(APIView):
@@ -223,6 +245,9 @@ class order_id(APIView):
 
 class user_id(APIView):
     def get(self, request, id):
+        serializer = serializers.userId_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
         try:
             upstream = requests.get(
                     f"{DATA_SERVICE}/users/{id}/",
