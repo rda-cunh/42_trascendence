@@ -5,7 +5,3 @@ include:
   - ./database/docker-compose.yaml
   - ./backend/docker-compose.yaml
   - ./frontend/docker-compose${FRONTEND_MODE:+-${FRONTEND_MODE}}.yaml
-
-#networks:
-#  shared-network:
-#    external: true

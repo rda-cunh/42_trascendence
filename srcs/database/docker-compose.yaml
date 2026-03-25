@@ -20,8 +20,6 @@ services:
       MYSQL_DATABASE:       ${DB_NAME}
       MYSQL_USER:           ${DB_USER}
       MYSQL_PASSWORD:       ${DB_PASSWORD}
-#    networks:
-#      - shared-network
 
   data-service:
     build: ./data-service
@@ -39,8 +37,6 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-#    networks:
-#      - shared-network
 
 volumes:
   db_data:
