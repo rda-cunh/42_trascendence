@@ -61,6 +61,7 @@ class user_session(APIView):
         return Response({"Message": "Logged out"})
 
 
+
 class user_profile(APIView):
     def get(self, request):
         # api should have JWT_STRING if does not match, different information is provided
@@ -184,6 +185,7 @@ def listing_full(request):
     return Responde({"count": len(data), "results": data})
 '''
 
+uuid4 from fastAPI
 
 class order_create(APIView):
 
@@ -250,7 +252,7 @@ class user_id(APIView):
 
         try:
             upstream = requests.get(
-                    f"{DATA_SERVICE}/users/{id}/",
+                    f"{DATA_SERVICE}/user/{id}/",
                     request.data,
                     timeout=5,
             ) # this works as intended and I can perfectly communicate with data-service
