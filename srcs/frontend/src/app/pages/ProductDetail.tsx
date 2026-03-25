@@ -109,9 +109,12 @@ export function ProductDetail() {
                   <Download className="w-5 h-5" />
                   <span>Purchase & Download</span>
                 </button>
-                <button className="px-6 py-3 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                <Link
+                  to="/chat/1" // TODO: Start conversation and get ID
+                  className="px-6 py-3 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
                   <MessageCircle className="w-5 h-5" />
-                </button>
+                </Link>
               </div>
             </div>
 

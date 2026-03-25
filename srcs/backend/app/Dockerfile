@@ -16,4 +16,4 @@ EXPOSE 8000
 
 CMD python3 manage.py makemigrations && \
 	python3 manage.py migrate && \
-	python3 ./manage.py runserver 0.0.0.0:8000
+	DJANGO_SETTINGS_MODULE=backend.settings daphne -b 0.0.0.0 -p 8000 backend.asgi:application

@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router";
 import { Home } from "./pages/Home";
 import { ProductDetail } from "./pages/ProductDetail";
 import { SellItem } from "./pages/SellItem";
+import { Chat } from "./pages/Chat";
 import { Header } from "./components/Header";
 
 // Root layout component
@@ -36,6 +37,14 @@ export const router = createBrowserRouter([
     element: (
       <Layout>
         <SellItem />
+      </Layout>
+    ),
+  },
+  {
+    path: "/chat/:conversationId",
+    element: (
+      <Layout>
+        <Chat />
       </Layout>
     ),
   },
