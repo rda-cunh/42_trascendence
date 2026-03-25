@@ -13,5 +13,5 @@ services:
       - "443:443"
     volumes:
       - ./default.conf:/etc/nginx/templates/default.conf.template:ro
-      - ./${SSL_DIR}:/${SSL_DIR}:rw
+      - ../../${SSL_DIR}:/${SSL_DIR}:rw
     restart: always
