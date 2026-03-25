@@ -19,9 +19,7 @@ include .env
 
 COMPOSE_FILE ?= srcs/docker-compose.yaml
 PROJECT_NAME ?= server
-SSL_CERT ?= certificates/selfsigned.crt
-SSL_KEY ?= certificates/selfsigned.key
-SSL_DIR = $(dir $(SSL_CERT))
+SSL_PROVIDED = $(if $(SSL_CERT),ssl,)
 
 ifeq ($(strip $(SERVER)),)
     EXEC = bash -c
