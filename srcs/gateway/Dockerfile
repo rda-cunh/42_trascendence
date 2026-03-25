@@ -12,5 +12,5 @@ ENV SSL_KEY=/${SSL_KEY}
 RUN apk add --no-cache openssl && \
     mkdir -p $(dirname "$SSL_CERT")
 
-COPY ./generate_certs.sh /docker-entrypoint.d/01-generate-certs.sh
-RUN chmod +x /docker-entrypoint.d/01-generate-certs.sh
+COPY ./generate_certs.sh /docker-entrypoint.d/01-generate-certs.envsh
+RUN chmod +x /docker-entrypoint.d/01-generate-certs.envsh
