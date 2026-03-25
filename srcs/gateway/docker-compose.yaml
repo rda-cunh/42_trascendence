@@ -1,11 +1,17 @@
 services:
   gateway:
+    build:
+      context: .
+      args:
+        - SSL_CERT=${SSL_CERT}
+        - SSL_KEY=${SSL_KEY}
     container_name: gateway
-    image: nginx:alpine
+    environment:
+      - NGINX_ENVSUBST_FILTER=SSL_CERT|SSL_KEY
     ports:
       - "80:80"
+      - "443:443"
     volumes:
-      - ./default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./default.conf:/etc/nginx/templates/default.conf.template:ro
+      - ./${SSL_DIR}:/${SSL_DIR}:rw
     restart: always
-#    networks:
-#      - shared-network

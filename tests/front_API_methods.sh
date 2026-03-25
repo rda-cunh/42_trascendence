@@ -4,9 +4,9 @@ set -e
 
 mkdir -p api_tests
 
-CURL="curl -X"
+CURL="curl --insecure -X"
 METHOD=("GET" "DELETE" "POST" "PATCH")
-DOMAIN="http://127.0.0.1/api/"
+DOMAIN="https://127.0.0.1/api/"
 DIR="api_tests/"
 
 run_test(){
