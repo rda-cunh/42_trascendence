@@ -50,7 +50,7 @@ def	list_products(
 		sql += ' AND seller_id = %s'
 		params.append(seller_id)
 
-	sql += ' ORDER BY created_at DESC LIMIT %s OFFSET %s'
+	sql += ' ORDER BY created_at DESC LIMIT %s OFFSET %s'	# Pagination
 	params.extend([limit, skip])
 
 	cursor.execute(sql, params)
@@ -75,7 +75,10 @@ def update_products(product_id: int, product_in: ProductUpdate, db=Depends(get_d
 	cursor.execute('SELECT * FROM products WHERE id = %s', (product_id,))
 	if not cursor.fetchone():
 		raise HTTPException(status_code=404, detail='Product not found')
-	update_data = product_in.model_dump(exclude_unset=True)
+	update_data = {
+		k: v for k, v in product_in.model_dump(exclude_none=True).items()
+    	if v != ""
+		}
 	if not update_data:
 		raise HTTPException(status_code=400, detail='No fields to update')
 	set_clause = ', '.join(f'{k} = %s' for k in update_data.keys())
@@ -136,3 +139,26 @@ def	get_product_image(product_id: int, image_id: int, db=Depends(get_db_dep)):
 	if not image:
 		raise HTTPException(status_code=404, detail='Image not found')
 	return ProductImagesResponse(**image)
+
+
+
+
+
+# POST /product_review
+
+
+
+
+# GET /product_review
+
+
+
+
+# PATCH /product_review
+
+
+
+# DELETE /product_review
+
+
+

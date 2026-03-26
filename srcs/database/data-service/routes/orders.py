@@ -99,7 +99,8 @@ def update_orders(order_id: int, order_in: OrderUpdate, db=Depends(get_db_dep)):
 	cursor.execute('SELECT * FROM orders WHERE id = %s', (order_id,))
 	if not cursor.fetchone():
 		raise HTTPException(status_code=404, detail='Order not found')
-	update_data = order_in.model_dump(exclude_unset=True)
+	update_data = { k: v for k, v in user_in.model_dump(exclude_none=True).items()
+    	if v != ""}
 	if not update_data:
 		raise HTTPException(status_code=400, detail='No fields to update')
 	set_clause = ', '.join(f'{k} = %s' for k in update_data.keys())
@@ -111,4 +112,25 @@ def update_orders(order_id: int, order_in: OrderUpdate, db=Depends(get_db_dep)):
 	)
 	cursor.execute('SELECT * FROM orders WHERE id = %s', (order_id,))
 	return OrderResponse(**cursor.fetchone())
+
+
+
+
+# POST /payment
+
+
+
+
+# GET /payment
+
+
+
+
+# PATCH /payment
+
+
+
+# DELETE /payment
+
+
 
