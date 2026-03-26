@@ -12,15 +12,15 @@ DATA_SERVICE = "http://data-service:9000/api/"
 # Auth API
 
 
-class user_create(APIView):
+class auth_register(APIView):
     def post(self, request):
         # This api should have [user] [email] [passhash]
-        serializer = serializers.userCreate(data=request.data)
+        serializer = serializers.authCreate(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         try:
-            upstream = requests.get(
-                    f"{DATA_SERVICE}/users/{id}/",
+            upstream = requests.post(
+                    f"{DATA_SERVICE}/auth/register/",
                     request.data,
                     timeout=5,
             )
@@ -32,12 +32,12 @@ class user_create(APIView):
 
     def delete(self, request):
         # This api should have JWT_String, passhash, user id
-        serializer = serializers.userDelete(data=request.data)
+        serializer = serializers.authDelete(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         try:
-            upstream = requests.get(
-                    f"{DATA_SERVICE}/users/{id}/",
+            upstream = requests.delete(
+                    f"{DATA_SERVICE}/auth/register/",
                     request.data,
                     timeout=5,
             )
@@ -48,21 +48,43 @@ class user_create(APIView):
                             status=status.HTTP_502_BAD_GATEWAY)
 
 
-class user_session(APIView):
+class auth_login(APIView):
     def post(self, request):
-        # this api should have email and passhash
-        data = {
-            "token": "JWT_STRING", "status": "Login Successful",
-                }
-        return Response(data)
+        # This api should have [user] [email] [passhash]
+        serializer = serializers.authLogin(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            upstream = requests.post(
+                    f"{DATA_SERVICE}/auth/login/",
+                    request.data,
+                    timeout=5,
+            )
+            return Response(upstream.json(), status=upstream.status_code)
+        except requests.RequestException as e:
+            return Response({"error": "Data service unreachable",
+                             "details": str(e)},
+                            status=status.HTTP_502_BAD_GATEWAY)
 
     def delete(self, request):
-        # this api should have JWT_STRING
-        return Response({"Message": "Logged out"})
+        # This api should have JWT_String, passhash, user id
+        serializer = serializers.authLogout(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            upstream = requests.delete(
+                    f"{DATA_SERVICE}/auth/login/",
+                    request.data,
+                    timeout=5,
+            )
+            return Response(upstream.json(), status=upstream.status_code)
+        except requests.RequestException as e:
+            return Response({"error": "Data service unreachable",
+                             "details": str(e)},
+                            status=status.HTTP_502_BAD_GATEWAY)
 
 
-
-class user_profile(APIView):
+class auth_profile(APIView):
     def get(self, request):
         # api should have JWT_STRING if does not match, different information is provided
         data = {
@@ -81,15 +103,57 @@ class user_profile(APIView):
 
     def patch(self, request):
         # api should probably receive all user info that needs to be edited
-        return Response({"Status": "User profile has been updated successfully"})
+        serializer = serializers.authPatch(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            upstream = requests.patch(
+                    f"{DATA_SERVICE}/auth/profile/",
+                    request.data,
+                    timeout=5,
+            )
+            return Response(upstream.json(), status=upstream.status_code)
+        except requests.RequestException as e:
+            return Response({"error": "Data service unreachable",
+                             "details": str(e)},
+                            status=status.HTTP_502_BAD_GATEWAY)
 
     def delete(self, request):
         # api should probably receive all user info that needs to be deleted
-        return Response({"Status": "User profile has been updated successfully"})
+        serializer = serializers.authDelete(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            upstream = requests.delete(
+                    f"{DATA_SERVICE}/auth/profile/",
+                    request.data,
+                    timeout=5,
+            )
+            return Response(upstream.json(), status=upstream.status_code)
+        except requests.RequestException as e:
+            return Response({"error": "Data service unreachable",
+                             "details": str(e)},
+                            status=status.HTTP_502_BAD_GATEWAY)
+
+
+class auth_password(APIView):
+    def patch(self, request):
+        serializer = serializers.authPassPatch(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            upstream = requests.patch(
+                    f"{DATA_SERVICE}/auth/profile/password/",
+                    request.data,
+                    timeout=5,
+            )
+            return Response(upstream.json(), status=upstream.status_code)
+        except requests.RequestException as e:
+            return Response({"error": "Data service unreachable",
+                             "details": str(e)},
+                            status=status.HTTP_502_BAD_GATEWAY)
 
 # Product listings API
-
-
 
 
 class listing_id(APIView):
@@ -102,7 +166,6 @@ class listing_id(APIView):
                     request.data,
                     timeout=5,
             )
-            upstream.raise_for_status()
             return Response(upstream.json(), status=upstream.status_code)
         except requests.RequestException as e:
             return Response({"error": "Data service unreachable",
@@ -118,7 +181,19 @@ class listing_id(APIView):
 
 class listing_full(APIView):
     def post(self, request):
-        return Response({"product_id": 1})
+        # serializer = listingsPost(data=request.data, partial=true)
+        # serializer.is_valid(raise_exception=true)
+        try:
+            upstream = requests.post(
+                    f"{DATA_SERVICE}/listings/",
+                    request.data,
+                    timeout=5,
+            )
+            return Response(upstream.json(), status=upstream.status_code)
+        except requests.RequestException as e:
+            return Response({"error": "Data service unreachable",
+                             "details": str(e)},
+                            status=status.HTTP_502_BAD_GATEWAY)
 
     def get(self, request):
 
@@ -185,7 +260,8 @@ def listing_full(request):
     return Responde({"count": len(data), "results": data})
 '''
 
-uuid4 from fastAPI
+# uuid4 from fastAPI
+
 
 class order_create(APIView):
 
