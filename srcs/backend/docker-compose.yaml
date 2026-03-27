@@ -3,7 +3,10 @@ services:
     container_name: backend
     build: ./app
     env_file:
-      - .env
+      - ../../.env
+    environment:
+      DATA_SERVICE: ${DATA_SERVICE}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
     depends_on:
       - data-service
     restart: always

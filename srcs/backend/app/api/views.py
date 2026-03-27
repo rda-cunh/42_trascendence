@@ -353,12 +353,9 @@ class order_id(APIView):
 
 class user_id(APIView):
     def get(self, request, id):
-        serializer = serializers.userId_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
         try:
             upstream = requests.get(
-                    f"{DATA_SERVICE}/user/{id}/",
+                    f"{DATA_SERVICE}/users/{id}/",
                     request.data,
                     timeout=5,
             ) # this works as intended and I can perfectly communicate with data-service

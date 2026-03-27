@@ -22,7 +22,7 @@ from .views import order_create, order_id
 urlpatterns = [
         path("listings/<int:id>/", listing_id.as_view()),
         path("listings/", listing_full.as_view()),
-        path("user/<int:id>/", user_id.as_view()),
+        path("users/<int:id>/", user_id.as_view()),
         path("auth/register/", auth_register.as_view()),
         path("auth/login/", auth_login.as_view()),
         path("auth/profile/", auth_profile.as_view()),

@@ -2,19 +2,19 @@
 
 set -e 
 
-mkdir -p api_tests
+mkdir -p ping_tests 
 
 CURL="curl -X"
 METHOD=("GET" "DELETE" "POST" "PATCH")
 DOMAIN="http://127.0.0.1/api/"
-DIR="api_tests/"
+DIR="ping_tests/"
 
 run_test(){
 	local endpoint=$2
 	local output_file=$3
 	local method=${METHOD[$1]}
 	echo -e "\e[1;31m/api/${endpoint} - ${method}\e[0m"
-	${CURL} ${method} ${DOMAIN}${endpoint} > ${DIR}${output_file}.html
+	${CURL} ${method} ${DOMAIN}${endpoint} > ${DIR}${output_file}.json
 }
 
 # listings
