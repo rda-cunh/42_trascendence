@@ -164,6 +164,9 @@ database-restore:
 #network-create:
 #	@docker network inspect shared-network >/dev/null 2>&1 || docker network create shared-network
 
+backend:
+	docker compose --env-file .env -f $(COMPOSE_FILE) up --build backend
+
 clean: stop
 	@$(EXEC) "$(PRE_CMD) docker compose --env-file .env -f $(COMPOSE_FILE) down -v"
 
