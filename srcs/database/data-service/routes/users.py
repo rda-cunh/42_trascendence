@@ -20,6 +20,36 @@ def	list_users(skip: int = 0, limit: int = 20, db=Depends(get_db_dep)):
 	return [UserResponse(**row) for row in rows]
 
 
+# Create new user
+@router.post('/', response_model=UserResponse, status_code=201)
+def create_user(user_in: UserCreate, db=Depends(get_db_dep)):
+	conn, cursor = db
+	cursor.execute(
+		'SELECT id FROM users WHERE email = %s',
+		(user_in.email,)
+	)
+	if cursor.fetchone():
+		raise HTTPException(status_code=409, detail='Email already registered')
+	
+	cursor.execute(
+		'''
+		INSERT INTO users (name, email, password_hash, phone, avatar_url)
+		VALUES (%s, %s, %s, %s, %s)
+		''',
+		(
+			user_in.name,
+			user_in.email,
+			hash_pw(user_in.password),
+			user_in.phone,
+			user_in.avatar_url
+		)
+	)
+	new_id = conn.insert_id()
+	
+	cursor.execute('SELECT * FROM users WHERE id = %s', (new_id))
+	new_user = cursor.fetchone()
+
+	return UserResponse(**new_user)
 
 
 

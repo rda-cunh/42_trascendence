@@ -68,6 +68,18 @@ def get_seller_products(seller_id: int, db=Depends(get_db_dep)):
 	rows = cursor.fetchall()
 	return [ProductResponse(**row) for row in rows]
 
+# GET /listings/seller/{product_id}
+@router.get('/seller/{product_id}', response_model=list[ProductResponse])
+def get_id_products(product_id: int, db=Depends(get_db_dep)):
+	print("Test")
+	conn, cursor = db
+	cursor.execute(
+		'SELECT * FROM products WHERE id = %s',
+		(product_id,)
+	)
+	rows = cursor.fetchall()
+	return [ProductResponse(**row) for row in rows]
+
 # PATCH /listings/{id}
 @router.patch('/{product_id}', response_model=ProductResponse)
 def update_products(product_id: int, product_in: ProductUpdate, db=Depends(get_db_dep)):
