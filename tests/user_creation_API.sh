@@ -4,10 +4,10 @@ set -e
 
 mkdir -p user_tests
 
-CURL="curl -X"
+CURL="curl --insecure -X"
 METHOD=("GET" "DELETE" "POST" "PATCH")
 HEADER="Content-Type: application/json"
-DOMAIN="http://127.0.0.1/api/"
+DOMAIN="https://127.0.0.1/api/"
 DIR="user_tests/"
 
 run_test(){
@@ -17,25 +17,16 @@ run_test(){
 	local body=$4
 	echo -e "\e[1;31m/api/${endpoint} - ${method}\e[0m"
 	${CURL} ${method} ${DOMAIN}${endpoint} -H "${HEADER}" -d "${body}" > ${DIR}${output_file}.json
-}
-
-user_test(){
-	local endpoint="users/$2"
-	local output_file=$3
-	local method=${METHOD[$1]}
-	echo -e "\e[1;31m/api/${endpoint} - ${method}\e[0m"
-	${CURL} ${method} ${DOMAIN}${endpoint} -H "${HEADER}" > ${DIR}${output_file}.json
+	sleep .5
 }
 
 USER1='{"name": "Rda-cunh", "email": "rda@email.com", "password": "securepass1", "phone": "+351123456789"}'
 USER2='{"name": "Rapcampo", "email": "rcv@email.com", "password": "securepass2", "phone": "223456789"}'
 
 run_test 2 "auth/register/" "auth_register_1" "${USER1}"
-sleep 1
 run_test 2 "auth/register/" "auth_register_2" "${USER2}"
-sleep 1
-user_test 0 "1/" "user_id1"
-user_test 0 "2/" "user_id2"
+run_test 0 "users/1/" "user_id1"
+run_test 0 "users/2/" "user_id2"
 #run_test 2 "auth/login/" "auth_login_post"
 #sleep(1)
 #run_test 1 "auth/register/" "auth_register_delete"
