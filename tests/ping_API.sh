@@ -4,9 +4,9 @@ set -e
 
 mkdir -p ping_tests 
 
-CURL="curl -X"
+CURL="curl --insecure -X"
 METHOD=("GET" "DELETE" "POST" "PATCH")
-DOMAIN="http://127.0.0.1/api/"
+DOMAIN="https://127.0.0.1/api/"
 DIR="ping_tests/"
 
 run_test(){
@@ -15,7 +15,9 @@ run_test(){
 	local method=${METHOD[$1]}
 	echo -e "\e[1;31m/api/${endpoint} - ${method}\e[0m"
 	${CURL} ${method} ${DOMAIN}${endpoint} > ${DIR}${output_file}.json
+	sleep .5
 }
+# .5 sleep added for rate limiting
 
 # listings
 # listings/id/
@@ -40,6 +42,6 @@ run_test 2 "auth/login/" "auth_login_post"
 run_test 1 "auth/login/" "auth_login_delete"
 run_test 2 "auth/register/" "auth_register_post"
 run_test 1 "auth/register/" "auth_register_delete"
-run_test 0 "user/1/" "user_id"
+run_test 0 "users/1/" "user_id"
 
 echo "done!"
