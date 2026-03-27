@@ -17,8 +17,9 @@ run_test(){
 	local body=$4
 	echo -e "\e[1;31m/api/${endpoint} - ${method}\e[0m"
 	${CURL} ${method} ${DOMAIN}${endpoint} -H "${HEADER}" -d "${body}" > ${DIR}${output_file}.json
-	sleep .5
+	sleep .8
 }
+# OBS.: sleep may need to be increased due to rate limit
 
 USER1='{"name": "Rda-cunh", "email": "rda@email.com", "password": "securepass1", "phone": "+351123456789"}'
 USER2='{"name": "Rapcampo", "email": "rcv@email.com", "password": "securepass2", "phone": "223456789"}'
