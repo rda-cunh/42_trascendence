@@ -5,9 +5,15 @@ from rest_framework import status
 from rest_framework.exceptions import APIException
 from . import serializers
 import requests
-# from .serializers import ProductSerializer
 
 DATA_SERVICE = "http://data-service:9000/api/"
+
+# TODO AUTH PROFILE GET
+# TODO LISTING ID PATCH
+# TODO LISTING ID DELETE
+# TODO LISTING GET
+# TODO ORDER GET, POST
+# TODO ORDER ID GET, PATCH
 
 # Auth API
 
@@ -15,6 +21,7 @@ DATA_SERVICE = "http://data-service:9000/api/"
 class auth_register(APIView):
     def post(self, request):
         # This api should have [user] [email] [passhash]
+        # this with JWT will work as request, raise_for_status, create JWT with upstream data send both JWT tokens
         serializer = serializers.authCreate(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -87,23 +94,23 @@ class auth_login(APIView):
 class auth_profile(APIView):
     def get(self, request):
         # api should have JWT_STRING if does not match, different information is provided
-        data = {
-                "user_info": {
-                    "username": "Rapcampo",
-                    "email": "example@42.com",
-                    "billing address": "Avenida dos aliados, 42, 4000-000",
-                    "avatar": "url",
-                    "user_id": 1,
-                    "Products_owned": [1, 2, 5, 6],
-                    "Current_order": 1,  # unique order ids may be interesting here
-                    "Order_history": [2, 4, 5],
-                    },
-                }
-        return Response(data)
+        # serializer = serializers.authGet(data=request.data, partial=True)
+        # serializer.is_valid(raise_exception=True)
+        try:
+            upstream = requests.get(
+                    f"{DATA_SERVICE}/auth/profile/",
+                    request.data,
+                    timeout=5,
+            )
+            return Response(upstream.json(), status=upstream.status_code)
+        except requests.RequestException as e:
+            return Response({"error": "Data service unreachable",
+                             "details": str(e)},
+                            status=status.HTTP_502_BAD_GATEWAY)
 
     def patch(self, request):
         # api should probably receive all user info that needs to be edited
-        serializer = serializers.authPatch(data=request.data)
+        serializer = serializers.authPatch(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
         try:
@@ -173,10 +180,37 @@ class listing_id(APIView):
                             status=status.HTTP_502_BAD_GATEWAY)
 
     def patch(self, request, id):
-        return Response({"status": f"Product {id} updated sucessfully"})
+        serializer = serializers.listingIdPatch(data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            upstream = requests.patch(
+                    f"{DATA_SERVICE}/listings/{id}",
+                    request.data,
+                    timeout=5,
+            )
+            return Response(upstream.json(), status=upstream.status_code)
+        except requests.RequestException as e:
+            return Response({"error": "Data service unreachable",
+                             "details": str(e)},
+                            status=status.HTTP_502_BAD_GATEWAY)
 
     def delete(self, request, id):
-        return Response({"status": f"Product {id} deleted sucessfully"})
+        # TODO add authentication verification and provide id to data-service
+        # serializer = serializers.listingIdPatch(data=request.data, partial=True)
+        # serializer.is_valid(raise_exception=True)
+
+        try:
+            upstream = requests.patch(
+                    f"{DATA_SERVICE}/listings/{id}",
+                    request.data,
+                    timeout=5,
+            )
+            return Response(upstream.json(), status=upstream.status_code)
+        except requests.RequestException as e:
+            return Response({"error": "Data service unreachable",
+                             "details": str(e)},
+                            status=status.HTTP_502_BAD_GATEWAY)
 
 
 class listing_full(APIView):
@@ -234,42 +268,16 @@ class listing_full(APIView):
         return Response({"items": len(data), "results": data})
 
 
-# this is a proper product class implementation using models and serializers
-# may need to interact better with data service API.
-
-
-'''
-@api_view(["GET"])
-def listing_detail(request, id):
-
-    try:
-        product = Product.objects.get(pk=id)
-    except product.DoesNotExist:
-        return Response({"error": "Not Found."}, status=status.HTTP_404_NOT_FOUND)
-
-    data = ProductSerializer(product).data
-    return Response(data)
-'''
-
-'''
-@api_view(["GET"])
-def listing_full(request):
-
-    query = Product.objects.all().order_by("id")
-    data = ProductSerializer(query, many=true).data
-    return Responde({"count": len(data), "results": data})
-'''
-
 # uuid4 from fastAPI
 
+# def get_permission(self):
+#     if self.request.method in ["POST"]:
+#         return [IsAuthenticated()]
+#     return [AllowAny()]
 
 class order_create(APIView):
 
     # this get_permission is how i can set auth requirement for different methods.
-    def get_permission(self):
-        if self.request.method in ["POST"]:
-            return [IsAuthenticated()]
-        return [AllowAny()]
 
     def get(self, request):
         # This API should have JWT_STRING, ?page=num&status=created
@@ -289,13 +297,20 @@ class order_create(APIView):
     def post(self, request):
         # this API should have JWT_STRING and list of items [id] and quantatity
         # should also have billing address and name
-        data = {
-                "status": "created",
-                "order_id": 5501,
-                "total": 62.5,
-                "currency": "EUR",
-                }
-        return Response(data)
+        # serializer = serializers.orderIdPatch(data=request.data, partial=True)
+        # serializer.is_valid(raise_exception=True)
+
+        try:
+            upstream = requests.post(
+                    f"{DATA_SERVICE}/orders/",
+                    request.data,
+                    timeout=5,
+            )
+            return Response(upstream.json(), status=upstream.status_code)
+        except requests.RequestException as e:
+            return Response({"error": "Data service unreachable",
+                             "details": str(e)},
+                            status=status.HTTP_502_BAD_GATEWAY)
 
 
 class order_id(APIView):
@@ -314,8 +329,22 @@ class order_id(APIView):
         return Response(data)
 
     def patch(self, request, id):
-        # this API needs JWT_STRING, order id and a status change, cancelled, delayed,etc
-        return Response({"message": "Updated", "order_id": id, "new_status": "cancelled"})
+        # serializer = serializers.orderIdPatch(data=request.data, partial=True)
+        # serializer.is_valid(raise_exception=True)
+        # payload = dict(serializer.validated_data)
+        # payload["updated_by"] = request.user.id
+
+        try:
+            upstream = requests.patch(
+                    f"{DATA_SERVICE}/orders/{id}",
+                    request.data,
+                    timeout=5,
+            )
+            return Response(upstream.json(), status=upstream.status_code)
+        except requests.RequestException as e:
+            return Response({"error": "Data service unreachable",
+                             "details": str(e)},
+                            status=status.HTTP_502_BAD_GATEWAY)
 
 
 # USER API interfaces
