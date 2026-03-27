@@ -19,14 +19,7 @@ run_test(){
 	${CURL} ${method} ${DOMAIN}${endpoint} ${HEADER} > ${DIR}${output_file}.html
 }
 
-REGISTERPOST="-d \
-'{ \
-"name" : "Person Name",
-"email" : "example@email.com",
-"password" : "examplepassword",
-"phone" : "123456789",
-}'
-"
+REGISTERPOST="-d '{"name": "Person Name", "email": "example@email.com", "password": "examplepassword", "phone": "123456789"}'"
 
 run_test 2 "auth/register/" "auth_register_post" ${REGISTERPOST}
 sleep(1)

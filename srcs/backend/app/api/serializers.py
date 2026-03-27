@@ -3,16 +3,16 @@ from rest_framework import serializers
 
 # /api/auth/register
 
-class authCreate(serializers.serializer):
+class authCreate(serializers.Serializer):
     username = serializers.CharField(min_length=3, max_length=255, trim_whitespace=True)
     email = serializers.EmailField()
     password = serializers.CharField(min_length=8, max_length=64, trim_whitespace=True)
     phone = serializers.CharField(required=False,min_length=9, max_length=13)
-    status = serializers.Charfield(required=False)
+    status = serializers.CharField(required=False)
     avatar_url = serializers.URLField(required=False)
 
 
-class authDelete(serializers.serializer):
+class authDelete(serializers.Serializer):
     user_id = serializers.IntegerField()
     email = serializers.EmailField()
     password = serializers.CharField(min_length=8, max_length=64, trim_whitespace=True)
@@ -20,18 +20,18 @@ class authDelete(serializers.serializer):
 # /api/auth/login
 
 
-class authLogin(serializers.serializer):
+class authLogin(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(min_length=8, max_length=64, trim_whitespace=True)
 
 
-class authLogout(serializers.serializer):
+class authLogout(serializers.Serializer):
     user_id = serializers.IntegerField(required=True)
 
 # /api/auth/profile
 
 
-class authPatch(serializers.serializer):
+class authPatch(serializers.Serializer):
     username = serializers.CharField(allow_null=True, min_length=3, max_length=255, trim_whitespace=True)
     email = serializers.EmailField(allow_null=True)
     phone = serializers.CharField(allow_null=True, min_length=9, max_length=13)
@@ -40,7 +40,7 @@ class authPatch(serializers.serializer):
 # /api/auth/profile/password
 
 
-class authPassPatch(serializers.serializer):
+class authPassPatch(serializers.Serializer):
     user_id = serializers.IntegerField(required=True)
     password = serializers.CharField(min_length=8, max_length=64, trim_whitespace=True)
     new_password = serializers.CharField(min_length=8, max_length=64, trim_whitespace=True)
@@ -49,10 +49,10 @@ class authPassPatch(serializers.serializer):
 # /api/listings/{id}
 
 
-class listinsIdPatch(serializers.serializer):
+class listinsIdPatch(serializers.Serializer):
     product_name = serializers.CharField(allow_null=True, min_length=3, max_length=255, trim_whitespace=True)
     slug = serializers.SlugField(allow_null=True)
-    description = serializers.Charfield(allow_null=True, min_length=3, required=False)
+    description = serializers.CharField(allow_null=True, min_length=3, required=False)
 
 
 # /api/listings
@@ -61,6 +61,6 @@ class listinsIdPatch(serializers.serializer):
 # /api/users/{id}
 
 
-class userId(serializers.serializer):
+class userId(serializers.Serializer):
     user_id = serializers.IntegerField(required=True)
 

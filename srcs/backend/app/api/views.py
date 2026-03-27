@@ -6,7 +6,7 @@ from rest_framework.exceptions import APIException
 from . import serializers
 import requests
 
-DATA_SERVICE = "http://data-service:9000/api/"
+DATA_SERVICE = "http://data-service:9000/api"
 
 # TODO AUTH PROFILE GET
 # TODO LISTING ID PATCH
@@ -27,8 +27,9 @@ class auth_register(APIView):
 
         try:
             upstream = requests.post(
-                    f"{DATA_SERVICE}/auth/register/",
-                    request.data,
+                    f"{DATA_SERVICE}/users/",
+                    # f"{DATA_SERVICE}/auth/register/",
+                    json=serializer.validated_data,
                     timeout=5,
             )
             return Response(upstream.json(), status=upstream.status_code)
@@ -45,7 +46,7 @@ class auth_register(APIView):
         try:
             upstream = requests.delete(
                     f"{DATA_SERVICE}/auth/register/",
-                    request.data,
+                    json=serializer.validated_data,
                     timeout=5,
             )
             return Response(upstream.json(), status=upstream.status_code)
@@ -64,7 +65,7 @@ class auth_login(APIView):
         try:
             upstream = requests.post(
                     f"{DATA_SERVICE}/auth/login/",
-                    request.data,
+                    json=serializer.validated_data,
                     timeout=5,
             )
             return Response(upstream.json(), status=upstream.status_code)
@@ -81,7 +82,7 @@ class auth_login(APIView):
         try:
             upstream = requests.delete(
                     f"{DATA_SERVICE}/auth/login/",
-                    request.data,
+                    json=serializer.validated_data,
                     timeout=5,
             )
             return Response(upstream.json(), status=upstream.status_code)
@@ -116,7 +117,7 @@ class auth_profile(APIView):
         try:
             upstream = requests.patch(
                     f"{DATA_SERVICE}/auth/profile/",
-                    request.data,
+                    json=serializer.validated_data,
                     timeout=5,
             )
             return Response(upstream.json(), status=upstream.status_code)
@@ -133,7 +134,7 @@ class auth_profile(APIView):
         try:
             upstream = requests.delete(
                     f"{DATA_SERVICE}/auth/profile/",
-                    request.data,
+                    json=serializer.validated_data,
                     timeout=5,
             )
             return Response(upstream.json(), status=upstream.status_code)
@@ -151,7 +152,7 @@ class auth_password(APIView):
         try:
             upstream = requests.patch(
                     f"{DATA_SERVICE}/auth/profile/password/",
-                    request.data,
+                    json=serializer.validated_data,
                     timeout=5,
             )
             return Response(upstream.json(), status=upstream.status_code)
@@ -186,7 +187,7 @@ class listing_id(APIView):
         try:
             upstream = requests.patch(
                     f"{DATA_SERVICE}/listings/{id}",
-                    request.data,
+                    json=serializer.validated_data,
                     timeout=5,
             )
             return Response(upstream.json(), status=upstream.status_code)
