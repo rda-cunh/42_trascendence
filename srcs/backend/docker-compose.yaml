@@ -10,5 +10,3 @@ services:
     depends_on:
       - data-service
     restart: always
-    networks:
-      - shared-network

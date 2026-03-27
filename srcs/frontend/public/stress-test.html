@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nginx Rate Limit Stress Tester</title>
+    <style>
+        body { font-family: system-ui, sans-serif; padding: 20px; max-width: 800px; margin: auto; background: #181a1b; color: #e8e6e3; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; background: #9333ea; color: white; border: none; border-radius: 6px; font-weight: bold; }
+        button:hover { background: #7e22ce; }
+        .log-container { margin-top: 20px; padding: 15px; background: #030712; border-radius: 8px; height: 400px; overflow-y: auto; font-family: monospace; font-size: 14px;}
+        .status-success { color: #4ade80; } /* 2xx codes */
+        .status-429 { color: #f87171; font-weight: bold; } /* Rate limited */
+        .status-other { color: #fbbf24; } /* 404s, 500s, etc. */
+    </style>
+</head>
+<body>
+    <h2>Rate Limit Test Dashboard</h2>
+    <p>Click to fire concurrent requests and exhaust the Nginx burst queues. The numbers are calibrated to exceed your specific bucket sizes.</p>
+
+    <div>
+        <button onclick="fireRequests('/', 60)">Spam Global (60 reqs)</button>
+
+        <button onclick="fireRequests('/api/listings/', 15)">Spam API (15 reqs)</button>
+
+        <button onclick="fireRequests('/api/orders/', 6)">Spam Heavy (6 reqs)</button>
+
+        <button onclick="fireRequests('/api/auth/login/', 8)">Spam Login (8 reqs)</button>
+
+        <button onclick="document.getElementById('log').innerHTML=''" style="background: #4b5563;">Clear Logs</button>
+    </div>
+
+    <div class="log-container" id="log"></div>
+
+    <script>
+        // Using relative paths assumes this is hosted on the same origin (127.0.0.1)
+        async function fireRequests(endpoint, count) {
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += `<div style="color: #9333ea; margin-top: 10px;"><strong>--- Firing ${count} requests to ${endpoint} ---</strong></div>`;
+
+            const requests = [];
+            for (let i = 0; i < count; i++) {
+                // Cache-buster prevents the browser from optimizing away duplicate requests
+                const url = `${endpoint}?t=${Date.now()}_${i}`;
+
+                requests.push(
+                    fetch(url, { method: 'GET' })
+                        .then(res => logResult(endpoint, res.status))
+                        .catch(err => logResult(endpoint, 'Fetch Error (CORS or Down)'))
+                );
+            }
+
+            // Fire them all concurrently
+            await Promise.all(requests);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function logResult(endpoint, status) {
+            const logDiv = document.getElementById('log');
+            let cssClass = 'status-other';
+
+            if (status >= 200 && status < 300) cssClass = 'status-success';
+            if (status === 429) cssClass = 'status-429';
+
+            const time = new Date().toISOString().split('T')[1].replace('Z', '');
+            logDiv.innerHTML += `<div class="${cssClass}">[${time}] ${endpoint} - HTTP ${status}</div>`;
+        }
+    </script>
+</body>
+</html>

@@ -8,4 +8,13 @@ services:
       - "443:443"
     volumes:
       - ./default.conf:/etc/nginx/conf.d/default.conf:ro
+    secrets:
+      - ssl_cert
+      - ssl_key
     restart: always
+
+secrets:
+  ssl_cert:
+    file: ../../${SSL_CERT}
+  ssl_key:
+    file: ../../${SSL_KEY}

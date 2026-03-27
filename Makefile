@@ -1,6 +1,6 @@
-# ======================================================================================
+# =====================================================================================================
 # TRANSCENDENCE DEPLOYMENT TOOL
-# ======================================================================================
+# =====================================================================================================
 # USAGE:
 #   make              - Full deployment (Setup deps -> Sync files -> Run)
 #   make dev          - Full deployment and immediately attach to logs
@@ -11,11 +11,15 @@
 #   make setup-docker - Install Docker on the target machine (Requires root)
 #   make ssh-setup    - Setup SSH keys for remote server access using ssh-copy-id
 #                         (Requires root password and 'PermitRootLogin yes' on target)
-#   make ssh-wipe     - Dangerous: Wipes all SSH keys from target's root account
-#   make purge        - Dangerous: Nukes Docker, files, and SSH keys on target
-# ======================================================================================
+#   make ssh-wipe     - Dangerous: Wipes all SSH keys from target's root account (Remote only)
+#   make purge        - Dangerous: Removes Docker, files, and SSH keys on target
+# =====================================================================================================
 
 include .env
+
+COMPOSE_FILE ?= srcs/docker-compose.yaml
+PROJECT_NAME ?= server
+SSL_PROVIDED = $(if $(SSL_CERT),ssl,)
 
 ifeq ($(strip $(SERVER)),)
     EXEC = bash -c
@@ -28,22 +32,20 @@ else
     PRE_CMD = cd /tmp/$(PROJECT_NAME) &&
 endif
 
+
 all: run
 
 dev: all logs
 
-re: fclean all
+re: clean all
 
-# CANNOT FORCE ROOT ON 42 MACHINES
+fre: fclean all
+
 check-root:
 	@if [ "$$(id -u)" -ne 0 ]; then \
 		echo "Error: You must run this command as root or with 'sudo'."; \
 		exit 1; \
 	fi
-
-check-env:
-	@if [ -z "$(PROJECT_NAME)" ]; then echo "Error: PROJECT_NAME not set"; exit 1; fi
-	@if [ -z "$(COMPOSE_FILE)" ]; then echo "Error: COMPOSE_FILE not set"; exit 1; fi
 
 ssh-check:
 	@if [ "$(SERVER)" != "local" ]; then \
@@ -78,7 +80,7 @@ check-docker:
 
 setup-docker: check-root
 	@$(EXEC) "if ! command -v docker >/dev/null 2>&1; then \
-		apt-get update && \
+		apt-get update -o Dir::Etc::sourcelist=\"sources.list\" -o Dir::Etc::sourceparts=\"-\" && \
 		apt-get install -y ca-certificates curl && \
 		install -m 0755 -d /etc/apt/keyrings && \
 		curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc && \
@@ -99,7 +101,7 @@ remove-files:
   		$(EXEC) "rm -rf /tmp/$(PROJECT_NAME)"; \
 	fi
 
-run: check-docker check-env ssh-check sync-files network-create
+run: check-docker ssh-check sync-files
 	@$(EXEC) "$(PRE_CMD) docker compose --env-file .env -f $(COMPOSE_FILE) up -d"
 
 logs: check-docker
@@ -159,12 +161,15 @@ database-restore:
 	mysql -u root $(DB_NAME) \
 	< $$fullpath
 
-network-create:
-	@docker network inspect shared-network >/dev/null 2>&1 || docker network create shared-network
+#network-create:
+#	@docker network inspect shared-network >/dev/null 2>&1 || docker network create shared-network
+
+clean: stop
+	@$(EXEC) "$(PRE_CMD) docker compose --env-file .env -f $(COMPOSE_FILE) down -v"
 
 fclean: stop
 	@$(EXEC) "$(PRE_CMD) docker compose --env-file .env -f $(COMPOSE_FILE) down -v --rmi all --remove-orphans"
 
 purge: fclean uninstall-docker remove-files ssh-wipe
 
-.PHONY: all re check-root check-docker check-env ssh-check ssh-setup setup-docker sync-files remove-files run logs status stop uninstall-docker ssh-wipe database-backup database-restore network-create fclean purge
+.PHONY: all re fre check-root check-docker ssh-check ssh-setup setup-docker sync-files remove-files run logs status stop uninstall-docker ssh-wipe database-backup database-restore fclean purge
