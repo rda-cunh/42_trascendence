@@ -2,8 +2,11 @@ services:
   backend:
     container_name: backend
     build: ./app
+    env_file:
+      - ../../.env
     environment:
-      DATA_SERVICE_URL: "http://data-service:5000/data"
+      DATA_SERVICE: ${DATA_SERVICE}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
     depends_on:
       - data-service
     restart: always
