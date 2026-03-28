@@ -1,1 +1,7 @@
 .env
+__pycache__
+*.pass
+tests/*.html
+tests/*.json
+docs/notes*.md
+docs/notas*.md

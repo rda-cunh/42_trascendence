@@ -16,16 +16,16 @@ Including another URLconf
 """
 from django.urls import path
 from .views import listing_id, listing_full
-from .views import user_id, user_create, user_session, user_profile
+from .views import user_id, auth_register, auth_login, auth_profile
 from .views import order_create, order_id
 
 urlpatterns = [
         path("listings/<int:id>/", listing_id.as_view()),
         path("listings/", listing_full.as_view()),
-        path("user/<int:id>/", user_id.as_view()),
-        path("auth/register/", user_create.as_view()),
-        path("auth/login/", user_session.as_view()),
-        path("auth/profile/", user_profile.as_view()),
+        path("users/<int:id>/", user_id.as_view()),
+        path("auth/register/", auth_register.as_view()),
+        path("auth/login/", auth_login.as_view()),
+        path("auth/profile/", auth_profile.as_view()),
         path("orders/", order_create.as_view()),
         path("orders/<int:id>/", order_id.as_view()),
 ]

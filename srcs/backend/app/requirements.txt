@@ -1,5 +1,6 @@
 requests
 Django
 djangorestframework
+djangorestframework_simplejwt
 #gunicorn #may be useful
 #psycopg #missing for postgres, or other for database integration
