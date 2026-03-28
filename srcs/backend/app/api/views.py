@@ -15,7 +15,7 @@ DATA_SERVICE = "http://data-service:9000/api/"
 # TODO ORDER GET, POST
 # TODO ORDER ID GET, PATCH
 
-def raiseForUpstream(method, endpoint, payload):
+def raiseForUpstream(method, endpoint, payload=None):
     try:
         upstream = requests.request(
                 method=method,
@@ -33,26 +33,41 @@ def raiseForUpstream(method, endpoint, payload):
                          "details": str(e)},
                         status=status.HTTP_502_BAD_GATEWAY)
 
+def silentUpstream(method, endpoint, payload=None):
+    try:
+        upstream = requests.request(
+                method=method,
+                url=f"{DATA_SERVICE}{endpoint}",
+                json=payload,
+                timeout=5,
+                )
+        return Response(status=upstream.status_code)
+    except requests.RequestException as e:
+        return Response({"error": "Data service unreachable",
+                         "details": str(e)},
+                        status=status.HTTP_502_BAD_GATEWAY)
+
 # Auth API
+
+# This api should have [user] [email] [passhash]
+# this with JWT will work as request, raise_for_status, create JWT with upstream data send both JWT tokens
 
 
 class auth_register(APIView):
     def post(self, request):
-        # This api should have [user] [email] [passhash]
-        # this with JWT will work as request, raise_for_status, create JWT with upstream data send both JWT tokens
         serializer = serializers.authCreate(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        return raiseForUpstream("POST", "users/", serializer.validated_data)
+        return raiseForUpstream("POST", "auth/register/", serializer.validated_data)
 
 
 class auth_delete(APIView):
     def delete(self, request, id):
         # This api should have JWT_String, passhash, user id
-#        serializer = serializers.authDelete(data={"user_id": id, **request.data)
-#        serializer.is_valid(raise_exception=True)
+        # serializer = serializers.authCreate(data=request.data)
+        # serializer.is_valid(raise_exception=True)
 
-        return raiseForUpstream("DELETE", f"users/{id}/")
+        return silentUpstream("DELETE", f"auth/register/{id}/", None)
 
 
 class auth_login(APIView):
@@ -62,34 +77,14 @@ class auth_login(APIView):
         serializer.is_valid(raise_exception=True)
 
         # return raiseForUpstream("POST", f"auth/login/{id}", serializer.validated_data)
-        try:
-            upstream = requests.post(
-                    f"{DATA_SERVICE}/auth/login/",
-                    json=serializer.validated_data,
-                    timeout=5,
-                    )
-            return Response(upstream.json(), status=upstream.status_code)
-        except requests.RequestException as e:
-            return Response({"error": "Data service unreachable",
-                             "details": str(e)},
-                            status=status.HTTP_502_BAD_GATEWAY)
+        return raiseForUpstream("POST", "auth/login/", serializer.validated_data)
 
     def delete(self, request, id):
         # This api should have JWT_String, passhash, user id
         serializer = serializers.authLogout(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        try:
-            upstream = requests.delete(
-                    f"{DATA_SERVICE}/auth/login/{id}",
-                    json=serializer.validated_data,
-                    timeout=5,
-                    )
-            return Response(upstream.json(), status=upstream.status_code)
-        except requests.RequestException as e:
-            return Response({"error": "Data service unreachable",
-                             "details": str(e)},
-                            status=status.HTTP_502_BAD_GATEWAY)
+        return silentUpstream("DELETE", f"auth/login/{id}/", None)
 
 
 class auth_profile(APIView):
@@ -97,17 +92,8 @@ class auth_profile(APIView):
         # api should have JWT_STRING if does not match, different information is provided
         # serializer = serializers.authGet(data=request.data, partial=True)
         # serializer.is_valid(raise_exception=True)
-        try:
-            upstream = requests.get(
-                    f"{DATA_SERVICE}/auth/profile/",
-                    request.data,
-                    timeout=5,
-                    )
-            return Response(upstream.json(), status=upstream.status_code)
-        except requests.RequestException as e:
-            return Response({"error": "Data service unreachable",
-                             "details": str(e)},
-                            status=status.HTTP_502_BAD_GATEWAY)
+
+        return raiseForUpstream("GET", "auth/profile/")
 
     def patch(self, request, id):
         # api should probably receive all user info that needs to be edited
@@ -168,17 +154,7 @@ class listing_id(APIView):
     def get(self, request, id):
         # serializer = listing_id_get(data=request.data, partial=true)
         # serializer.is_valid(raise_exception=true)
-        try:
-            upstream = requests.get(
-                    f"{DATA_SERVICE}/listings/{id}/",
-                    request.data,
-                    timeout=5,
-                    )
-            return Response(upstream.json(), status=upstream.status_code)
-        except requests.RequestException as e:
-            return Response({"error": "Data service unreachable",
-                             "details": str(e)},
-                            status=status.HTTP_502_BAD_GATEWAY)
+        return raiseForUpstream("GET", f"listings/{id}")
 
     def patch(self, request, id):
         serializer = serializers.listingIdPatch(data=request.data, partial=True)
@@ -353,7 +329,6 @@ class order_id(APIView):
 
 class user_id(APIView):
     def get(self, request, id):
-#        serializer = serializers.authDelete(data={"user_id": id, **request.data)
-#        serializer.is_valid(raise_exception=True)
-
-        return raiseForUpstream("GET", f"users/{id}/")
+        # serializer = serializers.authDelete(data={"user_id": id, **request.data)
+        # serializer.is_valid(raise_exception=True)
+        return raiseForUpstream("GET", f"users/{id}/", None)
