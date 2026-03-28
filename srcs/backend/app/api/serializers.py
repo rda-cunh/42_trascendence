@@ -7,6 +7,10 @@ class authentication(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(min_length=8, max_length=64, trim_whitespace=True)
 
+class idVerifier(serializers.Serializer):
+   user_id = serializers.IntegerField(required=True)
+
+
 class authCreate(authentication):
     name = serializers.CharField(min_length=3, max_length=255, trim_whitespace=True)
     phone = serializers.CharField(required=False,min_length=9, max_length=13)
@@ -20,13 +24,12 @@ class authDelete(authentication):
 # /api/auth/login
 
 
-class authLogin(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField(min_length=8, max_length=64, trim_whitespace=True)
+class authLogin(authentication):
+    pass
 
 
-# class authLogout(serializers.Serializer):
-#    user_id = serializers.IntegerField(required=True)
+class authLogout(idVerifier):
+    pass
 
 # /api/auth/profile
 
@@ -48,7 +51,7 @@ class authPassPatch(serializers.Serializer):
 # /api/listings/{id}
 
 
-class listinsIdPatch(serializers.Serializer):
+class listingsIdPatch(idVerifier):
     product_name = serializers.CharField(allow_null=True, min_length=3, max_length=255, trim_whitespace=True)
     slug = serializers.SlugField(allow_null=True)
     description = serializers.CharField(allow_null=True, min_length=3, required=False)
@@ -58,4 +61,5 @@ class listinsIdPatch(serializers.Serializer):
 
 
 # /api/users/{id}
+
 

@@ -4,9 +4,6 @@ services:
     build: ./app
     env_file:
       - ../../.env
-    environment:
-      DATA_SERVICE: ${DATA_SERVICE}
-      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
     depends_on:
       - data-service
     restart: always
