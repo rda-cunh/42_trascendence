@@ -6,6 +6,8 @@ from models.user import UserCreate, UserAddressCreate, UserUpdate, UserPasswordU
 
 router = APIRouter(prefix='/api/users', tags=['Users'])
 
+def hash_pw(pw: str) -> str:
+	return hashlib.sha256(pw.encode()).hexdigest()
 
 # Admin
 # GET /users
@@ -57,7 +59,7 @@ def create_user(user_in: UserCreate, db=Depends(get_db_dep)):
 
 # Visão pública
 # GET /users/{id}
-@router.get('/{user_id}', response_model=UserResponse)
+@router.get('/{user_id}/', response_model=UserResponse)
 def	get_user(user_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
 	cursor.execute('SELECT * FROM users WHERE id = %s', (user_id))

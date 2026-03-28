@@ -14,7 +14,7 @@ def hash_pw(pw: str) -> str:
 
 
 # Create new user
-@router.post('/register', response_model=UserResponse, status_code=201)
+@router.post('/register/', response_model=UserResponse, status_code=201)
 def create_user(user_in: UserCreate, db=Depends(get_db_dep)):
 	conn, cursor = db
 	cursor.execute(
@@ -45,7 +45,7 @@ def create_user(user_in: UserCreate, db=Depends(get_db_dep)):
 	return UserResponse(**new_user)
 
 # delete user from table
-@router.delete('register/{user_id}', status_code=204)
+@router.delete('/register/{user_id}/', status_code=204)
 def delete_user(user_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
 	cursor.execute('DELETE FROM users WHERE id = %s', (user_id,))
@@ -68,7 +68,7 @@ def delete_user(user_id: int, db=Depends(get_db_dep)):
 
 # TO DO
 # Check token to see self profile
-@router.get('/profile/{user_id}', response_model=UserResponse)
+@router.get('/profile/{user_id}/', response_model=UserResponse)
 def	get_user(user_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
 	cursor.execute('SELECT * FROM users WHERE id = %s', (user_id))
@@ -78,7 +78,7 @@ def	get_user(user_id: int, db=Depends(get_db_dep)):
 	return UserResponse(**user)
 
 # Update user infos
-@router.patch('/profile/{user_id}', response_model=UserResponse, status_code=200)
+@router.patch('/profile/{user_id}/', response_model=UserResponse, status_code=200)
 def update_user(user_id: int, user_in: UserUpdate, db=Depends(get_db_dep)):
 	conn, cursor = db
 	cursor.execute('SELECT * FROM users WHERE id = %s', (user_id, ))
@@ -99,7 +99,7 @@ def update_user(user_id: int, user_in: UserUpdate, db=Depends(get_db_dep)):
 	return UserResponse(**cursor.fetchone())
 
 # Update password
-@router.patch('/profile/password/{user_id}', response_model=UserResponse, status_code=200)
+@router.patch('/profile/password/{user_id}/', response_model=UserResponse, status_code=200)
 def update_user_password(user_id: int, user_in: UserPasswordUpdate, db=Depends(get_db_dep)):
 	conn, cursor = db
 	cursor.execute('SELECT password_hash FROM users WHERE id = %s', (user_id, ))
@@ -115,12 +115,12 @@ def update_user_password(user_id: int, user_in: UserPasswordUpdate, db=Depends(g
 
 
 # Set user as deactivated
-@router.delete('/profile/{user_id}', status_code=204)
+@router.delete('/profile/{user_id}/', status_code=204)
 def deactivate_user(user_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
-	cursor.execute('SELECT * FROM users_address WHERE users_id = %s', (user_id, ))
+	cursor.execute('SELECT * FROM users WHERE users_id = %s', (user_id, ))
 	if not cursor.fetchone():
-		raise HTTPException(status_code=404, detail='Address not found')
+		raise HTTPException(status_code=404, detail='User not found')
 
 	cursor.execute('UPDATE users SET status = "Deactivated" WHERE id = %s', (user_id,))
 
@@ -136,7 +136,7 @@ def deactivate_user(user_id: int, db=Depends(get_db_dep)):
 
 # AUTH
 # GET /auth/address/{id}
-@router.get('/address/{user_id}', response_model=UserAddressResponse)
+@router.get('/address/{user_id}/', response_model=UserAddressResponse)
 def get_user_address(user_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
 	cursor.execute('SELECT * FROM user_address WHERE user_id = %s', (user_id,))
@@ -148,7 +148,7 @@ def get_user_address(user_id: int, db=Depends(get_db_dep)):
 
 # AUTH
 #POST /auth/address/{id}
-@router.post('/address/{user_id}', response_model=UserAddressResponse, status_code=201)
+@router.post('/address/{user_id}/', response_model=UserAddressResponse, status_code=201)
 def create_user_address(user_id: int, address_in: UserAddressCreate, db=Depends(get_db_dep)):
 	conn, cursor = db
 
@@ -175,7 +175,7 @@ def create_user_address(user_id: int, address_in: UserAddressCreate, db=Depends(
 
 # AUTH
 # PATCH /users/address/{id}
-@router.patch('/address/{user_id}', response_model=UserAddressResponse)
+@router.patch('/address/{user_id}/', response_model=UserAddressResponse)
 def update_user_address(user_id: int, user_in: UserAddressUpdate, db=Depends(get_db_dep)):
 	conn, cursor = db
 	cursor.execute('SELECT * FROM users_address WHERE users_id = %s', (user_id, ))
@@ -200,7 +200,7 @@ def update_user_address(user_id: int, user_in: UserAddressUpdate, db=Depends(get
 
 # AUTH
 # DELETE /users/address/{id}
-@router.delete('/address/{user_id}', status_code=204)
+@router.delete('/address/{user_id}/', status_code=204)
 def delete_address(user_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
 	cursor.execute('DELETE FROM users_address WHERE users_id = %s', (user_id,))
