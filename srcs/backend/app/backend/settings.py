@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,16 +22,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-*#fdt7661njr!02vs2bhisi8u*(z9w#qp9lxy_wz^_(z^suwv)'
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = [
     'transcendence.42.fr',
+    'localhost',
     '127.0.0.1',
     ]
 
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARD_PROTO', 'https')
+
+# SECURE_SSL_DIRECT = True
+
+# SESSION_COOKIE_SECURE = True  # requires https
 
 # Application definition
 
@@ -41,6 +49,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'api',
 ]
 
@@ -84,6 +94,29 @@ DATABASES = {
     }
 }
 
+# Until proper JWT authentication this will remain commented
+
+REST_FRAMEWORK = {
+#        'DEFAULT_PERMISSION_CLASSES': (
+#            'rest_framework.permissions.IsAuthenticated',
+#        ),
+#        'DEFAULT_AUTHENTICATION_CLASSES': (
+#            'rest_framework_simplejwt.authentication.JWTAuthentication',
+#        ),
+}
+
+
+# testing JWT auth not sure what will need specifically yet may need postman for testing
+
+SIMPLE_JWT = {
+        'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+        'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+        'SLIDING_TOKEN_LIFETIME': timedelta(days=30),
+        'SLIDING_TOKEN_REFRESH_LIFETIME_LATE_USER': timedelta(days=1),
+        'SLIDING_TOKEN_LIFETIME_LATE_USER': timedelta(days=30),
+        'AUTH_HEADER_TYPES': ('Bearer',),
+        'BLACKLIST_AFTER_ROTATION': True,
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -91,9 +124,16 @@ DATABASES = {
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'OPTIONS': {
+            'user_attributes': ('username', 'email'),
+            'max_similarity': 0.7,
+            }
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_lenght': 10,
+            }
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
