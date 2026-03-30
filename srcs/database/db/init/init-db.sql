@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS orders (
   code VARCHAR(30) NOT NULL,
   buyer_id BIGINT UNSIGNED NOT NULL,
   buyer_address_id BIGINT UNSIGNED NULL DEFAULT NULL,
-  status ENUM('Pending','Paid','Shipped','Delivered', 'Cancelled', 'Refunded') NOT NULL DEFAULT 'Pending',
+  status ENUM('Pending', 'Paid', 'Done', 'Cancelled', 'Refunded') NOT NULL DEFAULT 'Pending',
   subtotal DECIMAL(12,2) NOT NULL,
   total DECIMAL(12,2) NOT NULL,
   notes TEXT NULL DEFAULT NULL,
