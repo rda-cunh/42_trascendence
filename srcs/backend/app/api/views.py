@@ -76,13 +76,12 @@ class auth_login(APIView):
         serializer = serializers.authLogin(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # return raiseForUpstream("POST", f"auth/login/{id}", serializer.validated_data)
-        return raiseForUpstream("POST", "auth/login/", serializer.validated_data)
+        return raiseForUpstream("POST", f"auth/login/{id}", serializer.validated_data)
 
     def delete(self, request, id):
         # This api should have JWT_String, passhash, user id
-        serializer = serializers.authLogout(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        # serializer = serializers.authLogout(data=request.data)
+        # serializer.is_valid(raise_exception=True)
 
         return silentUpstream("DELETE", f"auth/login/{id}/", None)
 
@@ -93,41 +92,21 @@ class auth_profile(APIView):
         # serializer = serializers.authGet(data=request.data, partial=True)
         # serializer.is_valid(raise_exception=True)
 
-        return raiseForUpstream("GET", "auth/profile/")
+        return raiseForUpstream("GET", f"auth/profile/{id}/", None)
 
     def patch(self, request, id):
         # api should probably receive all user info that needs to be edited
         serializer = serializers.authPatch(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
-        try:
-            upstream = requests.patch(
-                    f"{DATA_SERVICE}/auth/profile/{id}",
-                    json=serializer.validated_data,
-                    timeout=5,
-                    )
-            return Response(upstream.json(), status=upstream.status_code)
-        except requests.RequestException as e:
-            return Response({"error": "Data service unreachable",
-                             "details": str(e)},
-                            status=status.HTTP_502_BAD_GATEWAY)
+        return raiseForUpstream("PATCH", f"auth/profile/{id}/", serializer.validated_data)
 
     def delete(self, request, id):
         # api should probably receive all user info that needs to be deleted
         serializer = serializers.authDelete(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        try:
-            upstream = requests.delete(
-                    f"{DATA_SERVICE}/auth/profile/{id}",
-                    json=serializer.validated_data,
-                    timeout=5,
-                    )
-            return Response(upstream.json(), status=upstream.status_code)
-        except requests.RequestException as e:
-            return Response({"error": "Data service unreachable",
-                             "details": str(e)},
-                            status=status.HTTP_502_BAD_GATEWAY)
+        return silentUpstream("DELETE", f"auth/profile/{id}/", None)
 
 
 class auth_password(APIView):
@@ -135,114 +114,42 @@ class auth_password(APIView):
         serializer = serializers.authPassPatch(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        try:
-            upstream = requests.patch(
-                    f"{DATA_SERVICE}/auth/profile/password/",
-                    json=serializer.validated_data,
-                    timeout=5,
-                    )
-            return Response(upstream.json(), status=upstream.status_code)
-        except requests.RequestException as e:
-            return Response({"error": "Data service unreachable",
-                             "details": str(e)},
-                            status=status.HTTP_502_BAD_GATEWAY)
+        return raiseForUpstream("PATCH", f"auth/profile/password/{id}/", serializer.validated_data)
 
 # Product listings API
 
 
 class listing_id(APIView):
     def get(self, request, id):
-        # serializer = listing_id_get(data=request.data, partial=true)
-        # serializer.is_valid(raise_exception=true)
-        return raiseForUpstream("GET", f"listings/{id}")
+        # serializer = listing_id_get(data=request.data, partial=True)
+        # serializer.is_valid(raise_exception=True)
+
+        return raiseForUpstream("GET", f"listings/{id}/")
 
     def patch(self, request, id):
         serializer = serializers.listingIdPatch(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
-        try:
-            upstream = requests.patch(
-                    f"{DATA_SERVICE}/listings/{id}",
-                    json=serializer.validated_data,
-                    timeout=5,
-                    )
-            return Response(upstream.json(), status=upstream.status_code)
-        except requests.RequestException as e:
-            return Response({"error": "Data service unreachable",
-                             "details": str(e)},
-                            status=status.HTTP_502_BAD_GATEWAY)
+        return raiseForUpstream("PATCH", f"listings/{id}/", serializer.validated_data)
 
     def delete(self, request, id):
         # TODO add authentication verification and provide id to data-service
         # serializer = serializers.listingIdPatch(data=request.data, partial=True)
         # serializer.is_valid(raise_exception=True)
 
-        try:
-            upstream = requests.patch(
-                    f"{DATA_SERVICE}/listings/{id}",
-                    request.data,
-                    timeout=5,
-                    )
-            return Response(upstream.json(), status=upstream.status_code)
-        except requests.RequestException as e:
-            return Response({"error": "Data service unreachable",
-                             "details": str(e)},
-                            status=status.HTTP_502_BAD_GATEWAY)
+        return silentUpstream("DELETE", f"listings/{id}/", None)
 
 
 class listing_full(APIView):
     def post(self, request):
-        # serializer = listingsPost(data=request.data, partial=true)
-        # serializer.is_valid(raise_exception=true)
-        try:
-            upstream = requests.post(
-                    f"{DATA_SERVICE}/listings/",
-                    request.data,
-                    timeout=5,
-                    )
-            return Response(upstream.json(), status=upstream.status_code)
-        except requests.RequestException as e:
-            return Response({"error": "Data service unreachable",
-                             "details": str(e)},
-                            status=status.HTTP_502_BAD_GATEWAY)
+        serializer = listingsPost(data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+
+        return raiseForUpstream("POST", "listings/", serializer.validated_data)
 
     def get(self, request):
-
-        data = [
-                {
-                    "product_id": 1,
-                    "name": "Infinity shader",
-                    "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla mauris sed nibh scelerisque, ultrices ornare velit aliquam. Cras semper neque nec metus suscipit scelerisque. Nulla in lorem facilisis, efficitur libero nec, pellentesque eros. Aliquam at tortor odio. Nam pretium lobortis leo, vitae sodales eros sagittis fringilla. Sed ligula mauris, congue in finibus non, vulputate a neque. Nunc eleifend ex urna, id laoreet sapien aliquam eget. Donec lorem neque, efficitur et viverra eget, auctor sit amet nisl. Nulla sodales, nisl sit amet pharetra posuere, mi lorem cursus erat, sed ultricies quam urna a magna. Praesent tincidunt ligula in arcu condimentum lobortis. Nunc rhoncus lobortis nibh sit amet venenatis. Fusce eget cursus tellus. Proin molestie dolor eget nisl faucibus iaculis vel imperdiet tellus. Integer vel ligula sit amet lacus ornare facilisis vel et ipsum. Ut laoreet ipsum purus, sit amet posuere sapien eleifend et. In non felis a libero tempor vestibulum.",
-                    "price": 19.99,
-                    "currency": "EUR",
-                    "status": "active",
-                    },
-                {
-                    "product_id": 2,
-                    "name": "Erik shader",
-                    "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla mauris sed nibh scelerisque, ultrices ornare velit aliquam. Cras semper neque nec metus suscipit scelerisque. Nulla in lorem facilisis, efficitur libero nec, pellentesque eros. Aliquam at tortor odio. Nam pretium lobortis leo, vitae sodales eros sagittis fringilla. Sed ligula mauris, congue in finibus non, vulputate a neque. Nunc eleifend ex urna, id laoreet sapien aliquam eget. Donec lorem neque, efficitur et viverra eget, auctor sit amet nisl. Nulla sodales, nisl sit amet pharetra posuere, mi lorem cursus erat, sed ultricies quam urna a magna. Praesent tincidunt ligula in arcu condimentum lobortis. Nunc rhoncus lobortis nibh sit amet venenatis. Fusce eget cursus tellus. Proin molestie dolor eget nisl faucibus iaculis vel imperdiet tellus. Integer vel ligula sit amet lacus ornare facilisis vel et ipsum. Ut laoreet ipsum purus, sit amet posuere sapien eleifend et. In non felis a libero tempor vestibulum.",
-                    "price": 19.99,
-                    "currency": "EUR",
-                    "status": "active",
-                    },
-                {
-                    "product_id": 3,
-                    "name": "Rainbow shader",
-                    "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla mauris sed nibh scelerisque, ultrices ornare velit aliquam. Cras semper neque nec metus suscipit scelerisque. Nulla in lorem facilisis, efficitur libero nec, pellentesque eros. Aliquam at tortor odio. Nam pretium lobortis leo, vitae sodales eros sagittis fringilla. Sed ligula mauris, congue in finibus non, vulputate a neque. Nunc eleifend ex urna, id laoreet sapien aliquam eget. Donec lorem neque, efficitur et viverra eget, auctor sit amet nisl. Nulla sodales, nisl sit amet pharetra posuere, mi lorem cursus erat, sed ultricies quam urna a magna. Praesent tincidunt ligula in arcu condimentum lobortis. Nunc rhoncus lobortis nibh sit amet venenatis. Fusce eget cursus tellus. Proin molestie dolor eget nisl faucibus iaculis vel imperdiet tellus. Integer vel ligula sit amet lacus ornare facilisis vel et ipsum. Ut laoreet ipsum purus, sit amet posuere sapien eleifend et. In non felis a libero tempor vestibulum.",
-                    "price": 19.99,
-                    "currency": "EUR",
-                    "status": "active",
-                    },
-                {
-                    "product_id": 4,
-                    "name": "Punk shader",
-                    "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla mauris sed nibh scelerisque, ultrices ornare velit aliquam. Cras semper neque nec metus suscipit scelerisque. Nulla in lorem facilisis, efficitur libero nec, pellentesque eros. Aliquam at tortor odio. Nam pretium lobortis leo, vitae sodales eros sagittis fringilla. Sed ligula mauris, congue in finibus non, vulputate a neque. Nunc eleifend ex urna, id laoreet sapien aliquam eget. Donec lorem neque, efficitur et viverra eget, auctor sit amet nisl. Nulla sodales, nisl sit amet pharetra posuere, mi lorem cursus erat, sed ultricies quam urna a magna. Praesent tincidunt ligula in arcu condimentum lobortis. Nunc rhoncus lobortis nibh sit amet venenatis. Fusce eget cursus tellus. Proin molestie dolor eget nisl faucibus iaculis vel imperdiet tellus. Integer vel ligula sit amet lacus ornare facilisis vel et ipsum. Ut laoreet ipsum purus, sit amet posuere sapien eleifend et. In non felis a libero tempor vestibulum.",
-                    "price": 19.99,
-                    "currency": "EUR",
-                    "status": "active",
-                    },
-                ]
-        return Response({"items": len(data), "results": data})
+        # will likely need to break down the url and send it either as body or link
+        return raiseForUpstream("GET", "listings/", None)
 
 
 # uuid4 from fastAPI
@@ -259,69 +166,31 @@ class order_create(APIView):
     def get(self, request):
         # This API should have JWT_STRING, ?page=num&status=created
         # return a list or old orders
-        data = {
-                "page": 1, "page_size": 10, "total": 3,
-                "items": [
-                    {"order_id": 5501, "status": "created", "total": 62.5,
-                     "currency": "EUR", "created_at": "2026-02-25T14:12:30Z"},
-                    {"order_id": 5498, "status": "shipped", "total": 25.0,
-                     "currency": "EUR",
-                     "created_at": "2026-02-20T09:05:11Z"},
-                    ],
-                }
-        return Response(data)
+
+        return raiseForUpstream("GET", "orders/", None)
 
     def post(self, request):
         # this API should have JWT_STRING and list of items [id] and quantatity
         # should also have billing address and name
-        # serializer = serializers.orderIdPatch(data=request.data, partial=True)
-        # serializer.is_valid(raise_exception=True)
+        serializer = serializers.orderIdPatch(data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
 
-        try:
-            upstream = requests.post(
-                    f"{DATA_SERVICE}/orders/",
-                    request.data,
-                    timeout=5,
-                    )
-            return Response(upstream.json(), status=upstream.status_code)
-        except requests.RequestException as e:
-            return Response({"error": "Data service unreachable",
-                             "details": str(e)},
-                            status=status.HTTP_502_BAD_GATEWAY)
+        return raiseForUpstream("POST", "orders/", serializer.validated_data)
 
 
 class order_id(APIView):
     def get(self, request, id):
-        # order id is needed, nothing else
-        data = {
-                "order_id": id, "status": "created", "currency": "EUR",
-                "total": 62.5, "items": [
-                    {"listing_id": 210, "title": "Mechanical Keyboard", "unit_price": 25.0,
-                     "quantity": 2},
-                    {"listing_id": 2, "title": "Keycap Set", "unit_price": 12.5, "quantity": 1},
-                    ]
+        # orders id is needed, nothing else
 
-
-                }
-        return Response(data)
+        return raiseForUpstream("GET", f"orders/{id}", None)
 
     def patch(self, request, id):
-        # serializer = serializers.orderIdPatch(data=request.data, partial=True)
-        # serializer.is_valid(raise_exception=True)
+        serializer = serializers.orderIdPatch(data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
         # payload = dict(serializer.validated_data)
         # payload["updated_by"] = request.user.id
 
-        try:
-            upstream = requests.patch(
-                    f"{DATA_SERVICE}/orders/{id}",
-                    request.data,
-                    timeout=5,
-                    )
-            return Response(upstream.json(), status=upstream.status_code)
-        except requests.RequestException as e:
-            return Response({"error": "Data service unreachable",
-                             "details": str(e)},
-                            status=status.HTTP_502_BAD_GATEWAY)
+        return raiseForUpstream("PATCH", f"orders/{id}", serializer.validated_data)
 
 
 # USER API interfaces
@@ -331,4 +200,5 @@ class user_id(APIView):
     def get(self, request, id):
         # serializer = serializers.authDelete(data={"user_id": id, **request.data)
         # serializer.is_valid(raise_exception=True)
+
         return raiseForUpstream("GET", f"users/{id}/", None)
