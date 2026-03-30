@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import pymysql
-from routes import users, products, orders
+from routes import users, products, orders, auth
 
 app = FastAPI(title='Marketplace DB Gateway',
 			)
@@ -32,6 +32,7 @@ async def db_error(request: Request, exc: pymysql.OperationalError):
 app.include_router(users.router)
 app.include_router(products.router)
 app.include_router(orders.router)
+app.include_router(auth.router)
 
 @app.get('/health', tags=['System'])
 def health():

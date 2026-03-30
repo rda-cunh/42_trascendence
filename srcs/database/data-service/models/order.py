@@ -7,7 +7,6 @@ from enum import Enum
 class OrderStatus(str, Enum):
 	pending			= 'Pending'
 	paid			= 'Paid'
-	shipped			= 'Shipped'
 	delivered		= 'Delivered'
 	cancelled		= 'Cancelled'
 	refunded		= 'Refunded'
@@ -32,6 +31,9 @@ class OrderItemResponse(BaseModel):
 	seller_id:			int
 
 	model_config = {'from_attributes': True}
+
+class OrderUpdate(BaseModel):
+	status:			Optional[OrderStatus] = None
 
 class OrderResponse(BaseModel):
 	id:			int

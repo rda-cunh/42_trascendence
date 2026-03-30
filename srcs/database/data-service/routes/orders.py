@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from database import get_db_dep
-from models.order import OrderCreate, OrderItemCreate, OrderResponse, OrderItemResponse
+from models.order import OrderCreate, OrderItemCreate, OrderResponse, OrderItemResponse, OrderUpdate
 import uuid
 from decimal import Decimal
 
@@ -62,7 +62,7 @@ def create_order(order_in: OrderCreate, db=Depends(get_db_dep)):
 	return OrderResponse(**order)
 
 # GET /orders/{order_id}
-@router.get('/{order_id}', response_model=OrderResponse)
+@router.get('/{order_id}/', response_model=OrderResponse)
 def get_order(order_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
 
@@ -79,7 +79,7 @@ def get_order(order_id: int, db=Depends(get_db_dep)):
 	return OrderResponse(**order)
 
 # GET /orders/buyer/{id}
-@router.get('/buyer/{buyer_id}', response_model=list[OrderResponse])
+@router.get('/buyer/{buyer_id}/', response_model=list[OrderResponse])
 def get_buyer_orders(buyer_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
 
@@ -91,5 +91,46 @@ def get_buyer_orders(buyer_id: int, db=Depends(get_db_dep)):
 		order['items'] = cursor.fetchall()
 	
 	return [OrderResponse(**o) for o in orders]
+
+# PATCH /orders{order_id}
+@router.patch('/{order_id}/', response_model=OrderResponse)
+def update_orders(order_id: int, order_in: OrderUpdate, db=Depends(get_db_dep)):
+	conn, cursor = db
+	cursor.execute('SELECT * FROM orders WHERE id = %s', (order_id,))
+	if not cursor.fetchone():
+		raise HTTPException(status_code=404, detail='Order not found')
+	update_data = { k: v for k, v in user_in.model_dump(exclude_none=True).items()
+    	if v != ""}
+	if not update_data:
+		raise HTTPException(status_code=400, detail='No fields to update')
+	set_clause = ', '.join(f'{k} = %s' for k in update_data.keys())
+	values = list(update_data.values()) + [order_id]
+
+	cursor.execute(
+		f'UPDATE orders SET {set_clause} WHERE id = %s',
+		values
+	)
+	cursor.execute('SELECT * FROM orders WHERE id = %s', (order_id,))
+	return OrderResponse(**cursor.fetchone())
+
+
+
+
+# POST /payment
+
+
+
+
+# GET /payment
+
+
+
+
+# PATCH /payment
+
+
+
+# DELETE /payment
+
 
 

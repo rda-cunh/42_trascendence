@@ -133,8 +133,6 @@ ssh-wipe: check-root
 	fi
 
 DATABASE_PATH = ./srcs/database
-include $(DATABASE_PATH)/.env
-export
 
 # Make a backup .sql file
 database-backup:
