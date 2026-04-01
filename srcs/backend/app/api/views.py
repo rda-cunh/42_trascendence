@@ -48,8 +48,6 @@ class auth_register(APIView):
 
         return raiseForUpstream("POST", "auth/register/", serializer.validated_data)
 
-
-class auth_delete(APIView):
     def delete(self, request, id):
         # This api should have JWT_String, passhash, user id
         # serializer = serializers.authCreate(data=request.data)

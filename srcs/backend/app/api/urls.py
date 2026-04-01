@@ -16,20 +16,20 @@ Including another URLconf
 """
 from django.urls import path
 from .views import listing_id, listing_full
-from .views import user_id, auth_register, auth_login, auth_profile, auth_password, auth_delete
+from .views import user_id, auth_register, auth_login, auth_profile, auth_password
 from .views import order_create, order_id
 
 urlpatterns = [
         path("listings/<int:id>/", listing_id.as_view()),
         path("listings/", listing_full.as_view()),
         path("users/<int:id>/", user_id.as_view()),
-        path("auth/register/<int:id>/", auth_delete.as_view()),  # to be deleted
         path("auth/register/", auth_register.as_view()),
-        path("auth/login/<int:id>/", auth_login.as_view()),  # to be deleted
+        path("auth/register/<int:id>/", auth_register.as_view()),
         path("auth/login/", auth_login.as_view()),
+        path("auth/login/<int:id>/", auth_login.as_view()),
         path("auth/profile/password/<int:id>/", auth_password.as_view()),
-        path("auth/profile/<int:id>/", auth_profile.as_view()),  # to be deleted
         path("auth/profile/", auth_profile.as_view()),
+        path("auth/profile/<int:id>/", auth_profile.as_view()),
         path("orders/<int:id>/", order_id.as_view()),
         path("orders/", order_create.as_view()),
         # path("auth/profile/address/", auth_address.as_view()),
