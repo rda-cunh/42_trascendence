@@ -102,6 +102,26 @@ class auth_password(APIView):
 
         return raiseForUpstream("PATCH", f"auth/profile/password/{id}/", serializer.validated_data)
 
+
+class auth_address(APIView):
+    def get(self, request, id):
+        return raiseForUpstream("GET", f"auth/address/{id}/")
+
+    def post(self, request, id):
+        serializer = serializers.authAddressPost(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        return raiseForUpstream("POST", f"auth/address/{id}/", serializer.validated_data)
+    
+    def patch(self, request, id):
+        serializer = serializers.authAddressPatch(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        return raiseForUpstream("PATCH", f"auth/address/{id}/", serializer.validated_data)
+
+    def delete(self, request, id):
+        return raiseForUpstream("DELETE", f"auth/address/{id}/")
+
 # Product listings API
 
 
@@ -139,12 +159,58 @@ class listing_full(APIView):
         return raiseForUpstream("GET", "listings/")
 
 
-# uuid4 from fastAPI
+class seller_id(APIView):
+    def get(self, request, id):
+        return raiseForUpstream("GET", f"listings/seller/{id}/")
 
-# def get_permission(self):
-#     if self.request.method in ["POST"]:
-#         return [IsAuthenticated()]
-#     return [AllowAny()]
+
+class seller_product(APIView):
+    def get(self, request, product_id):
+        return raiseForUpstream("GET", f"listings/seller/{product_id}/")
+
+
+class listings_image(APIView):
+    def post(self, request, product_id):
+        # serializer = listingsPost(data=request.data, partial=True)
+        # serializer.is_valid(raise_exception=True)
+
+        return raiseForUpstream("POST", f"listings/{product_id}/images/")
+
+    def get(self, request, product_id):
+        return raiseForUpstream("GET", f"listings/{product_id}/images/")
+
+class listings_image_id(APIView):
+    def get(self, request, product_id, image_id):
+        return raiseForUpstream("GET", f"listings/{product_id}/images/{image_id}/")
+
+    def delete(self, request, product_id, image_id):
+        return raiseForUpstream("DELETE", f"listings/{product_id}/images/{image_id}/")
+
+
+class listings_review(APIView):
+    def post(self, request, product_id):
+        # serializer = listingsPost(data=request.data, partial=True)
+        # serializer.is_valid(raise_exception=True)
+
+        return raiseForUpstream("POST", f"listings/{product_id}/review/")
+
+    def get(self, request, product_id):
+        return raiseForUpstream("GET", f"listings/{product_id}/review/")
+
+    def patch(self, request, product_id, review_id):
+        # serializer = listingsPost(data=request.data, partial=True)
+        # serializer.is_valid(raise_exception=True)
+
+        return raiseForUpstream("PATCH", f"listings/{product_id}/review/{review_id}/")
+
+    def patch(self, request, product_id, review_id):
+        # serializer = listingsPost(data=request.data, partial=True)
+        # serializer.is_valid(raise_exception=True)
+
+        return raiseForUpstream("PATCH", f"listings/{product_id}/review/{review_id}/")
+
+# orders API
+
 
 class order_create(APIView):
 
@@ -167,25 +233,50 @@ class order_create(APIView):
 
 class order_id(APIView):
     def get(self, request, id):
-        # orders id is needed, nothing else
 
-        return raiseForUpstream("GET", f"orders/{id}")
+        return raiseForUpstream("GET", f"orders/{id}/")
 
     def patch(self, request, id):
         serializer = serializers.orderIdPatch(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        # payload = dict(serializer.validated_data)
-        # payload["updated_by"] = request.user.id
 
-        return raiseForUpstream("PATCH", f"orders/{id}", serializer.validated_data)
+        return raiseForUpstream("PATCH", f"orders/{id}/", serializer.validated_data)
 
+
+class order_buyer_id(APIView):
+    def get(self, request, id):
+
+        return raiseForUpstream("GET", f"orders/buyer/{id}/")
+
+
+class payment_id(APIView):
+    def get(self, request, order_id):
+
+        return raiseForUpstream("GET", f"payment/{id}/")
+
+    def post(self, request, order_id):
+
+        return raiseForUpstream("POST", f"payment/{id}/")
+
+    def patch(self, request, order_id):
+
+        return raiseForUpstream("PATCH", f"payment/{id}/")
+
+    def delete(self, request, order_id):
+
+        return raiseForUpstream("DELETE", f"payment/{id}/")
+
+
+# PUBLIC APIs
 
 # USER API interfaces
+
+class user_list(APIView):
+    def get(self, request):
+        return raiseForUpstream("GET", "users/")
 
 
 class user_id(APIView):
     def get(self, request, id):
-        # serializer = serializers.authDelete(data={"user_id": id, **request.data)
-        # serializer.is_valid(raise_exception=True)
 
         return raiseForUpstream("GET", f"users/{id}/")
