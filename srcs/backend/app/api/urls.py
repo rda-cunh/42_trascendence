@@ -15,32 +15,32 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.urls import path
-from . views import views
+from .views import *
 
 urlpatterns = [
         # listing paths
-        path("listings/<int:id>/", views.listing_id.as_view()),
-        path("listings/", views.listing_full.as_view()),
-        path("listings/seller/<int:product_id>/", views.seller_product.as_view()),
-        path("listings/seller/<int:id>/", views.seller_id.as_view()),
-        path("listings/<int:product_id>/images/<int:id>/", views.listings_image_id.as_view()),
-        path("listings/<int:product_id>/images/", views.listings_image.as_view()),
-        path("listings/<int:product_id>/review/", views.listings_review.as_view()),
-        path("listings/<int:product_id>/review/<int:review_id>/", views.listings_review.as_view()),
+        path("listings/<int:id>/", listing_id.as_view()),
+        path("listings/", listing_full.as_view()),
+        path("listings/seller/<int:product_id>/", seller_product.as_view()),
+        path("listings/seller/<int:id>/", seller_id.as_view()),
+        path("listings/<int:product_id>/images/<int:id>/", listings_image_id.as_view()),
+        path("listings/<int:product_id>/images/", listings_image.as_view()),
+        path("listings/<int:product_id>/review/", listings_review.as_view()),
+        path("listings/<int:product_id>/review/<int:review_id>/", listings_review.as_view()),
         # auth paths
-        path("auth/register/", views.auth_register.as_view()),
-        path("auth/register/<int:id>/", views.auth_register.as_view()),
-        path("auth/login/", views.auth_login.as_view()),
-        path("auth/login/<int:id>/", views.auth_login.as_view()),
-        path("auth/profile/password/<int:id>/", views.auth_password.as_view()),
-        path("auth/profile/", views.auth_profile.as_view()),
-        path("auth/profile/<int:id>/", views.auth_profile.as_view()),
-        path("auth/address/<int:id>", views.auth_address.as_view()),
+        path("auth/register/", auth_register.as_view()),
+        path("auth/register/<int:id>/", auth_register.as_view()),
+        path("auth/login/", auth_login.as_view()),
+        path("auth/login/<int:id>/", auth_login.as_view()),
+        path("auth/profile/password/<int:id>/", auth_password.as_view()),
+        path("auth/profile/", auth_profile.as_view()),
+        path("auth/profile/<int:id>/", auth_profile.as_view()),
+        path("auth/address/<int:id>", auth_address.as_view()),
         # order path
-        path("orders/<int:id>/", views.order_id.as_view()),
-        path("orders/", views.order_create.as_view()),
-        path("payment/<int:order_id>/", views.payment_id.as_view()),
+        path("orders/<int:id>/", order_id.as_view()),
+        path("orders/", order_create.as_view()),
+        path("payment/<int:order_id>/", payment_id.as_view()),
         # public path
-        path("users/", views.user_list.as_view()),
-        path("users/<int:id>/", views.user_id.as_view()),
+        path("users/", user_list.as_view()),
+        path("users/<int:id>/", user_id.as_view()),
 ]
