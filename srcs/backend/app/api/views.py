@@ -23,25 +23,13 @@ def raiseForUpstream(method, endpoint, payload=None):
                 json=payload,
                 timeout=5,
                 )
+        if upstream.status_code == 204 or not upstream.content:
+            return (Response(status=upstream.status_code))
         try:
             body = upstream.json()
         except requests.exceptions.JSONDecodeError:
             body = {"detail": upstream.text or "Upstream returned non-JSON response"}
         return Response(body, status=upstream.status_code)
-    except requests.RequestException as e:
-        return Response({"error": "Data service unreachable",
-                         "details": str(e)},
-                        status=status.HTTP_502_BAD_GATEWAY)
-
-def silentUpstream(method, endpoint, payload=None):
-    try:
-        upstream = requests.request(
-                method=method,
-                url=f"{DATA_SERVICE}{endpoint}",
-                json=payload,
-                timeout=5,
-                )
-        return Response(status=upstream.status_code)
     except requests.RequestException as e:
         return Response({"error": "Data service unreachable",
                          "details": str(e)},
@@ -67,7 +55,7 @@ class auth_delete(APIView):
         # serializer = serializers.authCreate(data=request.data)
         # serializer.is_valid(raise_exception=True)
 
-        return silentUpstream("DELETE", f"auth/register/{id}/", None)
+        return raiseForUpstream("DELETE", f"auth/register/{id}/")
 
 
 class auth_login(APIView):
@@ -83,7 +71,7 @@ class auth_login(APIView):
         # serializer = serializers.authLogout(data=request.data)
         # serializer.is_valid(raise_exception=True)
 
-        return silentUpstream("DELETE", f"auth/login/{id}/", None)
+        return raiseForUpstream("DELETE", f"auth/login/{id}/")
 
 
 class auth_profile(APIView):
@@ -92,7 +80,7 @@ class auth_profile(APIView):
         # serializer = serializers.authGet(data=request.data, partial=True)
         # serializer.is_valid(raise_exception=True)
 
-        return raiseForUpstream("GET", f"auth/profile/{id}/", None)
+        return raiseForUpstream("GET", f"auth/profile/{id}/")
 
     def patch(self, request, id):
         # api should probably receive all user info that needs to be edited
@@ -106,7 +94,7 @@ class auth_profile(APIView):
         serializer = serializers.authDelete(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        return silentUpstream("DELETE", f"auth/profile/{id}/", None)
+        return raiseForUpstream("DELETE", f"auth/profile/{id}/")
 
 
 class auth_password(APIView):
@@ -121,7 +109,7 @@ class auth_password(APIView):
 
 class listing_id(APIView):
     def get(self, request, id):
-        # serializer = listing_id_get(data=request.data, partial=True)
+        # serializer = listingIdGet(data=request.data, partial=True)
         # serializer.is_valid(raise_exception=True)
 
         return raiseForUpstream("GET", f"listings/{id}/")
@@ -137,19 +125,20 @@ class listing_id(APIView):
         # serializer = serializers.listingIdPatch(data=request.data, partial=True)
         # serializer.is_valid(raise_exception=True)
 
-        return silentUpstream("DELETE", f"listings/{id}/", None)
+        return raiseForUpstream("DELETE", f"listings/{id}/")
 
 
 class listing_full(APIView):
     def post(self, request):
-        serializer = listingsPost(data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
+        # serializer = listingsPost(data=request.data, partial=True)
+        # serializer.is_valid(raise_exception=True)
 
-        return raiseForUpstream("POST", "listings/", serializer.validated_data)
+        # return raiseForUpstream("POST", "listings/", serializer.validated_data)
+        return raiseForUpstream("POST", "listings/")
 
     def get(self, request):
         # will likely need to break down the url and send it either as body or link
-        return raiseForUpstream("GET", "listings/", None)
+        return raiseForUpstream("GET", "listings/")
 
 
 # uuid4 from fastAPI
@@ -167,7 +156,7 @@ class order_create(APIView):
         # This API should have JWT_STRING, ?page=num&status=created
         # return a list or old orders
 
-        return raiseForUpstream("GET", "orders/", None)
+        return raiseForUpstream("GET", "orders/")
 
     def post(self, request):
         # this API should have JWT_STRING and list of items [id] and quantatity
@@ -182,7 +171,7 @@ class order_id(APIView):
     def get(self, request, id):
         # orders id is needed, nothing else
 
-        return raiseForUpstream("GET", f"orders/{id}", None)
+        return raiseForUpstream("GET", f"orders/{id}")
 
     def patch(self, request, id):
         serializer = serializers.orderIdPatch(data=request.data, partial=True)
@@ -201,4 +190,4 @@ class user_id(APIView):
         # serializer = serializers.authDelete(data={"user_id": id, **request.data)
         # serializer.is_valid(raise_exception=True)
 
-        return raiseForUpstream("GET", f"users/{id}/", None)
+        return raiseForUpstream("GET", f"users/{id}/")

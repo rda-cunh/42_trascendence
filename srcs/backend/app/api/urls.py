@@ -23,12 +23,12 @@ urlpatterns = [
         path("listings/<int:id>/", listing_id.as_view()),
         path("listings/", listing_full.as_view()),
         path("users/<int:id>/", user_id.as_view()),
-        path("auth/register/<int:id>", auth_delete.as_view()),  # to be deleted
+        path("auth/register/<int:id>/", auth_delete.as_view()),  # to be deleted
         path("auth/register/", auth_register.as_view()),
-        path("auth/login/<int:id>", auth_login.as_view()),  # to be deleted
+        path("auth/login/<int:id>/", auth_login.as_view()),  # to be deleted
         path("auth/login/", auth_login.as_view()),
-        path("auth/profile/password/<int:id>", auth_password.as_view()),
-        path("auth/profile/<int:id>", auth_profile.as_view()),  # to be deleted
+        path("auth/profile/password/<int:id>/", auth_password.as_view()),
+        path("auth/profile/<int:id>/", auth_profile.as_view()),  # to be deleted
         path("auth/profile/", auth_profile.as_view()),
         path("orders/<int:id>/", order_id.as_view()),
         path("orders/", order_create.as_view()),

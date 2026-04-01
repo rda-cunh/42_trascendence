@@ -53,11 +53,16 @@ class authPassPatch(serializers.Serializer):
 
 class listingsIdPatch(idVerifier):
     product_name = serializers.CharField(allow_null=True, min_length=3, max_length=255, trim_whitespace=True)
-    slug = serializers.SlugField(allow_null=True)
+    slug = serializers.SlugField(allow_null=True, required=False)
     description = serializers.CharField(allow_null=True, min_length=3, required=False)
 
 
 # /api/listings
+
+class listingsPost(serializers.Serializer):
+    product_name = serializers.CharField(min_length=3, max_length=255, trim_whitespace=True)
+    slug = serializers.SlugField(required=False)
+    description = serializers.CharField(min_length=3, required=False)
 
 
 # /api/users/{id}
