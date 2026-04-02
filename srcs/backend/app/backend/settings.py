@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
-from datetime import timedelta
+from datetime import timedelta  #this allow us to set the lifetime of the JWT tokens in settings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
@@ -55,6 +56,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -94,28 +96,37 @@ DATABASES = {
     }
 }
 
-# Until proper JWT authentication this will remain commented
-
+# Enable JWT authentication globally for the API, both for authentication and permissions.
 REST_FRAMEWORK = {
-#        'DEFAULT_PERMISSION_CLASSES': (
-#            'rest_framework.permissions.IsAuthenticated',
-#        ),
-#        'DEFAULT_AUTHENTICATION_CLASSES': (
-#            'rest_framework_simplejwt.authentication.JWTAuthentication',
-#        ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ),
 }
 
-
-# testing JWT auth not sure what will need specifically yet may need postman for testing
-
+# update the JWT settings and added temp comments to explain the each setting (for eventual later adjustment)
 SIMPLE_JWT = {
-        'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-        'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
-        'SLIDING_TOKEN_LIFETIME': timedelta(days=30),
-        'SLIDING_TOKEN_REFRESH_LIFETIME_LATE_USER': timedelta(days=1),
-        'SLIDING_TOKEN_LIFETIME_LATE_USER': timedelta(days=30),
-        'AUTH_HEADER_TYPES': ('Bearer',),
+        # how long the jwt token is valid
+        'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+        # how long the refresh token is valid
+        'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=7),
+        # when the client refreshes (refresh token rotation) issue a NEW refresh token and invalidate the old one
+        'ROTATE_REFRESH_TOKENS': True,
+        # after rotation, add the old refresh token to the blacklist table in the DB (Django DB)
         'BLACKLIST_AFTER_ROTATION': True,
+        # the signing token algorithm. HS256 = HMAC with SHA-256 (symmetric)
+        'ALGORITHM': 'HS256',
+        # uses Django secret key by default, but we can set a separate JWT key later if necessary
+        # 'SIGNING_KEY': os.getenv('JWT_SECRET_KEY'),
+        # prefix in the Authorization header: "Authorization: Bearer <token>"
+        'AUTH_HEADER_TYPES': ('Bearer',),
+        # fields in the token payload that identify the user (default is 'user_id' but we can change it if needed)
+        'USER_ID_FIELD': 'id',
+        'USER_ID_CLAIM': 'user_id',
+        # custom serializer that adds extra fields (role, name) to the token payload
+        'TOKEN_OBTAIN_PAIR_SERIALIZER': 'api.serializers.CustomTokenPairSerializer',
 }
 
 # Password validation
@@ -160,3 +171,24 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# CORS — which frontend origins are allowed to make requests
+# In development, our Vite dev server runs here:
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",    
+    "https://localhost:5173",  
+    "https://transcendence.42.fr",
+]
+
+# Allows the browser to send cookies (the httpOnly refresh token cookie)
+# cross-origin. Without this, credentials: "include" in the frontend fetch calls will fail silently.
+CORS_ALLOW_CREDENTIALS = True
+# ! IMPORTANT !: Ask frontend to include credentials: "include" in fetch calls that need to send cookies (refresh token cookie) or receive cookies (logout endpoint that clears the cookie)
+
+# Allow the Authorization header so the browser doesn't strip it
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'authorization',
+    'content-type',
+    'x-csrftoken',
+]
