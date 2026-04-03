@@ -15,17 +15,32 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.urls import path
-from .views import listing_id, listing_full
-from .views import user_id, auth_register, auth_login, auth_profile
-from .views import order_create, order_id
+from .views import *
 
 urlpatterns = [
+        # listing paths
         path("listings/<int:id>/", listing_id.as_view()),
         path("listings/", listing_full.as_view()),
-        path("users/<int:id>/", user_id.as_view()),
+        path("listings/seller/<int:product_id>/", seller_product.as_view()),
+        path("listings/seller/<int:id>/", seller_id.as_view()),
+        path("listings/<int:product_id>/images/<int:id>/", listings_image_id.as_view()),
+        path("listings/<int:product_id>/images/", listings_image.as_view()),
+        path("listings/<int:product_id>/review/", listings_review.as_view()),
+        path("listings/<int:product_id>/review/<int:review_id>/", listings_review.as_view()),
+        # auth paths
         path("auth/register/", auth_register.as_view()),
+        path("auth/register/<int:id>/", auth_register.as_view()),
         path("auth/login/", auth_login.as_view()),
+        path("auth/login/<int:id>/", auth_login.as_view()),
+        path("auth/profile/password/<int:id>/", auth_password.as_view()),
         path("auth/profile/", auth_profile.as_view()),
-        path("orders/", order_create.as_view()),
+        path("auth/profile/<int:id>/", auth_profile.as_view()),
+        path("auth/address/<int:id>", auth_address.as_view()),
+        # order path
         path("orders/<int:id>/", order_id.as_view()),
+        path("orders/", order_create.as_view()),
+        path("payment/<int:order_id>/", payment_id.as_view()),
+        # public path
+        path("users/", user_list.as_view()),
+        path("users/<int:id>/", user_id.as_view()),
 ]
