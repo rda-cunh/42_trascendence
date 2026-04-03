@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router";
 import { ProductCard } from "../components/ProductCard";
 import { Listing } from "../data/mockListings";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, ArrowRight } from "lucide-react";
 
 export function Home() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -133,6 +134,17 @@ export function Home() {
         ) : (
           <div className="text-center py-12">
             <p className="text-gray-500 dark:text-gray-400 text-lg">No assets found matching your search.</p>
+          </div>
+        )}
+        {/* View All Link */}
+        {filteredListings.length > 0 && (
+          <div className="mt-8 text-center">
+            <Link
+              to={`/search${selectedCategory !== "All" ? `?category=${selectedCategory}` : ""}`}
+              className="inline-flex items-center gap-2 px-6 py-3 border border-purple-600 text-purple-600 dark:text-purple-400 dark:border-purple-400 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors font-medium"
+            >
+              View All Assets <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         )}
       </div>
