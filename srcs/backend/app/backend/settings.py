@@ -154,7 +154,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
@@ -192,3 +191,7 @@ CORS_ALLOW_HEADERS = [
     'content-type',
     'x-csrftoken',
 ]
+
+# Internal data-service proxy config
+DATA_SERVICE_URL = "http://data-service:9000/api"
+DATA_SERVICE_TOKEN = os.getenv("DATA_SERVICE_TOKEN", "dev-internal-token-change-in-prod")
