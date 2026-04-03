@@ -42,7 +42,13 @@ def raiseForUpstream(method, endpoint, payload=None):
 
 
 class auth_register(APIView):
+    # this will will allow non authenticated methods in ["METHOD"]
+    def get_self(self):
+        if self.request.method in ["POST"]:
+            return [AllowAny()]
+        return [IsAuthenticated()]
     def post(self, request):
+        AllowAny()
         serializer = serializers.authCreate(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -50,10 +56,10 @@ class auth_register(APIView):
 
     def delete(self, request, id):
         # This api should have JWT_String, passhash, user id
-        # serializer = serializers.authCreate(data=request.data)
-        # serializer.is_valid(raise_exception=True)
+        serializer = serializers.authDelete(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        return raiseForUpstream("DELETE", f"auth/register/{id}/")
+        return raiseForUpstream("DELETE", f"auth/register/{id}/", serializer.validated_data)
 
 
 class auth_login(APIView):
@@ -66,8 +72,6 @@ class auth_login(APIView):
 
     def delete(self, request, id):
         # This api should have JWT_String, passhash, user id
-        # serializer = serializers.authLogout(data=request.data)
-        # serializer.is_valid(raise_exception=True)
 
         return raiseForUpstream("DELETE", f"auth/login/{id}/")
 
@@ -77,8 +81,9 @@ class auth_profile(APIView):
         # api should have JWT_STRING if does not match, different information is provided
         # serializer = serializers.authGet(data=request.data, partial=True)
         # serializer.is_valid(raise_exception=True)
+        #user_id = request.user_id
 
-        return raiseForUpstream("GET", f"auth/profile/{id}/")
+        return raiseForUpstream("GET", f"auth/profile/{user_id}/")
 
     def patch(self, request, id):
         # api should probably receive all user info that needs to be edited
@@ -89,7 +94,7 @@ class auth_profile(APIView):
 
     def delete(self, request, id):
         # api should probably receive all user info that needs to be deleted
-        serializer = serializers.authDelete(data=request.data)
+        serializer = serializers.authProfileDelete(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
         return raiseForUpstream("DELETE", f"auth/profile/{id}/")

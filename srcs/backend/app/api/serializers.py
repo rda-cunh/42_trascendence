@@ -28,9 +28,6 @@ class authLogin(authentication):
     pass
 
 
-class authLogout(idVerifier):
-    pass
-
 # /api/auth/profile
 
 
@@ -40,12 +37,25 @@ class authPatch(serializers.Serializer):
     phone = serializers.CharField(allow_null=True, min_length=9, max_length=13)
     avatar_url = serializers.URLField(allow_null=True, required=False)
 
+
+class authProfileDelete(serializers.Serializer):
+    name = serializers.CharField(allow_null=True, required=False)
+    email = serializers.EmailField(allow_null=True, required=False)
+    phone = serializers.CharField(allow_null=True, required=False)
+    avatar_url = serializers.URLField(allow_null=True, required=False)
+
 # /api/auth/profile/password
 
 
 class authPassPatch(serializers.Serializer):
     password = serializers.CharField(min_length=8, max_length=64, trim_whitespace=True)
     new_password = serializers.CharField(min_length=8, max_length=64, trim_whitespace=True)
+
+
+# /api/auth/address
+
+class authAdressPost(serializers.Serializer):
+    
 
 
 # /api/listings/{id}
