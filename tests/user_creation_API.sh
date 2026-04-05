@@ -17,7 +17,7 @@ run_test(){
 	local body=$4
 	echo -e "\e[1;31m/api/${endpoint} - ${method}\e[0m"
 	${CURL} ${method} ${DOMAIN}${endpoint} -H "${HEADER}" -d "${body}" > ${DIR}${output_file}.json
-	sleep .8
+	sleep 1
 }
 # OBS.: sleep may need to be increased due to rate limit
 
@@ -28,8 +28,11 @@ run_test 2 "auth/register/" "auth_register_1" "${USER1}"
 run_test 2 "auth/register/" "auth_register_2" "${USER2}"
 run_test 0 "users/1/" "user_id1"
 run_test 0 "users/2/" "user_id2"
+run_test 1 "auth/register/1/" "user_delete1"
+run_test 1 "auth/register/2/" "user_delete2"
+run_test 0 "users/1/" "user_id1"
+run_test 0 "users/2/" "user_id2"
 #run_test 2 "auth/login/" "auth_login_post"
 #sleep(1)
-#run_test 1 "auth/register/" "auth_register_delete"
 
 echo "done!"
