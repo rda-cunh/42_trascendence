@@ -1,4 +1,4 @@
-from rest_framework.decorators import APIView
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
@@ -6,12 +6,11 @@ from rest_framework.exceptions import APIException
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.exceptions import TokenError
+from django.conf import settings
 
 from . import serializers
 import requests
 import os
-
-DATA_SERVICE = "http://data-service:9000/api"
 
 # TODO LISTING ID PATCH
 # TODO LISTING ID DELETE
@@ -22,8 +21,8 @@ DATA_SERVICE = "http://data-service:9000/api"
 # data-service proxy configuration
 def proxy_request(method, endpoint, data=None, params=None):
     """ helper function: proxy to data-service with auth headers"""
-    url = f"{DATA_SERVICE_URL}{endpoint}"
-    headers = {"X-Internal-Token": DATA_SERVICE_TOKEN}
+    url = f"{settings.DATA_SERVICE_URL}{endpoint}"
+    headers = {"X-Internal-Token": settings.DATA_SERVICE_TOKEN}
 
     try:
         resp = requests.request(
@@ -50,28 +49,6 @@ def proxy_request(method, endpoint, data=None, params=None):
             status=status.HTTP_502_BAD_GATEWAY
         )
 
-def proxy_request(method, endpoint, data=None, params=None):
-    """ helper function: proxy to data-service with auth headers"""
-    url = f"{DATA_SERVICE}{endpoint}"
-    headers = {"X-Internal-Token": INTERNAL_TOKEN}
-
-    try:
-        resp = requests.request(
-            method=method,
-            url=url,
-            json=data,
-            params=params,
-            headers=headers,
-            timeout=5,
-        )
-    # this will return data-service response directly (including 4xx errors)
-    return Response(resp.json() if resp.content else {"error": resp.reason}, status=resp.status_code)
-    except requests.RequestException as e:
-        return Response(
-            {"error": "Data service unreachable", "details": str(e)},
-            status=status.HTTP_502_BAD_GATEWAY
-        )
-
 # --- AUTH REGISTRATION ---
 class auth_register(APIView):
     permission_classes = [AllowAny]
@@ -84,12 +61,12 @@ class auth_register(APIView):
         return proxy_request("POST", "/auth/register/", data=serializer.validated_data)
 
 # --- AUTH LOGIN (issues JWT) ---
-class auth_login(TokenObtainPairView):
-    serializer_class = serializers.CustomTokenPairSerializer
+class auth_login(APIView):
     permission_classes = [AllowAny]
     
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+    def post(self, request):
+        # Use dedicated LoginSerializer instead of TokenObtainPairView
+        serializer = serializers.LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
         # use proxy to data-service to verify credentials
@@ -102,11 +79,10 @@ class auth_login(TokenObtainPairView):
         if user_resp.status_code != 200:
             return user_resp
         
-        # as jwt expects a django user object when issuing the token (when running ´RefreshToken.for_user(fake_user)´) whe need to transform our JSON info into an django object manually
-        # we start extracting user data from data-service
-        user_data = user_resp.data # {"id": 1, "name": "...", "role": "..."}
+        # extract user data from data-service response
+        user_data = user_resp.data # {"id": 1, "name": "...", "status": "Active", ...}
 
-        # we create a fake user object for jwt
+        # create a fake user object for jwt token generation
         class FakeUser:
             def __init__(self, data):
                 self.id = data["id"]
@@ -114,15 +90,20 @@ class auth_login(TokenObtainPairView):
                 self.email = data.get("email")
         fake_user = FakeUser(user_data)
 
-        # issue JWT tokens
+        # issue JWT tokens using simplejwt
         refresh = RefreshToken.for_user(fake_user)
         
+        # customize token claims to include user data
+        access_token = refresh.access_token
+        access_token['name'] = user_data.get('name')
+        access_token['user_id'] = user_data.get('id')
+        
         response = Response({
-            "token": str(refresh.access_token),
+            "access": str(access_token),
             "user": user_data,
         })
         
-        # set httpOnly refresh cookie
+        # set httpOnly refresh token cookie
         response.set_cookie(
             key="refresh_token",
             value=str(refresh),
