@@ -109,7 +109,7 @@ logs: check-docker
 
 status: check-docker
 	@$(EXEC) "$(PRE_CMD) \
-		printf '\n=== CONTAINERS ===\n' && docker compose -f $(COMPOSE_FILE) ps -a; \
+		printf '\n=== CONTAINERS ===\n' && docker compose --env-file .env -f $(COMPOSE_FILE) ps -a; \
 		printf '\n=== IMAGES ===\n' && docker images 2>/dev/null || true; \
 		printf '\n=== VOLUMES ===\n' && docker volume ls 2>/dev/null || true; \
 		printf '\n=== NETWORKS ===\n' && docker network ls 2>/dev/null || true"
