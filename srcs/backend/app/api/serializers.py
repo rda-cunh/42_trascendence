@@ -40,7 +40,16 @@ class DeleteAccountSerializer(serializers.Serializer):
 # -- JWT SERIALIZERS --
 
 class CustomTokenPairSerializer(TokenObtainPairSerializer):
-    """Customizes login response — adds user data to token payload"""
+    """Customizes login response — accepts email instead of username, adds user data to token payload"""
+    email = serializers.EmailField()
+    username = serializers.CharField(required=False)  # Make username optional to avoid parent class errors
+    
+    def validate(self, attrs):
+        # remove the username field requirement since we're using email
+        if 'username' not in attrs:
+            attrs['username'] = attrs.get('email')  # Use email as username internally
+        return super().validate(attrs)
+    
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
