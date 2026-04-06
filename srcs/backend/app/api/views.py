@@ -19,9 +19,36 @@ DATA_SERVICE = "http://data-service:9000/api"
 # TODO ORDER GET, POST
 # TODO ORDER ID GET, PATCH
 
-# data-service proxy congiguration
-DATA_SERVICE = os.getenv("DATA_SERVICE_URL", "http://data-service:9000/api")
-INTERNAL_TOKEN = os.getenv("DATA_SERVICE_TOKEN", "dev-internal-token")
+# data-service proxy configuration
+def proxy_request(method, endpoint, data=None, params=None):
+    """ helper function: proxy to data-service with auth headers"""
+    url = f"{DATA_SERVICE_URL}{endpoint}"
+    headers = {"X-Internal-Token": DATA_SERVICE_TOKEN}
+
+    try:
+        resp = requests.request(
+            method=method,
+            url=url,
+            json=data,
+            params=params,
+            headers=headers,
+            timeout=5,
+        )
+
+        # handle JSON or empty responses
+        try:
+            content = resp.json()
+        except ValueError:  # Not JSON (204 No Content)
+            content = {"error": resp.reason, "status": resp.status_code}
+        
+        # return data-service response directly (including 4xx errors)
+        return Response(content, status=resp.status_code)
+
+    except requests.RequestException as e:
+        return Response(
+            {"error": "Data service unreachable", "details": str(e)},
+            status=status.HTTP_502_BAD_GATEWAY
+        )
 
 def proxy_request(method, endpoint, data=None, params=None):
     """ helper function: proxy to data-service with auth headers"""
@@ -37,8 +64,8 @@ def proxy_request(method, endpoint, data=None, params=None):
             headers=headers,
             timeout=5,
         )
-        resp.raise_for_status()     #error checking will raise exception if 4xx or 5xx code is returned
-        return Response(resp.json(), status=resp.status_code)   # convert data into json and return it to frontend with same status code
+    # this will return data-service response directly (including 4xx errors)
+    return Response(resp.json() if resp.content else {"error": resp.reason}, status=resp.status_code)
     except requests.RequestException as e:
         return Response(
             {"error": "Data service unreachable", "details": str(e)},
