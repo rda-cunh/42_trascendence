@@ -192,6 +192,6 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
 ]
 
-# Internal data-service proxy config
-DATA_SERVICE_URL = "http://data-service:9000/api"
-DATA_SERVICE_TOKEN = os.getenv("DATA_SERVICE_TOKEN", "dev-internal-token-change-in-prod")
+# Internal data-service proxy info config (from .env.example)
+DATA_SERVICE_URL = os.getenv("DATA_SERVICE_URL", "http://data-service:9000/api")
+DATA_SERVICE_TOKEN = os.getenv("DATA_SERVICE_TOKEN", "dev-internal-token")
