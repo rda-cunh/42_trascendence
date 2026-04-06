@@ -102,13 +102,24 @@ class auth_login(TokenObtainPairView):
         if user_resp.status_code != 200:
             return user_resp
         
+        # as jwt expects a django user object when issuing the token (when running ´RefreshToken.for_user(fake_user)´) whe need to transform our JSON info into an django object manually
+        # we start extracting user data from data-service
+        user_data = user_resp.data # {"id": 1, "name": "...", "role": "..."}
+
+        # we create a fake user object for jwt
+        class FakeUser:
+            def __init__(self, data):
+                self.id = data["id"]
+                self.is_active = data.get("status") == "Active"
+                self.email = data.get("email")
+        fake_user = FakeUser(user_data)
+
         # issue JWT tokens
-        user = user_resp.data  # {"id": 1, "name": "...", "role": "..."}
-        refresh = RefreshToken.for_user(user)  # simplejwt creates fake user
+        refresh = RefreshToken.for_user(fake_user)
         
         response = Response({
             "token": str(refresh.access_token),
-            "user": user,
+            "user": user_data,
         })
         
         # set httpOnly refresh cookie
