@@ -21,7 +21,9 @@ import os
 # data-service proxy configuration
 def proxy_request(method, endpoint, data=None, params=None):
     """ helper function: proxy to data-service with auth headers"""
-    url = f"{settings.DATA_SERVICE_URL}{endpoint}"
+    base_url = settings.DATA_SERVICE_URL.rstrip("/")                            # added this to ensure no double slashes in the URL
+    endpoint_path = endpoint if endpoint.startswith("/") else f"/{endpoint}"
+    url = f"{base_url}{endpoint_path}"
     headers = {"X-Internal-Token": settings.DATA_SERVICE_TOKEN}
 
     try:
@@ -187,10 +189,14 @@ class auth_password(APIView):
     def patch(self, request):
         serializer = serializers.ChangePasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        payload = {
+            "oldPass": serializer.validated_data["password"],
+            "newPass": serializer.validated_data["new_password"],
+        }
         return proxy_request(
             "PATCH",
             f"/auth/profile/password/{request.user.id}/",
-            serializer.validated_data
+            payload
         )
 
 # Product listings API
