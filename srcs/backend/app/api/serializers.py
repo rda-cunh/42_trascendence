@@ -55,7 +55,7 @@ class authPassPatch(serializers.Serializer):
 # /api/auth/address
 
 class authAdressPost(serializers.Serializer):
-    
+    pass
 
 
 # /api/listings/{id}
