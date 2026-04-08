@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 import pymysql
 import hashlib
 from database import get_db_dep
-from models.user import UserCreate, UserAddressCreate, UserUpdate, UserPasswordUpdate,UserAddressUpdate, UserResponse, UserAddressResponse
+from models.user import UserCreate, UserLogin, UserAddressCreate, UserUpdate, UserPasswordUpdate,UserAddressUpdate, UserResponse, UserAddressResponse
 
 router = APIRouter(prefix='/api/auth', tags=['Users'])
 
@@ -57,7 +57,19 @@ def delete_user(user_id: int, db=Depends(get_db_dep)):
 
 # @router.post('/login', response_model=200)
 # email and password
-
+@router.post('/login/', response_model=UserResponse, status_code=200)
+def login_user(user_in: UserLogin, db=Depends(get_db_dep)):
+	conn, cursor = db
+	cursor.execute(
+		'SELECT * FROM users WHERE email = %s',
+		(user_in.email,)
+	)
+	user = cursor.fetchone()
+	if not user or user['password_hash'] != hash_pw(user_in.password):
+		raise HTTPException(status_code=401, detail='Invalid credentials')
+	if user['status'] != 'Active':
+		raise HTTPException(status_code=403, detail='User is not active')
+	return UserResponse(**user)
 
 
 # @router.delete('/login', response_model=200)
