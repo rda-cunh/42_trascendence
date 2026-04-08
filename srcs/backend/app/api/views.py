@@ -2,11 +2,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
-from rest_framework.exceptions import APIException
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.exceptions import TokenError
 from django.conf import settings
+from django.contrib.auth import get_user_model
 
 from . import serializers
 import requests
@@ -24,7 +23,7 @@ def proxy_request(method, endpoint, data=None, params=None):
     base_url = settings.DATA_SERVICE_URL.rstrip("/")                            # added this to ensure no double slashes in the URL
     endpoint_path = endpoint if endpoint.startswith("/") else f"/{endpoint}"
     url = f"{base_url}{endpoint_path}"
-    headers = {"X-Internal-Token": settings.DATA_SERVICE_TOKEN}
+    headers = {"X-Internal-Token": settings.DATA_SERVICE_TOKEN}                 # to check with the team if we want to use this for internal auth between services
 
     try:
         resp = requests.request(
@@ -50,6 +49,58 @@ def proxy_request(method, endpoint, data=None, params=None):
             {"error": "Data service unreachable", "details": str(e)},
             status=status.HTTP_502_BAD_GATEWAY
         )
+
+# shadow user management for JWT token geneation
+def get_or_create_shadow_user(user_data):
+    """Create or update a minimal local Django user bound to external user id."""
+    
+    # get django user model, extract fields and normalize data
+    UserModel = get_user_model()
+    external_id = int(user_data["id"])
+    email = user_data.get("email") or ""
+    name = user_data.get("name") or ""
+    username_field = getattr(UserModel, "USERNAME_FIELD", "username")
+
+    # prepare default values for user creation
+    defaults = {}
+    if hasattr(UserModel, username_field):
+        defaults[username_field] = email or f"ext_{external_id}"
+    if hasattr(UserModel, "email"):
+        defaults["email"] = email
+    if hasattr(UserModel, "first_name"):
+        defaults["first_name"] = name
+
+    # try to get user by external_id (stored in pk) or create if does not exist
+    user, created = UserModel.objects.get_or_create(pk=external_id, defaults=defaults)
+
+    # track for modifications and if new user set unusable password to prevent local login
+    dirty = False
+    if created and hasattr(user, "set_unusable_password"):
+        user.set_unusable_password()
+        dirty = True
+
+    # sync username fields with values from data-service and ensure user is active
+    if hasattr(UserModel, username_field):
+        expected_username = email or f"ext_{external_id}"
+        if getattr(user, username_field, None) != expected_username:
+            setattr(user, username_field, expected_username)
+            dirty = True
+    if hasattr(user, "email") and user.email != email:
+        user.email = email
+        dirty = True
+    if hasattr(user, "first_name") and user.first_name != name:
+        user.first_name = name
+        dirty = True
+    if hasattr(user, "is_active") and not user.is_active:
+        user.is_active = True
+        dirty = True
+
+    # save if anything was changed
+    if dirty:
+        user.save()
+
+    #return the local user object for jwt generation 
+    return user
 
 # --- AUTH REGISTRATION ---
 class auth_register(APIView):
@@ -84,21 +135,20 @@ class auth_login(APIView):
         # extract user data from data-service response
         user_data = user_resp.data # {"id": 1, "name": "...", "status": "Active", ...}
 
-        # create a fake user object for jwt token generation
-        class FakeUser:
-            def __init__(self, data):
-                self.id = data["id"]
-                self.is_active = data.get("status") == "Active"
-                self.email = data.get("email")
-        fake_user = FakeUser(user_data)
-
-        # issue JWT tokens using simplejwt
-        refresh = RefreshToken.for_user(fake_user)
+        # create/get shadow user so SimpleJWT can use the djanfo user model
+        shadow_user = get_or_create_shadow_user(user_data)
+        refresh = RefreshToken.for_user(shadow_user)
+        refresh['external_user_id'] = str(user_data.get('id'))
+        refresh['name'] = user_data.get('name')
+        refresh['email'] = user_data.get('email')
+        refresh['role'] = user_data.get('role')
         
         # customize token claims to include user data
         access_token = refresh.access_token
+        access_token['external_user_id'] = str(user_data.get('id'))
         access_token['name'] = user_data.get('name')
-        access_token['user_id'] = user_data.get('id')
+        access_token['email'] = user_data.get('email')
+        access_token['role'] = user_data.get('role')
         
         response = Response({
             "access": str(access_token),

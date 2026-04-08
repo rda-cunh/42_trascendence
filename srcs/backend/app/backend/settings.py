@@ -125,8 +125,6 @@ SIMPLE_JWT = {
         # fields in the token payload that identify the user (default is 'user_id' but we can change it if needed)
         'USER_ID_FIELD': 'id',
         'USER_ID_CLAIM': 'user_id',
-        # custom serializer that adds extra fields (role, name) to the token payload
-        'TOKEN_OBTAIN_PAIR_SERIALIZER': 'api.serializers.CustomTokenPairSerializer',
 }
 
 # Password validation
