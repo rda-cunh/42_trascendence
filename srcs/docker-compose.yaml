@@ -5,3 +5,7 @@ include:
   - ./database/docker-compose.yaml
   - ./backend/docker-compose.yaml
   - ./frontend/docker-compose${FRONTEND_MODE:+-${FRONTEND_MODE}}.yaml
+  - ./pki/docker-compose.yaml
+
+volumes:
+  certs_data:
