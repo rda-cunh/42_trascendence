@@ -1,0 +1,13 @@
+services:
+  pki-init:
+    image: alpine:latest
+    container_name: pki-init
+    environment:
+      - CA_CRT_NAME=${CA_CRT_NAME:-ca.crt}
+      - CA_KEY_NAME=${CA_KEY_NAME:-ca.key}
+      - INT_CRT_NAME=${INT_CRT_NAME:-internal.crt}
+      - INT_KEY_NAME=${INT_KEY_NAME:-internal.key}
+    volumes:
+      - certs_data:/certs
+      - ./scripts/gen-certs.sh:/scripts/gen-certs.sh:ro
+    command: /bin/sh -c "apk add --no-cache openssl && sh /scripts/gen-certs.sh"

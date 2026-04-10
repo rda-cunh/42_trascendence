@@ -24,8 +24,5 @@ FROM nginx:alpine
 # Copy the compiled static files from the 'builder' stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Expose port 80 internally
-EXPOSE 80
-
 # Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
