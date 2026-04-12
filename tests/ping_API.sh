@@ -4,6 +4,9 @@ set -e
 
 mkdir -p ping_tests 
 
+#OBS currently unstable testing as proper AUTH is necessary for further testing.
+#Should probably use admin account as a way to quickly check for stuff
+
 LOGIN_RESPONSE=$(curl -sS --insecure \
 	-X POST "https://127.0.0.1/api/auth/login/" \
 	-H "Content-Type: application/json" \

@@ -4,6 +4,12 @@ set -e
 
 mkdir -p user_tests
 
+# OBS.: One can extract status code from curl with curl -w
+# may want to use that to check for expected status
+# example of how it would work bellow
+# HTTP_CODE=$(curl -sS --insecure -o out.json -w "%{http_code}" ...)
+#echo "$HTTP_CODE" > out.status
+
 CURL="curl --insecure -X"
 METHOD=("GET" "DELETE" "POST" "PATCH")
 HEADER="Content-Type: application/json"
