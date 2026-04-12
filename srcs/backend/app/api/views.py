@@ -253,115 +253,64 @@ class auth_password(APIView):
 
 class listing_id(APIView):
     def get(self, request, id):
-        # serializer = listing_id_get(data=request.data, partial=true)
-        # serializer.is_valid(raise_exception=true)
-        try:
-            upstream = requests.get(
-                    f"{DATA_SERVICE}/listings/{id}/",
-                    request.data,
-                    timeout=5,
-            )
-            return Response(upstream.json(), status=upstream.status_code)
-        except requests.RequestException as e:
-            return Response({"error": "Data service unreachable",
-                             "details": str(e)},
-                            status=status.HTTP_502_BAD_GATEWAY)
+        return proxy_request("GET", f"/listings/{id}/")
 
     def patch(self, request, id):
         serializer = serializers.listingIdPatch(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-
-        try:
-            upstream = requests.patch(
-                    f"{DATA_SERVICE}/listings/{id}",
-                    json=serializer.validated_data,
-                    timeout=5,
-            )
-            return Response(upstream.json(), status=upstream.status_code)
-        except requests.RequestException as e:
-            return Response({"error": "Data service unreachable",
-                             "details": str(e)},
-                            status=status.HTTP_502_BAD_GATEWAY)
+        return proxy_request("PATCH", f"/listings/{id}", serializer.validated_data)
 
     def delete(self, request, id):
         # TODO add authentication verification and provide id to data-service
-        # serializer = serializers.listingIdPatch(data=request.data, partial=True)
-        # serializer.is_valid(raise_exception=True)
-
-        try:
-            upstream = requests.patch(
-                    f"{DATA_SERVICE}/listings/{id}",
-                    request.data,
-                    timeout=5,
-            )
-            return Response(upstream.json(), status=upstream.status_code)
-        except requests.RequestException as e:
-            return Response({"error": "Data service unreachable",
-                             "details": str(e)},
-                            status=status.HTTP_502_BAD_GATEWAY)
+        return proxy_request("DELETE", f"/listings/{id}")
 
 
 class listing_full(APIView):
     def post(self, request):
-        # serializer = listingsPost(data=request.data, partial=true)
-        # serializer.is_valid(raise_exception=true)
-        try:
-            upstream = requests.post(
-                    f"{DATA_SERVICE}/listings/",
-                    request.data,
-                    timeout=5,
-            )
-            return Response(upstream.json(), status=upstream.status_code)
-        except requests.RequestException as e:
-            return Response({"error": "Data service unreachable",
-                             "details": str(e)},
-                            status=status.HTTP_502_BAD_GATEWAY)
+        return proxy_request("POST", "/listings/", request.data)
 
     def get(self, request):
-
-        data = [
-                {
-                    "product_id": 1,
-                    "name": "Infinity shader",
-                    "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla mauris sed nibh scelerisque, ultrices ornare velit aliquam. Cras semper neque nec metus suscipit scelerisque. Nulla in lorem facilisis, efficitur libero nec, pellentesque eros. Aliquam at tortor odio. Nam pretium lobortis leo, vitae sodales eros sagittis fringilla. Sed ligula mauris, congue in finibus non, vulputate a neque. Nunc eleifend ex urna, id laoreet sapien aliquam eget. Donec lorem neque, efficitur et viverra eget, auctor sit amet nisl. Nulla sodales, nisl sit amet pharetra posuere, mi lorem cursus erat, sed ultricies quam urna a magna. Praesent tincidunt ligula in arcu condimentum lobortis. Nunc rhoncus lobortis nibh sit amet venenatis. Fusce eget cursus tellus. Proin molestie dolor eget nisl faucibus iaculis vel imperdiet tellus. Integer vel ligula sit amet lacus ornare facilisis vel et ipsum. Ut laoreet ipsum purus, sit amet posuere sapien eleifend et. In non felis a libero tempor vestibulum.",
-                    "price": 19.99,
-                    "currency": "EUR",
-                    "status": "active",
-                    },
-                {
-                    "product_id": 2,
-                    "name": "Erik shader",
-                    "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla mauris sed nibh scelerisque, ultrices ornare velit aliquam. Cras semper neque nec metus suscipit scelerisque. Nulla in lorem facilisis, efficitur libero nec, pellentesque eros. Aliquam at tortor odio. Nam pretium lobortis leo, vitae sodales eros sagittis fringilla. Sed ligula mauris, congue in finibus non, vulputate a neque. Nunc eleifend ex urna, id laoreet sapien aliquam eget. Donec lorem neque, efficitur et viverra eget, auctor sit amet nisl. Nulla sodales, nisl sit amet pharetra posuere, mi lorem cursus erat, sed ultricies quam urna a magna. Praesent tincidunt ligula in arcu condimentum lobortis. Nunc rhoncus lobortis nibh sit amet venenatis. Fusce eget cursus tellus. Proin molestie dolor eget nisl faucibus iaculis vel imperdiet tellus. Integer vel ligula sit amet lacus ornare facilisis vel et ipsum. Ut laoreet ipsum purus, sit amet posuere sapien eleifend et. In non felis a libero tempor vestibulum.",
-                    "price": 19.99,
-                    "currency": "EUR",
-                    "status": "active",
-                    },
-                {
-                    "product_id": 3,
-                    "name": "Rainbow shader",
-                    "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla mauris sed nibh scelerisque, ultrices ornare velit aliquam. Cras semper neque nec metus suscipit scelerisque. Nulla in lorem facilisis, efficitur libero nec, pellentesque eros. Aliquam at tortor odio. Nam pretium lobortis leo, vitae sodales eros sagittis fringilla. Sed ligula mauris, congue in finibus non, vulputate a neque. Nunc eleifend ex urna, id laoreet sapien aliquam eget. Donec lorem neque, efficitur et viverra eget, auctor sit amet nisl. Nulla sodales, nisl sit amet pharetra posuere, mi lorem cursus erat, sed ultricies quam urna a magna. Praesent tincidunt ligula in arcu condimentum lobortis. Nunc rhoncus lobortis nibh sit amet venenatis. Fusce eget cursus tellus. Proin molestie dolor eget nisl faucibus iaculis vel imperdiet tellus. Integer vel ligula sit amet lacus ornare facilisis vel et ipsum. Ut laoreet ipsum purus, sit amet posuere sapien eleifend et. In non felis a libero tempor vestibulum.",
-                    "price": 19.99,
-                    "currency": "EUR",
-                    "status": "active",
-                    },
-                {
-                    "product_id": 4,
-                    "name": "Punk shader",
-                    "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla mauris sed nibh scelerisque, ultrices ornare velit aliquam. Cras semper neque nec metus suscipit scelerisque. Nulla in lorem facilisis, efficitur libero nec, pellentesque eros. Aliquam at tortor odio. Nam pretium lobortis leo, vitae sodales eros sagittis fringilla. Sed ligula mauris, congue in finibus non, vulputate a neque. Nunc eleifend ex urna, id laoreet sapien aliquam eget. Donec lorem neque, efficitur et viverra eget, auctor sit amet nisl. Nulla sodales, nisl sit amet pharetra posuere, mi lorem cursus erat, sed ultricies quam urna a magna. Praesent tincidunt ligula in arcu condimentum lobortis. Nunc rhoncus lobortis nibh sit amet venenatis. Fusce eget cursus tellus. Proin molestie dolor eget nisl faucibus iaculis vel imperdiet tellus. Integer vel ligula sit amet lacus ornare facilisis vel et ipsum. Ut laoreet ipsum purus, sit amet posuere sapien eleifend et. In non felis a libero tempor vestibulum.",
-                    "price": 19.99,
-                    "currency": "EUR",
-                    "status": "active",
-                    },
-                ]
-        return Response({"items": len(data), "results": data})
+        return proxy_request("GET", "/listings/")
 
 
-# uuid4 from fastAPI
+class listings_review(APIView):
+    def post(self, request, product_id):
+        return proxy_request("POST", f"/listings/{product_id}/review/")
 
-# def get_permission(self):
-#     if self.request.method in ["POST"]:
-#         return [IsAuthenticated()]
-#     return [AllowAny()]
+    def get(self, request, product_id):
+        return proxy_request("GET", f"/listings/{product_id}/review/")
+
+    def patch(self, request, product_id, review_id):
+        return proxy_request("PATCH", f"/listings/{product_id}/review/{review_id}/")
+
+
+class seller_id(APIView):
+    def get(self, request, id):
+        return proxy_request("GET", f"/listings/seller/{id}/")
+
+
+class seller_product(APIView):
+    def get(self, request, product_id):
+        return proxy_request("GET", f"/listings/seller/{product_id}/")
+
+
+class listings_image(APIView):
+    def post(self, request, product_id):
+        return proxy_request("POST", f"/listings/{product_id}/images/")
+
+    def get(self, request, product_id):
+        return proxy_request("GET", f"/listings/{product_id}/images/")
+
+
+class listings_image_id(APIView):
+    def get(self, request, product_id, image_id):
+        return proxy_request("GET", f"/listings/{product_id}/images/{image_id}/")
+
+    def delete(self, request, product_id, image_id):
+        return proxy_request("DELETE", f"/listings/{product_id}/images/{image_id}/")
+
+
+# orders API
 
 class order_create(APIView):
 
@@ -385,20 +334,7 @@ class order_create(APIView):
     def post(self, request):
         # this API should have JWT_STRING and list of items [id] and quantatity
         # should also have billing address and name
-        # serializer = serializers.orderIdPatch(data=request.data, partial=True)
-        # serializer.is_valid(raise_exception=True)
-
-        try:
-            upstream = requests.post(
-                    f"{DATA_SERVICE}/orders/",
-                    request.data,
-                    timeout=5,
-            )
-            return Response(upstream.json(), status=upstream.status_code)
-        except requests.RequestException as e:
-            return Response({"error": "Data service unreachable",
-                             "details": str(e)},
-                            status=status.HTTP_502_BAD_GATEWAY)
+        return proxy_request("POST", "/orders/", request.data)
 
 
 class order_id(APIView):
@@ -417,22 +353,33 @@ class order_id(APIView):
         return Response(data)
 
     def patch(self, request, id):
-        # serializer = serializers.orderIdPatch(data=request.data, partial=True)
-        # serializer.is_valid(raise_exception=True)
-        # payload = dict(serializer.validated_data)
-        # payload["updated_by"] = request.user.id
+        return proxy_request("PATCH", f"/orders/{id}", request.data)
 
-        try:
-            upstream = requests.patch(
-                    f"{DATA_SERVICE}/orders/{id}",
-                    request.data,
-                    timeout=5,
-            )
-            return Response(upstream.json(), status=upstream.status_code)
-        except requests.RequestException as e:
-            return Response({"error": "Data service unreachable",
-                             "details": str(e)},
-                            status=status.HTTP_502_BAD_GATEWAY)
+
+class order_buyer_id(APIView):
+    def get(self, request, id):
+        return proxy_request("GET", f"/orders/buyer/{id}/")
+
+
+class payment_id(APIView):
+    def get(self, request, order_id):
+        return proxy_request("GET", f"/orders/{order_id}/payment/")
+
+    def post(self, request, order_id):
+        return proxy_request("POST", f"/orders/{order_id}/payment/", request.data)
+
+    def patch(self, request, order_id):
+        return proxy_request("PATCH", f"/orders/{order_id}/payment/", request.data)
+
+    def delete(self, request, order_id):
+        return proxy_request("DELETE", f"/orders/{order_id}/payment/")
+
+
+# PUBLIC APIs
+
+class user_list(APIView):
+    def get(self, request):
+        return proxy_request("GET", "/users/")
 
 
 # USER API interfaces
@@ -440,15 +387,4 @@ class order_id(APIView):
 
 class user_id(APIView):
     def get(self, request, id):
-        try:
-            upstream = requests.get(
-                    f"{DATA_SERVICE}/users/{id}/",
-                    request.data,
-                    timeout=5,
-            ) # this works as intended and I can perfectly communicate with data-service
-            # upstream.raise_for_status() # will go to exception in case of error code
-            return Response(upstream.json(), status=upstream.status_code)
-        except requests.RequestException as e:
-            return Response({"error": "Data service unreachable",
-                             "details": str(e)},
-                            status=status.HTTP_502_BAD_GATEWAY)
+        return proxy_request("GET", f"/users/{id}/")
