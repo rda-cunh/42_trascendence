@@ -26,7 +26,7 @@ urlpatterns = [
         path("listings/<int:product_id>/images/<int:id>/", listings_image_id.as_view()),
         path("listings/<int:product_id>/images/", listings_image.as_view()),
         path("listings/<int:product_id>/review/", listings_review.as_view()),
-        path("listings/<int:product_id>/review/<int:review_id>/", listings_review.as_view()),
+        path("listings/<int:product_id>/review/<int:review_id>/", review_id.as_view()),
         # auth paths
         path("auth/register/", auth_register.as_view()),
         path("auth/register/<int:id>/", auth_register.as_view()),

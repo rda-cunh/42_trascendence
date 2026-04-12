@@ -202,17 +202,20 @@ class listings_review(APIView):
     def get(self, request, product_id):
         return raiseForUpstream("GET", f"listings/{product_id}/review/")
 
-    def patch(self, request, product_id, review_id):
-        # serializer = listingsPost(data=request.data, partial=True)
-        # serializer.is_valid(raise_exception=True)
 
-        return raiseForUpstream("PATCH", f"listings/{product_id}/review/{review_id}/")
+class review_id(APIView):
 
     def patch(self, request, product_id, review_id):
         # serializer = listingsPost(data=request.data, partial=True)
         # serializer.is_valid(raise_exception=True)
 
         return raiseForUpstream("PATCH", f"listings/{product_id}/review/{review_id}/")
+
+    def delete(self, request, product_id, review_id):
+        # serializer = listingsPost(data=request.data, partial=True)
+        # serializer.is_valid(raise_exception=True)
+
+        return raiseForUpstream("DELETE", f"listings/{product_id}/review/{review_id}/")
 
 # orders API
 
