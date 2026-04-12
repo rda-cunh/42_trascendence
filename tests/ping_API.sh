@@ -4,17 +4,23 @@ set -e
 
 mkdir -p ping_tests 
 
+LOGIN_RESPONSE=$(curl -sS --insecure \
+	-X POST "https://127.0.0.1/api/auth/login/" \
+	-H "Content-Type: application/json" \
+	-d '{"email":"admin@example.com","password":"securepass1"}')
+TOKEN=$(echo "$LOGIN_RESPONSE" | jq -r '.access // .token')
 CURL="curl --insecure -X"
 METHOD=("GET" "DELETE" "POST" "PATCH")
 DOMAIN="https://127.0.0.1/api/"
 DIR="ping_tests/"
+HEADER="Authorization: Bearer $Token"
 
 run_test(){
 	local endpoint=$2
 	local output_file=$3
 	local method=${METHOD[$1]}
 	echo -e "\e[1;31m/api/${endpoint} - ${method}\e[0m"
-	${CURL} ${method} ${DOMAIN}${endpoint} > ${DIR}${output_file}.html
+	${CURL} ${method} ${DOMAIN}${endpoint} -H "${HEADER}" -d "${body}" > ${DIR}${output_file}.json
 	sleep .8
 }
 # .5 sleep added for rate limiting
@@ -89,7 +95,7 @@ run_test 1 "auth/login/" "auth_login_delete"
 
 run_test 0 "auth/profile/1/" "auth_profile_get"
 run_test 3 "auth/profile/1/" "auth_profile_patch"
-run_test 2 "auth/profile/1/" "auth_profile_delete"
+run_test 1 "auth/profile/1/" "auth_profile_delete"
 
 # auth/profile/password/
 
@@ -98,7 +104,7 @@ run_test 3 "auth/profile/password/1/" "auth_password_patch"
 # auth/profile/address/
 
 run_test 0 "auth/profile/address/1/" "auth_address_get"
-run_test 1 "auth/profile/address/1/" "auth_address_delete"
+run_test 1 "auth/profile/address/1/" "auth_address_post"
 run_test 3 "auth/profile/address/1/" "auth_address_patch"
 run_test 2 "auth/profile/address/1/" "auth_address_delete"
 
