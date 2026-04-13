@@ -147,7 +147,7 @@ database-restore:
 	echo "$$files"; \
 	echo ""; \
 	read -p "Backup file: " file; \
-	fullpath="$$DATABASE_PATH/db/backup/$$file"; \
+	fullpath="$(DATABASE_PATH)/db/backup/$$file"; \
 	if [ ! -f "$$fullpath" ]; then \
 		echo "File doesn't exists: $$file"; \
 		exit 1; \
