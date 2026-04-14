@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.urls import path
 from .views import listing_id, listing_full
-from .views import user_id, auth_register, auth_login, auth_logout, auth_refresh, auth_profile, auth_password
+from .views import user_list, user_id, auth_register, auth_login, auth_logout, auth_refresh, auth_profile, auth_password
 from .views import order_create, order_id
 
 urlpatterns = [
@@ -27,6 +27,9 @@ urlpatterns = [
         path("auth/refresh/", auth_refresh.as_view()),
         path("auth/profile/", auth_profile.as_view()),
         path("auth/password/",  auth_password.as_view()),
+
+        path("users/", user_list.as_view()),
+        path("users/<int:id>/", user_id.as_view()),
 
         path("listings/<int:id>/", listing_id.as_view()),
         path("listings/", listing_full.as_view()),
