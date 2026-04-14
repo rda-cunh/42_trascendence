@@ -39,20 +39,16 @@ class UserResponse(UserBase):
 	model_config = {'from_attributes': True}
 
 class UserAddressCreate(BaseModel):
-	label:		str
 	street:		str
 	number:		str
-	complement:	str
 	city:		str
 	state:		str
 	postal_code:	str
 	country:	str
 
 class UserAddressUpdate(BaseModel):
-	label:		Optional[str] = None
 	street:		Optional[str] = None
 	number:		Optional[str] = None
-	complement:	Optional[str] = None
 	city:		Optional[str] = None
 	state:		Optional[str] = None
 	postal_code:	Optional[str] = None
@@ -60,10 +56,8 @@ class UserAddressUpdate(BaseModel):
 
 class UserAddressResponse(BaseModel):
 	id:			int
-	label:		str
 	street:		str
 	number:		str
-	complement:	str
 	city:		str
 	state:		str
 	postal_code:	str

@@ -161,11 +161,11 @@ def create_user_address(user_id: int, address_in: UserAddressCreate, db=Depends(
 
 	cursor.execute(
 		'''
-		INSERT INTO users_address (users_id, label, street, number, complement, city, state, postal_code, country)
-		VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+		INSERT INTO users_address (users_id, street, number, city, state, postal_code, country)
+		VALUES (%s, %s, %s, %s, %s, %s, %s)
 		''',
-		(user_id, address_in.label, address_in.street, address_in.number, address_in.complement,
-		address_in.city, address_in.state, address_in.postal_code, address_in.country,)
+		(user_id, address_in.street, address_in.number, address_in.city,
+   		address_in.state, address_in.postal_code, address_in.country,)
 	)
 	new_id = conn.insert_id()
 	cursor.execute('SELECT * FROM users_address WHERE id = %s', (new_id))

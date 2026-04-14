@@ -61,10 +61,8 @@ DROP TABLE IF EXISTS `users_address`;
 CREATE TABLE `users_address` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `users_id` bigint unsigned NOT NULL,
-  `label` varchar(50) DEFAULT NULL,
   `street` varchar(255) NOT NULL,
   `number` varchar(255) DEFAULT NULL,
-  `complement` varchar(255) DEFAULT NULL,
   `city` varchar(255) NOT NULL,
   `state` varchar(255) NOT NULL,
   `postal_code` varchar(255) NOT NULL,

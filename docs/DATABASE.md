@@ -175,10 +175,8 @@ nothing
 curl -X POST "http://data-service:9000/api/users/{user_id}/address" \
 -H "Content-Type: application/json" \
 -d '{
-  "label": "Home",
   "street": "Rua das Flores",
   "number": "123",
-  "complement": "Apt 4B",
   "city": "Porto",
   "state": "Porto",
   "postal_code": "4000-001",
@@ -189,10 +187,8 @@ curl -X POST "http://data-service:9000/api/users/{user_id}/address" \
 ```
 {
 "id":1,
-"label":"Home",
 "street":"Rua das Flores",
 "number":"123",
-"complement":"Apt 4B",
 "city":"Porto",
 "state":"Porto",
 "postal_code":"4000-001",
@@ -215,10 +211,8 @@ curl -X GET http://data-service:9000/api/users/{user_id}/address \
 ```
 {
 "id":1,
-"label":"Home",
 "street":"Rua das Flores",
 "number":"123",
-"complement":"Apt 4B",
 "city":"Porto",
 "state":"Porto",
 "postal_code":"4000-001",
