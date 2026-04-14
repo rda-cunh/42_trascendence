@@ -339,18 +339,7 @@ class order_create(APIView):
 
 class order_id(APIView):
     def get(self, request, id):
-        # order id is needed, nothing else
-        data = {
-                "order_id": id, "status": "created", "currency": "EUR",
-                "total": 62.5, "items": [
-                    {"listing_id": 210, "title": "Mechanical Keyboard", "unit_price": 25.0,
-                     "quantity": 2},
-                    {"listing_id": 2, "title": "Keycap Set", "unit_price": 12.5, "quantity": 1},
-                    ]
-
-
-                }
-        return Response(data)
+        return proxy_request("GET", f"/orders/{id}/")
 
     def patch(self, request, id):
         return proxy_request("PATCH", f"/orders/{id}", request.data)
