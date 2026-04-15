@@ -65,7 +65,7 @@ class CustomTokenPairSerializer(TokenObtainPairSerializer):
 
 class listinsIdPatch(serializers.Serializer):
     product_name = serializers.CharField(allow_null=True, min_length=3, max_length=255, trim_whitespace=True)
-    slug = serializers.SlugField(allow_null=True)
+    slug = serializers.SlugField(allow_null=True, required=False)
     description = serializers.CharField(allow_null=True, min_length=3, required=False)
 
 

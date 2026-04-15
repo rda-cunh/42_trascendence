@@ -35,6 +35,10 @@ def proxy_request(method, endpoint, data=None, params=None):
             timeout=5,
         )
 
+        # special handling for 204 No Content or empty responses
+        if resp.status_code == 204 or not resp.content:
+            return (Response(status=resp.status_code))
+
         # handle JSON or empty responses
         try:
             content = resp.json()
@@ -319,17 +323,7 @@ class order_create(APIView):
     def get(self, request):
         # This API should have JWT_STRING, ?page=num&status=created
         # return a list or old orders
-        data = {
-                "page": 1, "page_size": 10, "total": 3,
-                 "items": [
-                     {"order_id": 5501, "status": "created", "total": 62.5,
-                      "currency": "EUR", "created_at": "2026-02-25T14:12:30Z"},
-                     {"order_id": 5498, "status": "shipped", "total": 25.0,
-                      "currency": "EUR",
-                      "created_at": "2026-02-20T09:05:11Z"},
-                     ],
-                }
-        return Response(data)
+        return proxy_request("GET", "/orders/")
 
     def post(self, request):
         # this API should have JWT_STRING and list of items [id] and quantatity

@@ -130,7 +130,7 @@ def update_user_password(user_id: int, user_in: UserPasswordUpdate, db=Depends(g
 @router.delete('/profile/{user_id}/', status_code=204)
 def deactivate_user(user_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
-	cursor.execute('SELECT * FROM users WHERE users_id = %s', (user_id, ))
+	cursor.execute('SELECT * FROM users WHERE id = %s', (user_id, ))
 	if not cursor.fetchone():
 		raise HTTPException(status_code=404, detail='User not found')
 
