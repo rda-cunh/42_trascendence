@@ -6,7 +6,7 @@ from rest_framework.exceptions import APIException
 from . import serializers
 import requests
 
-DATA_SERVICE = "http://data-service:9000/api/"
+DATA_SERVICE = "https://data-service:9000/api/"
 
 # TODO AUTH PROFILE GET
 # TODO LISTING ID PATCH
