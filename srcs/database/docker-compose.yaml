@@ -13,11 +13,17 @@ services:
     volumes:
       - db_data:/var/lib/mysql
       - ./db/init:/docker-entrypoint-initdb.d
+      - certs_data:/certs:ro
     environment:
       MYSQL_ROOT_PASSWORD:  ${DB_ROOT_PASSWORD}
       MYSQL_DATABASE:       ${DB_NAME}
       MYSQL_USER:           ${DB_USER}
       MYSQL_PASSWORD:       ${DB_PASSWORD}
+    command:
+      - mysqld
+      - --ssl-ca=/certs/${CA_CRT_NAME:-ca.crt}
+      - --ssl-cert=/certs/${INT_CRT_NAME:-internal.crt}
+      - --ssl-key=/certs/${INT_KEY_NAME:-internal.key}
 
   data-service:
     build: ./data-service
