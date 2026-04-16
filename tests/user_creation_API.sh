@@ -34,7 +34,7 @@ run_post_test(){
 		-d "${body}" \
 		-o "${DIR}${output_file}.json" \
 		-w "%{http_code}" > "${DIR}${output_file}.status"
-	sleep 2
+	sleep 1
 }
 
 # Login helper (also captures headers and cookie so we can check the refresh_token)
@@ -51,7 +51,37 @@ run_login_test(){
 		-c "${DIR}${output_file}.cookies" \
 		-o "${DIR}${output_file}.json" \
 		-w "%{http_code}" > "${DIR}${output_file}.status"
-	sleep 2
+	sleep 1
+}
+
+# Helper to test refresh tokens with cookie jar (cookie strored) | It uses cookie file from login to test valid refresh
+run_refresh_with_cookie_file(){
+	local output_file=$1
+	local cookie_file=$2
+
+	echo -e "\e[1;34m/api/${REFRESH_ENDPOINT} - POST (cookie file)\e[0m"
+	curl --silent --show-error --insecure \
+		-X POST "${DOMAIN}${REFRESH_ENDPOINT}" \
+		-H "${HEADER}" \
+		-b "${cookie_file}" \
+		-o "${DIR}${output_file}.json" \
+		-w "%{http_code}" > "${DIR}${output_file}.status"
+	sleep 1
+}
+
+# Helper to test refresh tokens with cookie header (directly set cookie value) | It allows testing invalid cookies
+run_refresh_with_cookie_header(){
+	local output_file=$1
+	local cookie_value=$2
+
+	echo -e "\e[1;34m/api/${REFRESH_ENDPOINT} - POST (raw cookie)\e[0m"
+	curl --silent --show-error --insecure \
+		-X POST "${DOMAIN}${REFRESH_ENDPOINT}" \
+		-H "${HEADER}" \
+		-H "Cookie: refresh_token=${cookie_value}" \
+		-o "${DIR}${output_file}.json" \
+		-w "%{http_code}" > "${DIR}${output_file}.status"
+	sleep 1
 }
 
 
@@ -100,5 +130,14 @@ run_login_test "login_valid" "${LOGIN_VALID_PAYLOAD}"
 
 # Login — wrong password
 run_login_test "login_wrong_password" "${LOGIN_WRONG_PASSWORD_PAYLOAD}"
+
+# Refresh — test with a valid cookie issues new access token (check refresh_valid_cookie.json (new access token) + .status
+run_refresh_with_cookie_file "refresh_valid_cookie" "${DIR}login_valid.cookies"
+
+# Refresh — missing cookie (must return 401 error)
+run_post_test "${REFRESH_ENDPOINT}" "refresh_missing_cookie" "{}"
+
+# Refresh — invalid cookie (must return 401 error)
+run_refresh_with_cookie_header "refresh_invalid_cookie" "invalid.refresh.token"
 
 echo "done!"
