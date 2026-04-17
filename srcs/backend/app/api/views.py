@@ -197,20 +197,32 @@ class auth_refresh(APIView):
         if not refresh_token:
             return Response({"detail": "No refresh token."}, status=401)
         
+        UserModel = get_user_model()
         try:
             token = RefreshToken(refresh_token)     # validate and use refresh token
-            response = Response({"token": str(token.access_token)})    # new access token
+            user = UserModel.objects.get(pk=token["user_id"])
+            new_refresh = RefreshToken.for_user(user)
+
+            # keep custom claims aligned between refresh/access pairs
+            for claim in ("external_user_id", "name", "email", "role"):
+                if claim in token:
+                    new_refresh[claim] = token[claim]
+
+            response = Response({"access": str(new_refresh.access_token)})    # new access token
             response.set_cookie(            # new refresh token
                 key="refresh_token",
-                value=str(token), 
+                value=str(new_refresh),
                 httponly=True,
                 secure=True,
                 samesite="Strict",
                 max_age=7*24*3600,
                 path="/api/auth/",
             )
+            
+            # invalidate old refresh token after issuing a new one
+            token.blacklist()
             return response
-        except TokenError:
+        except (TokenError, UserModel.DoesNotExist):
             return Response({"detail": "Invalid refresh token."}, status=401)
 
 # --- AUTH PROFILE (take user_id from JWT)---
