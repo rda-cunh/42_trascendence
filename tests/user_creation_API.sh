@@ -9,6 +9,7 @@ METHOD=("GET" "DELETE" "POST" "PATCH")
 HEADER="Content-Type: application/json"
 DOMAIN="https://127.0.0.1/api/"
 DIR="user_tests/"
+REFRESH_ENDPOINT="auth/refresh/"
 
 run_test(){
 	local endpoint=$2
