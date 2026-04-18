@@ -1,3 +1,5 @@
+# I SUGEST TO DELETE THIS BELLOW as Django does not own the database and we will not use ORM
+
 from django.db import models
 
 
