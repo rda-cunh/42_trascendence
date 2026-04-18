@@ -62,34 +62,48 @@ export function Chat() {
     d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Support Chat</h1>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">Get help from our team</p>
+    <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
+      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+        <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">Support Chat</h1>
+        <p className="mb-6 text-gray-600 dark:text-gray-400">Get help from our team</p>
 
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col" style={{ height: "60vh" }}>
+        <div
+          className="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
+          style={{ height: "60vh" }}
+        >
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 space-y-4 overflow-y-auto p-4">
             {messages.map((msg) => (
-              <div key={msg.id} className={`flex gap-3 ${msg.sender === "user" ? "flex-row-reverse" : ""}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  msg.sender === "bot" ? "bg-purple-100 dark:bg-purple-900/30" : "bg-gray-100 dark:bg-gray-800"
-                }`}>
+              <div
+                key={msg.id}
+                className={`flex gap-3 ${msg.sender === "user" ? "flex-row-reverse" : ""}`}
+              >
+                <div
+                  className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${
+                    msg.sender === "bot"
+                      ? "bg-purple-100 dark:bg-purple-900/30"
+                      : "bg-gray-100 dark:bg-gray-800"
+                  }`}
+                >
                   {msg.sender === "bot" ? (
-                    <Bot className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                    <Bot className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                   ) : (
-                    <User className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                    <User className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                   )}
                 </div>
                 <div className={`max-w-[75%] ${msg.sender === "user" ? "text-right" : ""}`}>
-                  <div className={`inline-block px-4 py-2 rounded-2xl text-sm ${
-                    msg.sender === "user"
-                      ? "bg-purple-600 text-white rounded-br-md"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-bl-md"
-                  }`}>
+                  <div
+                    className={`inline-block rounded-2xl px-4 py-2 text-sm ${
+                      msg.sender === "user"
+                        ? "rounded-br-md bg-purple-600 text-white"
+                        : "rounded-bl-md bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white"
+                    }`}
+                  >
                     {msg.text}
                   </div>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 px-1">{formatTime(msg.timestamp)}</p>
+                  <p className="mt-1 px-1 text-xs text-gray-400 dark:text-gray-500">
+                    {formatTime(msg.timestamp)}
+                  </p>
                 </div>
               </div>
             ))}
@@ -97,18 +111,27 @@ export function Chat() {
           </div>
 
           {/* Input */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-            <form onSubmit={(e) => { e.preventDefault(); sendMessage(); }} className="flex gap-3">
+          <div className="border-t border-gray-200 p-4 dark:border-gray-800">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                sendMessage();
+              }}
+              className="flex gap-3"
+            >
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Type a message..."
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               />
-              <button type="submit" disabled={!input.trim()}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white rounded-lg transition-colors">
-                <Send className="w-5 h-5" />
+              <button
+                type="submit"
+                disabled={!input.trim()}
+                className="rounded-lg bg-purple-600 px-4 py-2 text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
+              >
+                <Send className="h-5 w-5" />
               </button>
             </form>
           </div>

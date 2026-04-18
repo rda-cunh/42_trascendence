@@ -15,9 +15,29 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.urls import path
-from .views import *
+from .views import (
+    listing_id,
+    listing_full,
+    payment_id,
+    seller_product,
+    seller_id,
+    listings_image_id,
+    listings_image,
+    listings_review,
+    user_list,
+    user_id,
+    auth_register,
+    auth_login,
+    auth_logout,
+    auth_refresh,
+    auth_profile,
+    auth_password,
+    order_create,
+    order_id,
+)
 
 urlpatterns = [
+        
         # listing paths
         path("listings/<int:id>/", listing_id.as_view()),
         path("listings/", listing_full.as_view()),
@@ -26,21 +46,22 @@ urlpatterns = [
         path("listings/<int:product_id>/images/<int:id>/", listings_image_id.as_view()),
         path("listings/<int:product_id>/images/", listings_image.as_view()),
         path("listings/<int:product_id>/review/", listings_review.as_view()),
-        path("listings/<int:product_id>/review/<int:review_id>/", review_id.as_view()),
-        # auth paths
+        path("listings/<int:product_id>/review/<int:review_id>/", listings_review.as_view()),
+        
+        # auth [everything under /api/auth]
         path("auth/register/", auth_register.as_view()),
-        path("auth/register/<int:id>/", auth_register.as_view()),
         path("auth/login/", auth_login.as_view()),
-        path("auth/login/<int:id>/", auth_login.as_view()),
-        path("auth/profile/password/<int:id>/", auth_password.as_view()),
+        path("auth/logout/", auth_logout.as_view()),
+        path("auth/refresh/", auth_refresh.as_view()),
         path("auth/profile/", auth_profile.as_view()),
-        path("auth/profile/<int:id>/", auth_profile.as_view()),
-        path("auth/address/<int:id>", auth_address.as_view()),
-        # order path
+        path("auth/password/",  auth_password.as_view()),
+
+        # orders path
         path("orders/<int:id>/", order_id.as_view()),
         path("orders/", order_create.as_view()),
         path("payment/<int:order_id>/", payment_id.as_view()),
-        # public path
+
+        # user paths
         path("users/", user_list.as_view()),
         path("users/<int:id>/", user_id.as_view()),
 ]
