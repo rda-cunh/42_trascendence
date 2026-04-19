@@ -30,37 +30,40 @@ This is the comprehensive list of APIs for internal use and non public facing. A
 
 These endpoints are related to user creation, deletion, login and logout and profile/dashboard view.
 
-#### /api/auth/register/
+#### POST /api/auth/register/
+Creates a new user account.
+Body: { name, email, password }
+Returns: { user_id, access_token }
+Auth required: No
 
-- **Allowed methods**: POST, DELETE
+#### POST /api/auth/login/
+Issues JWT tokens. Access token in body, refresh token set as httpOnly cookie.
+Body: { email, password }
+Returns: { access_token, user: { id, name, email, role } }
+Auth required: No
 
-- POST: Creation of new user account
-  - post(self, request, username, email, password)
-  - **return**: on success, JWT and user_id are returned.
+#### POST /api/auth/logout/
+Blacklists the current refresh token and clears the cookie.
+Body: (none)
+Returns: { detail: "Logged out." }
+Auth required: Yes (Bearer header)
 
-- DELETE: Deletion of an existing user account
-  - delete(self, request, username, password, jwt_string)
-  - **return**: on success, confirmation message is sent.
+#### GET /api/auth/profile/
+Returns the authenticated user's full profile.
+Returns: { id, name, email, avatar_url, role, is_active }
+Auth required: Yes (Bearer header)
 
-#### /api/auth/login/
+#### DELETE /api/auth/profile/
+Permanently deletes the authenticated user's account.
+Body: { password }   [password asked for safety]
+Returns: { detail: "Account deleted." }
+Auth required: Yes (Bearer header)
 
-- **Allowed methods**: POST, DELETE
-
-- POST: create a new login session
-  - post(self, request, email, password)
-  - **return**: on success, JWT is returned.
-
-- DELETE: quits current active session
-  - delete(self, request, jwt_string)
-  - **return**: on success, confirmation message is sent.
-
-#### /api/auth/profile
-
-- **Allowed methods**: GET 
-
-- GET: Show current logged user's profile
-  - get(self, request, jwt_string)
-  - **return**: on success, return full profile detail.
+#### PATCH /api/auth/password/
+Changes the user's password.
+Body: { password, new_password }
+Returns: { detail: "Password updated." }
+Auth required: Yes (Bearer header)
 
 ### Listing
 

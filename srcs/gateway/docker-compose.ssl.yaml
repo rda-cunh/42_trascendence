@@ -6,12 +6,19 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      - CA_CRT_NAME=${CA_CRT_NAME:-ca.crt}
+      - ENVSUBST_VARS=CA_CRT_NAME
     volumes:
       - ./default.conf:/etc/nginx/conf.d/default.conf:ro
+      - certs_data:/certs:ro
     secrets:
       - ssl_cert
       - ssl_key
     restart: always
+    depends_on:
+      pki-init:
+        condition: service_completed_successfully
 
 secrets:
   ssl_cert:

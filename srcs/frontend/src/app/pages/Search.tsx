@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, Link } from "react-router";
+import { useSearchParams } from "react-router";
 import { ProductCard } from "../components/ProductCard";
 import { Listing, mockListings } from "../data/mockListings";
 import { Search, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
 
 export function SearchPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [category, setCategory] = useState(searchParams.get("category") || "All");
   const [minPrice, setMinPrice] = useState(searchParams.get("min") || "");
@@ -16,15 +16,23 @@ export function SearchPage() {
   const [page, setPage] = useState(1);
   const perPage = 8;
 
-  const categories = ["All", "3D Models", "2D Assets", "Shaders", "Textures", "VFX", "Audio", "UI/UX"];
+  const categories = [
+    "All",
+    "3D Models",
+    "2D Assets",
+    "Shaders",
+    "Textures",
+    "VFX",
+    "Audio",
+    "UI/UX",
+  ];
 
   useEffect(() => {
-    setIsLoading(true);
     fetch("/api/listings/")
       .then((res) => res.json())
       .then((data) => {
         if (data?.results) {
-          const apiListings: Listing[] = data.results.map((item: any) => ({
+          const apiListings: Listing[] = data.results.map((item: Record<string, unknown>) => ({
             id: String(item.product_id),
             title: item.name || "Untitled",
             price: item.price || 0,
@@ -48,7 +56,8 @@ export function SearchPage() {
   const filtered = listings
     .filter((l) => {
       const q = query.toLowerCase();
-      const matchesQuery = !q || l.title.toLowerCase().includes(q) || l.description.toLowerCase().includes(q);
+      const matchesQuery =
+        !q || l.title.toLowerCase().includes(q) || l.description.toLowerCase().includes(q);
       const matchesCat = category === "All" || l.category === category;
       const matchesMin = !minPrice || l.price >= parseFloat(minPrice);
       const matchesMax = !maxPrice || l.price <= parseFloat(maxPrice);
@@ -56,10 +65,14 @@ export function SearchPage() {
     })
     .sort((a, b) => {
       switch (sortBy) {
-        case "price-asc": return a.price - b.price;
-        case "price-desc": return b.price - a.price;
-        case "oldest": return new Date(a.postedDate).getTime() - new Date(b.postedDate).getTime();
-        default: return new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime();
+        case "price-asc":
+          return a.price - b.price;
+        case "price-desc":
+          return b.price - a.price;
+        case "oldest":
+          return new Date(a.postedDate).getTime() - new Date(b.postedDate).getTime();
+        default:
+          return new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime();
       }
     });
 
@@ -67,25 +80,31 @@ export function SearchPage() {
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Search Assets</h1>
+    <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <h1 className="mb-8 text-3xl font-bold text-gray-900 dark:text-white">Search Assets</h1>
 
         {/* Filters */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 mb-8">
-          <div className="flex flex-col md:flex-row gap-4 mb-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <div className="mb-8 rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="mb-4 flex flex-col gap-4 md:flex-row">
+            <div className="relative flex-1">
+              <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 value={query}
-                onChange={(e) => { setQuery(e.target.value); setPage(1); }}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setPage(1);
+                }}
                 placeholder="Search assets..."
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+                className="w-full rounded-lg border border-gray-300 bg-white py-3 pr-4 pl-10 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               />
             </div>
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            >
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
               <option value="price-asc">Price: Low to High</option>
@@ -93,68 +112,111 @@ export function SearchPage() {
             </select>
           </div>
 
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="mb-4 flex flex-wrap gap-2">
             {categories.map((c) => (
-              <button key={c} onClick={() => { setCategory(c); setPage(1); }}
-                className={`px-4 py-2 rounded-full text-sm transition-colors ${
+              <button
+                key={c}
+                onClick={() => {
+                  setCategory(c);
+                  setPage(1);
+                }}
+                className={`rounded-full px-4 py-2 text-sm transition-colors ${
                   category === c
                     ? "bg-purple-600 text-white"
-                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-                }`}>{c}</button>
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                }`}
+              >
+                {c}
+              </button>
             ))}
           </div>
 
           <div className="flex gap-4">
             <div>
-              <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Min Price</label>
-              <input type="number" value={minPrice} onChange={(e) => { setMinPrice(e.target.value); setPage(1); }}
-                placeholder="$0" min="0"
-                className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors" />
+              <label className="mb-1 block text-xs text-gray-500 dark:text-gray-400">
+                Min Price
+              </label>
+              <input
+                type="number"
+                value={minPrice}
+                onChange={(e) => {
+                  setMinPrice(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="$0"
+                min="0"
+                className="w-24 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              />
             </div>
             <div>
-              <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Max Price</label>
-              <input type="number" value={maxPrice} onChange={(e) => { setMaxPrice(e.target.value); setPage(1); }}
-                placeholder="∞" min="0"
-                className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors" />
+              <label className="mb-1 block text-xs text-gray-500 dark:text-gray-400">
+                Max Price
+              </label>
+              <input
+                type="number"
+                value={maxPrice}
+                onChange={(e) => {
+                  setMaxPrice(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="∞"
+                min="0"
+                className="w-24 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              />
             </div>
           </div>
         </div>
 
         {/* Results */}
-        <p className="text-gray-600 dark:text-gray-400 mb-4">{filtered.length} assets found</p>
+        <p className="mb-4 text-gray-600 dark:text-gray-400">{filtered.length} assets found</p>
 
         {isLoading ? (
-          <p className="text-center py-12 text-gray-500 dark:text-gray-400">Loading...</p>
+          <p className="py-12 text-center text-gray-500 dark:text-gray-400">Loading...</p>
         ) : paginated.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {paginated.map((l) => <ProductCard key={l.id} listing={l} />)}
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {paginated.map((l) => (
+                <ProductCard key={l.id} listing={l} />
+              ))}
             </div>
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-8">
-                <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
-                  className="p-2 rounded-lg border border-gray-300 dark:border-gray-700 disabled:opacity-50 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                  <ChevronLeft className="w-5 h-5" />
+              <div className="mt-8 flex items-center justify-center gap-2">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="rounded-lg border border-gray-300 p-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                >
+                  <ChevronLeft className="h-5 w-5" />
                 </button>
                 {Array.from({ length: totalPages }, (_, i) => (
-                  <button key={i + 1} onClick={() => setPage(i + 1)}
-                    className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
+                  <button
+                    key={i + 1}
+                    onClick={() => setPage(i + 1)}
+                    className={`h-10 w-10 rounded-lg text-sm font-medium transition-colors ${
                       page === i + 1
                         ? "bg-purple-600 text-white"
-                        : "border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-                    }`}>{i + 1}</button>
+                        : "border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
                 ))}
-                <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                  className="p-2 rounded-lg border border-gray-300 dark:border-gray-700 disabled:opacity-50 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                  <ChevronRight className="w-5 h-5" />
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="rounded-lg border border-gray-300 p-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                >
+                  <ChevronRight className="h-5 w-5" />
                 </button>
               </div>
             )}
           </>
         ) : (
-          <div className="text-center py-12">
-            <SlidersHorizontal className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400 text-lg">No assets match your filters.</p>
+          <div className="py-12 text-center">
+            <SlidersHorizontal className="mx-auto mb-4 h-16 w-16 text-gray-300 dark:text-gray-600" />
+            <p className="text-lg text-gray-500 dark:text-gray-400">
+              No assets match your filters.
+            </p>
           </div>
         )}
       </div>

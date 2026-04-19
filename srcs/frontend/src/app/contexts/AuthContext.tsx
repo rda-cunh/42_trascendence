@@ -1,5 +1,8 @@
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback } from "react";
 import { api } from "../lib/api";
+
+// Centralized auth service to simplify login/register logic
+/* eslint-disable react-refresh/only-export-components */
 
 interface User {
   id: string;
@@ -15,7 +18,12 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (data: { name: string; email: string; password: string; phone?: string }) => Promise<void>;
+  register: (data: {
+    name: string;
+    email: string;
+    password: string;
+    phone?: string;
+  }) => Promise<void>;
   logout: () => void;
   updateUser: (data: Partial<User>) => void;
 }
@@ -23,82 +31,75 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const storedToken = localStorage.getItem("auth_token");
+  const [user, setUser] = useState<User | null>(() => {
     const storedUser = localStorage.getItem("auth_user");
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
-  }, []);
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+  const [token, setToken] = useState<string | null>(() => {
+    return localStorage.getItem("auth_token");
+  });
+  const [isLoading] = useState(false);
 
   const login = useCallback(async (email: string, _password: string) => {
-    // Since data-service has no login route, simulate login with stored user or create a fake session
-    // Try the API first
     try {
+      // Try API login first
       const res = await api.login({ email, password: _password });
-      const fakeToken = `token_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      setToken(fakeToken);
+      const token = res.token || generateMockToken();
+
+      setToken(token);
       setUser(res.user);
-      localStorage.setItem("auth_token", fakeToken);
-      localStorage.setItem("auth_user", JSON.stringify(res.user));
-      return;
+      persistAuth(token, res.user);
     } catch {
-      // Fallback: check if there's a registered user in localStorage
-      const registeredUser = localStorage.getItem("registered_user");
-      if (registeredUser) {
-        const parsed = JSON.parse(registeredUser);
-        if (parsed.email === email) {
-          const fakeToken = `token_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-          setToken(fakeToken);
-          setUser(parsed);
-          localStorage.setItem("auth_token", fakeToken);
-          localStorage.setItem("auth_user", JSON.stringify(parsed));
-          return;
-        }
+      // Fallback to mock login for development
+      const mockUser = getMockUserByEmail(email);
+      if (mockUser) {
+        const token = generateMockToken();
+        setToken(token);
+        setUser(mockUser);
+        persistAuth(token, mockUser);
+      } else {
+        throw new Error("Invalid credentials. Please register first.");
       }
-      throw new Error("Invalid credentials. Please register first.");
     }
   }, []);
 
-  const register = useCallback(async (data: { name: string; email: string; password: string; phone?: string }) => {
-    try {
-      const res = await api.register(data);
-      const fakeToken = `token_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      const userData: User = {
-        id: res.user?.id || String(Date.now()),
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        role: "user",
-      };
-      localStorage.setItem("registered_user", JSON.stringify(userData));
-      localStorage.setItem("auth_token", fakeToken);
-      localStorage.setItem("auth_user", JSON.stringify(userData));
-      setToken(fakeToken);
-      setUser(userData);
-    } catch {
-      // If API fails, still create local user (data-service may not have register route)
-      const fakeToken = `token_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      const userData: User = {
-        id: String(Date.now()),
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        role: "user",
-      };
-      localStorage.setItem("registered_user", JSON.stringify(userData));
-      localStorage.setItem("auth_token", fakeToken);
-      localStorage.setItem("auth_user", JSON.stringify(userData));
-      setToken(fakeToken);
-      setUser(userData);
-    }
-  }, []);
+  const register = useCallback(
+    async (data: { name: string; email: string; password: string; phone?: string }) => {
+      try {
+        // Try API registration
+        const res = await api.register(data);
+        const token = res.token || generateMockToken();
+        const userData: User = {
+          id: res.user?.id || String(Date.now()),
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          role: "user",
+        };
+
+        setToken(token);
+        setUser(userData);
+        persistAuth(token, userData);
+        saveMockUser(userData);
+      } catch {
+        // Fallback to mock registration for development
+        const token = generateMockToken();
+        const userData: User = {
+          id: String(Date.now()),
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          role: "user",
+        };
+
+        setToken(token);
+        setUser(userData);
+        persistAuth(token, userData);
+        saveMockUser(userData);
+      }
+    },
+    []
+  );
 
   const logout = useCallback(() => {
     setToken(null);
@@ -129,4 +130,29 @@ export function useAuth() {
     throw new Error("useAuth must be used within AuthProvider");
   }
   return context;
+}
+
+// Helper functions for cleaner code
+function generateMockToken(): string {
+  return `token_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+}
+
+function persistAuth(token: string, user: User): void {
+  localStorage.setItem("auth_token", token);
+  localStorage.setItem("auth_user", JSON.stringify(user));
+}
+
+function saveMockUser(user: User): void {
+  localStorage.setItem("registered_user", JSON.stringify(user));
+}
+
+function getMockUserByEmail(email: string): User | null {
+  const registeredUser = localStorage.getItem("registered_user");
+  if (registeredUser) {
+    const parsed = JSON.parse(registeredUser);
+    if (parsed.email === email) {
+      return parsed;
+    }
+  }
+  return null;
 }
