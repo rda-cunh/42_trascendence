@@ -86,6 +86,41 @@ run_refresh_with_cookie_header(){
 }
 
 
+# Generic helper for JSON endpoints | if access_token is provided adds Authorization: Bearer <token>, otherwise if access_token is empty do not send Authorization header.
+run_auth_test(){
+	local method=$1
+	local endpoint=$2
+	local output_file=$3
+	local access_token=$4
+	local body=$5
+	local cookie_file=$6
+
+	echo -e "\e[1;34m/api/${endpoint} - ${method} (auth)\e[0m"
+
+	local curl_cmd=(
+		curl --silent --show-error --insecure
+		-X "${method}" "${DOMAIN}${endpoint}"
+		-H "${HEADER}"
+	)
+
+	if [ -n "${access_token}" ]; then
+		curl_cmd+=( -H "Authorization: Bearer ${access_token}" )
+	fi
+
+	if [ -n "${cookie_file}" ]; then
+		curl_cmd+=( -b "${cookie_file}" )
+	fi
+
+	if [ -n "${body}" ]; then
+		curl_cmd+=( -d "${body}" )
+	fi
+
+	"${curl_cmd[@]}" \
+		-o "${DIR}${output_file}.json" \
+		-w "%{http_code}" > "${DIR}${output_file}.status"
+	sleep 1
+}
+
 # Existing tests
 
 USER1='{"name": "Rda-cunh", "email": "rda@email.com", "password": "securepass1", "phone": "+351123456789"}'
@@ -140,5 +175,35 @@ run_post_test "${REFRESH_ENDPOINT}" "refresh_missing_cookie" "{}"
 
 # Refresh — invalid cookie (must return 401 error)
 run_refresh_with_cookie_header "refresh_invalid_cookie" "invalid.refresh.token"
+
+ACCESS_TOKEN=$(python3 -c "import json; print(json.load(open('${DIR}login_valid.json')).get('access',''))")
+
+# Logout — valid refresh token should be blacklisted and cookie cleared
+run_auth_test "POST" "auth/logout/" "logout_valid" "${ACCESS_TOKEN}" "{}" "${DIR}login_valid.cookies"
+
+# Logout — second logout with same refresh token should fail (token already blacklisted)
+run_auth_test "POST" "auth/logout/" "logout_second_same_token" "${ACCESS_TOKEN}" "{}" "${DIR}login_valid.cookies"
+
+# Profile GET — valid JWT returns user data
+run_auth_test "GET" "auth/profile/" "profile_get_valid_jwt" "${ACCESS_TOKEN}" "" ""
+
+# Profile GET — missing JWT returns 401
+run_auth_test "GET" "auth/profile/" "profile_get_missing_jwt" "" "" ""
+
+# Profile PATCH — valid fields update correctly
+PROFILE_PATCH_VALID_PAYLOAD="{\"name\":\"Auth Tester Updated\",\"phone\":\"+351123456780\"}"
+run_auth_test "PATCH" "auth/profile/" "profile_patch_valid_fields" "${ACCESS_TOKEN}" "${PROFILE_PATCH_VALID_PAYLOAD}" ""
+
+# Profile PATCH — invalid field should be rejected by serializer
+PROFILE_PATCH_INVALID_PAYLOAD="{\"email\":\"cannot_change_here@email.com\"}"
+run_auth_test "PATCH" "auth/profile/" "profile_patch_invalid_fields" "${ACCESS_TOKEN}" "${PROFILE_PATCH_INVALID_PAYLOAD}" ""
+
+# Password PATCH — old and new password validated
+PASSWORD_PATCH_VALID_PAYLOAD="{\"password\":\"${TEST_PASSWORD}\",\"new_password\":\"${TEST_PASSWORD}X\"}"
+run_auth_test "PATCH" "auth/password/" "password_patch_valid" "${ACCESS_TOKEN}" "${PASSWORD_PATCH_VALID_PAYLOAD}" ""
+
+# Password PATCH — same password should be rejected
+PASSWORD_PATCH_SAME_PAYLOAD="{\"password\":\"${TEST_PASSWORD}\",\"new_password\":\"${TEST_PASSWORD}\"}"
+run_auth_test "PATCH" "auth/password/" "password_patch_same_password" "${ACCESS_TOKEN}" "${PASSWORD_PATCH_SAME_PAYLOAD}" ""
 
 echo "done!"
