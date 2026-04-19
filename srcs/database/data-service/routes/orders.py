@@ -21,7 +21,7 @@ def create_order(order_in: OrderCreate, db=Depends(get_db_dep)):
 	for item in order_in.items:
 		cursor.execute(
 			'SELECT id, name, price, seller_id FROM products WHERE id = %s AND status = %s',
-			(item.product_id, 'active')
+			(item.product_id, 'Active')
 		)
 		product = cursor.fetchone()
 		if not product:
@@ -99,7 +99,7 @@ def update_orders(order_id: int, order_in: OrderUpdate, db=Depends(get_db_dep)):
 	cursor.execute('SELECT * FROM orders WHERE id = %s', (order_id,))
 	if not cursor.fetchone():
 		raise HTTPException(status_code=404, detail='Order not found')
-	update_data = { k: v for k, v in user_in.model_dump(exclude_none=True).items()
+	update_data = { k: v for k, v in order_in.model_dump(exclude_none=True).items()
     	if v != ""}
 	if not update_data:
 		raise HTTPException(status_code=400, detail='No fields to update')

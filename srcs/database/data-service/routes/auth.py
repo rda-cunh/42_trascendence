@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 import pymysql
 import hashlib
 from database import get_db_dep
-from models.user import UserCreate, UserAddressCreate, UserUpdate, UserPasswordUpdate,UserAddressUpdate, UserResponse, UserAddressResponse
+from models.auth import UserCreate, UserAddressCreate, UserUpdate, UserPasswordUpdate,UserAddressUpdate, UserResponse, UserAddressResponse
 
 router = APIRouter(prefix='/api/auth', tags=['Users'])
 

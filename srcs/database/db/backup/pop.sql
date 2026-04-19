@@ -82,10 +82,10 @@ CREATE TABLE `users_address` (
 LOCK TABLES `users_address` WRITE;
 /*!40000 ALTER TABLE `users_address` DISABLE KEYS */;
 INSERT INTO `users_address` VALUES
-(1,1,'Home','Rua das Flores',       '12', NULL,     'Porto', 'Porto', '4000-001','PT','2026-03-22 09:00:00','2026-03-22 09:00:00'),
-(2,2,'Home','Avenida da Liberdade', '250','Apto 5B', 'Lisboa','Lisboa','1250-096','PT','2026-03-22 09:01:00','2026-03-22 09:01:00'),
-(3,3,'Home','Rua de Santa Catarina','88', NULL,     'Porto', 'Porto', '4000-447','PT','2026-03-22 09:02:00','2026-03-22 09:02:00'),
-(4,4,'Home','Largo do Carmo',       '3',  '2º Dto', 'Lisboa','Lisboa','1200-092','PT','2026-03-22 09:03:00','2026-03-22 09:03:00');
+(1,1,'Rua das Flores',       '12',  'Porto', 'Porto', '4000-001','PT','2026-03-22 09:00:00','2026-03-22 09:00:00'),
+(2,2,'Avenida da Liberdade', '250', 'Lisboa','Lisboa','1250-096','PT','2026-03-22 09:01:00','2026-03-22 09:01:00'),
+(3,3,'Rua de Santa Catarina','88',  'Porto', 'Porto', '4000-447','PT','2026-03-22 09:02:00','2026-03-22 09:02:00'),
+(4,4,'Largo do Carmo',       '3',   'Lisboa','Lisboa','1200-092','PT','2026-03-22 09:03:00','2026-03-22 09:03:00');
 /*!40000 ALTER TABLE `users_address` ENABLE KEYS */;
 UNLOCK TABLES;
 
