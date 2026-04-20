@@ -2,8 +2,29 @@ services:
   backend:
     container_name: backend
     build: ./app
-    env_file:
-      - ../../.env
-    depends_on:
-      - data-service
+    environment:
+      - INT_CRT_NAME=${INT_CRT_NAME:-internal.crt}
+      - INT_KEY_NAME=${INT_KEY_NAME:-internal.key}
+      - REQUESTS_CA_BUNDLE=/certs/${CA_CRT_NAME:-ca.crt}
+      - DJANGO_SETTINGS_MODULE=backend.settings
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+    volumes:
+      - certs_data:/certs:ro
     restart: always
+    depends_on:
+      pki-init:
+        condition: service_completed_successfully
+      data-service:
+        condition: service_started
+    command: >
+      sh -c "
+      python3 manage.py makemigrations &&
+      python3 manage.py migrate &&
+      gunicorn backend.wsgi:application
+      --bind 0.0.0.0:8000
+      --workers 3
+      --reload
+      --log-level debug
+      --certfile=/certs/$${INT_CRT_NAME}
+      --keyfile=/certs/$${INT_KEY_NAME}
+      "
