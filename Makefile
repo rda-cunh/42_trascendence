@@ -105,20 +105,21 @@ remove-files:
 	fi
 
 run: check-docker ssh-check sync-files
-	@$(EXEC) "$(PRE_CMD) docker compose --env-file .env -f $(COMPOSE_FILE) up -d"
+	@$(EXEC) "$(PRE_CMD) set -a; . .env; set +a; docker compose --env-file .env -f $(COMPOSE_FILE) up -d"
 
 logs: check-docker
-	@$(EXEC) "$(PRE_CMD) docker compose --env-file .env -f $(COMPOSE_FILE) logs -f || true"
+	@$(EXEC) "$(PRE_CMD) set -a; . .env; set +a; docker compose --env-file .env -f $(COMPOSE_FILE) logs -f || true"
 
 status: check-docker
 	@$(EXEC) "$(PRE_CMD) \
-		printf '\n=== CONTAINERS ===\n' && docker compose -f $(COMPOSE_FILE) ps -a; \
+		set -a; . .env; set +a; \
+		printf '\n=== CONTAINERS ===\n' && docker compose --env-file .env -f $(COMPOSE_FILE) ps -a; \
 		printf '\n=== IMAGES ===\n' && docker images 2>/dev/null || true; \
 		printf '\n=== VOLUMES ===\n' && docker volume ls 2>/dev/null || true; \
 		printf '\n=== NETWORKS ===\n' && docker network ls 2>/dev/null || true"
 
 stop: check-docker
-	@$(EXEC) "$(PRE_CMD) docker compose --env-file .env -f $(COMPOSE_FILE) down"
+	@$(EXEC) "$(PRE_CMD) set -a; . .env; set +a; docker compose --env-file .env -f $(COMPOSE_FILE) down"
 
 uninstall-docker: check-root
 	@$(EXEC) "apt-get remove -y docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc || true"
@@ -166,13 +167,13 @@ database-restore:
 #	@docker network inspect shared-network >/dev/null 2>&1 || docker network create shared-network
 
 backend:
-	docker compose --env-file .env -f $(COMPOSE_FILE) up --build backend
+	set -a; . .env; set +a; docker compose --env-file .env -f $(COMPOSE_FILE) up --build backend
 
 clean: stop
-	@$(EXEC) "$(PRE_CMD) docker compose --env-file .env -f $(COMPOSE_FILE) down -v"
+	@$(EXEC) "$(PRE_CMD) set -a; . .env; set +a; docker compose --env-file .env -f $(COMPOSE_FILE) down -v"
 
 fclean: stop
-	@$(EXEC) "$(PRE_CMD) docker compose --env-file .env -f $(COMPOSE_FILE) down -v --rmi all --remove-orphans"
+	@$(EXEC) "$(PRE_CMD) set -a; . .env; set +a; docker compose --env-file .env -f $(COMPOSE_FILE) down -v --rmi all --remove-orphans"
 
 purge: fclean uninstall-docker remove-files ssh-wipe
 

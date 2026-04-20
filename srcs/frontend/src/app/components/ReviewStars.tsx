@@ -9,7 +9,13 @@ interface ReviewStarsProps {
   size?: "sm" | "md" | "lg";
 }
 
-export function ReviewStars({ rating = 0, maxStars = 5, interactive = false, onRate, size = "md" }: ReviewStarsProps) {
+export function ReviewStars({
+  rating = 0,
+  maxStars = 5,
+  interactive = false,
+  onRate,
+  size = "md",
+}: ReviewStarsProps) {
   const [hovered, setHovered] = useState(0);
   const sizeClasses = { sm: "w-3 h-3", md: "w-5 h-5", lg: "w-6 h-6" };
 

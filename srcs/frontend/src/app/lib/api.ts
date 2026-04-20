@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const API_BASE = "/api";
 
 interface RequestOptions {
@@ -34,34 +35,41 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 
 export const api = {
   // Auth
-  register: (data: { name: string; email: string; password: string; phone?: string; avatar_url?: string }) =>
-    request<{ user: any; token: string }>("/auth/register/", { method: "POST", body: data }),
+  register: (data: {
+    name: string;
+    email: string;
+    password: string;
+    phone?: string;
+    avatar_url?: string;
+  }) =>
+    request<{ user: any; token: string }>("/auth/register/", {
+      method: "POST",
+      body: data,
+    }),
 
   login: (data: { email?: string; username?: string; password?: string }) =>
-    request<{ user: any; token: string }>("/auth/login/", { method: "POST", body: data }),
+    request<{ user: any; token: string }>("/auth/login/", {
+      method: "POST",
+      body: data,
+    }),
 
-  getProfile: (token: string) =>
-    request<any>("/auth/profile/", { token }),
+  getProfile: (token: string) => request<any>("/auth/profile/", { token }),
 
   updateProfile: (data: any, token: string) =>
     request<any>("/auth/profile/", { method: "PATCH", body: data, token }),
 
-  deleteProfile: (token: string) =>
-    request<void>("/auth/profile/", { method: "DELETE", token }),
+  deleteProfile: (token: string) => request<void>("/auth/profile/", { method: "DELETE", token }),
 
   changePassword: (data: { old_password: string; new_password: string }, token: string) =>
     request<void>("/auth/password/", { method: "PATCH", body: data, token }),
 
   // Users
-  getUser: (id: string) =>
-    request<any>(`/users/${id}/`),
+  getUser: (id: string) => request<any>(`/users/${id}/`),
 
   // Listings
-  getListings: () =>
-    request<any>("/listings/"),
+  getListings: () => request<any>("/listings/"),
 
-  getListing: (id: string) =>
-    request<any>(`/listings/${id}/`),
+  getListing: (id: string) => request<any>(`/listings/${id}/`),
 
   createListing: (data: any, token: string) =>
     request<any>("/listings/", { method: "POST", body: data, token }),
@@ -73,14 +81,12 @@ export const api = {
     request<void>(`/listings/${id}/`, { method: "DELETE", token }),
 
   // Orders
-  getOrders: (token: string) =>
-    request<any>("/orders/", { token }),
+  getOrders: (token: string) => request<any>("/orders/", { token }),
 
   createOrder: (data: any, token: string) =>
     request<any>("/orders/", { method: "POST", body: data, token }),
 
-  getOrder: (id: string, token: string) =>
-    request<any>(`/orders/${id}/`, { token }),
+  getOrder: (id: string, token: string) => request<any>(`/orders/${id}/`, { token }),
 
   updateOrder: (id: string, data: any, token: string) =>
     request<any>(`/orders/${id}/`, { method: "PATCH", body: data, token }),
