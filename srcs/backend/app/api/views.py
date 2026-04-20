@@ -314,6 +314,42 @@ class auth_42_callback(APIView):
 
         profile = profile_resp.json()
 
+        # define user data structure expected by data-service from 42 profile fields
+        user_data_42 = {
+            "name":     profile["displayname"],
+            "email":    profile["email"],
+            "phone":    None,
+            "password": secrets.token_urlsafe(32),   # random unusable password
+            "avatar_url": profile["image"]["link"],  # 42 provides avatar
+        }
+
+        # register in data-service
+        reg_resp = proxy_request("POST", "/auth/register/", data=user_data_42)
+
+        if reg_resp.status_code == 201:
+            # user created — use the returned user object
+            user_data = reg_resp.data
+
+        elif reg_resp.status_code == 409:
+            # in case of duplicate email — account already exists | return error as default for now
+            return Response(
+                {"error": "An account with this email already exists. Please log in with your password."},
+                status=409
+            )
+
+        elif reg_resp.status_code == 400:
+            # validation error from data-service 
+            return Response(
+                {"error": "Registration failed", "details": reg_resp.data},
+                status=400
+            )
+
+        else:
+            return Response({"error": "Data-service unavailable"}, status=502)
+
+        # user_data now has the data-service assigned id and we can create the shadow user for JWT generation
+        shadow_user = get_or_create_shadow_user(user_data)
+
         # normalize to the shape get_or_create_shadow_user() expects
         user_data = {
             "id":    profile["id"],
@@ -322,19 +358,18 @@ class auth_42_callback(APIView):
             "role":  "user",
         }
 
-        # reunsing oyt existing shadow user and JWT logic to issue tokens for 42 users
-        shadow_user = get_or_create_shadow_user(user_data)
+        # generate JWT tokens with info from 42 profile and data-service user data
         refresh = RefreshToken.for_user(shadow_user)
         refresh["external_user_id"] = str(user_data["id"])
-        refresh["name"]  = user_data["name"]
-        refresh["email"] = user_data["email"]
-        refresh["role"]  = user_data["role"]
+        refresh["name"]  = user_data.get("name")
+        refresh["email"] = user_data.get("email")
+        refresh["role"]  = user_data.get("role", "user")
 
         access_token = refresh.access_token
         access_token["external_user_id"] = str(user_data["id"])
-        access_token["name"]  = user_data["name"]
-        access_token["email"] = user_data["email"]
-        access_token["role"]  = user_data["role"]
+        access_token["name"]  = user_data.get("name")
+        access_token["email"] = user_data.get("email")
+        access_token["role"]  = user_data.get("role", "user")
 
         # same response as auth_login so frontend handle both cases the same way
         response = Response({"access": str(access_token), "user": user_data})
