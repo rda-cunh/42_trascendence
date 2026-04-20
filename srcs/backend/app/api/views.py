@@ -6,10 +6,13 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.shortcuts import redirect as django_redirect
+from urllib.parse import urlencode
 
 from . import serializers
 import requests
 import os
+import secrets
 
 # TODO LISTING ID PATCH
 # TODO LISTING ID DELETE
@@ -264,6 +267,83 @@ class auth_password(APIView):
             f"/auth/profile/password/{request.user.id}/",
             payload
         )
+
+# --- OAUTH 42 - redirect user to 42 login ---
+class auth_42_redirect(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        params = urlencode({
+            "client_id":     settings.FORTYTWO_CLIENT_ID,
+            "redirect_uri":  settings.FORTYTWO_REDIRECT_URI,
+            "response_type": "code",
+            "scope":         "public",
+            "state":         secrets.token_urlsafe(16),  # CSRF (Cross Site Request Forgery) protection
+        })
+        return django_redirect(f"https://api.intra.42.fr/oauth/authorize?{params}")
+
+# --- OAUTH 42 - receives callback and issues tokens ---
+class auth_42_callback(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        code = request.GET.get("code")
+        if not code:
+            return Response({"error": "Missing code"}, status=400)
+
+        # exchange code for 42 access token
+        token_resp = requests.post("https://api.intra.42.fr/oauth/token", data={
+            "grant_type":    "authorization_code",
+            "client_id":     settings.FORTYTWO_CLIENT_ID,
+            "client_secret": settings.FORTYTWO_CLIENT_SECRET,
+            "code":          code,
+            "redirect_uri":  settings.FORTYTWO_REDIRECT_URI,
+        })
+        if token_resp.status_code != 200:
+            return Response({"error": "Token exchange failed"}, status=400)
+
+        access_token_42 = token_resp.json().get("access_token")
+
+        # fetch user profile from 42 API
+        profile_resp = requests.get(
+            "https://api.intra.42.fr/v2/me",
+            headers={"Authorization": f"Bearer {access_token_42}"},
+        )
+        if profile_resp.status_code != 200:
+            return Response({"error": "Failed to fetch 42 profile"}, status=400)
+
+        profile = profile_resp.json()
+
+        # normalize to the shape get_or_create_shadow_user() expects
+        user_data = {
+            "id":    profile["id"],
+            "email": profile["email"],
+            "name":  profile["displayname"],
+            "role":  "user",
+        }
+
+        # reunsing oyt existing shadow user and JWT logic to issue tokens for 42 users
+        shadow_user = get_or_create_shadow_user(user_data)
+        refresh = RefreshToken.for_user(shadow_user)
+        refresh["external_user_id"] = str(user_data["id"])
+        refresh["name"]  = user_data["name"]
+        refresh["email"] = user_data["email"]
+        refresh["role"]  = user_data["role"]
+
+        access_token = refresh.access_token
+        access_token["external_user_id"] = str(user_data["id"])
+        access_token["name"]  = user_data["name"]
+        access_token["email"] = user_data["email"]
+        access_token["role"]  = user_data["role"]
+
+        # same response as auth_login so frontend handle both cases the same way
+        response = Response({"access": str(access_token), "user": user_data})
+        response.set_cookie(
+            key="refresh_token", value=str(refresh),
+            httponly=True, secure=True, samesite="Strict",
+            max_age=7*24*3600, path="/api/auth/",
+        )
+        return response
 
 # Product listings API
 
