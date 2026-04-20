@@ -194,3 +194,12 @@ CORS_ALLOW_HEADERS = [
 DATA_SERVICE_URL = os.getenv("DATA_SERVICE_URL", "http://data-service:9000/api")
 DATA_SERVICE_TOKEN = os.getenv("DATA_SERVICE_TOKEN", "dev-internal-token")
 DATA_SERVICE = os.getenv("DATA_SERVICE", "http://data-service:9000/api")
+
+# Authentication / OAuth2 config
+FORTYTWO_CLIENT_ID     = os.getenv("FORTYTWO_CLIENT_ID")
+FORTYTWO_CLIENT_SECRET = os.getenv("FORTYTWO_CLIENT_SECRET")
+FORTYTWO_REDIRECT_URI  = os.getenv("FORTYTWO_REDIRECT_URI")
+JWT_ACCESS_LIFETIME_MINUTES = os.getenv("JWT_ACCESS_LIFETIME_MINUTES", 30)
+JWT_REFRESH_LIFETIME_DAYS = os.getenv("JWT_REFRESH_LIFETIME_DAYS", 7)
+OAUTH_SUCCESS_REDIRECT = os.getenv("OAUTH_SUCCESS_REDIRECT", "https://127.0.0.1/login/success")
+OAUTH_FAILURE_REDIRECT = os.getenv("OAUTH_FAILURE_REDIRECT", "https://127.0.0.1/login/error")
