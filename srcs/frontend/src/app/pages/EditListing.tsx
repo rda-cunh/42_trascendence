@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
-import { Listing } from "../data/mockListings";
 import { Save, ArrowLeft, Tag, DollarSign, Package, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router";
@@ -22,7 +21,17 @@ export function EditListing() {
     engine: "",
   });
 
-  const categories = ["3D Models", "2D Assets", "Shaders", "Textures", "VFX", "Audio", "UI/UX", "Scripts", "Other"];
+  const categories = [
+    "3D Models",
+    "2D Assets",
+    "Shaders",
+    "Textures",
+    "VFX",
+    "Audio",
+    "UI/UX",
+    "Scripts",
+    "Other",
+  ];
   const engines = ["Unity", "Unreal Engine", "Godot", "GameMaker", "Any Engine", "Other"];
 
   useEffect(() => {
@@ -72,90 +81,146 @@ export function EditListing() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   if (isLoading) {
-    return <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center"><p className="text-gray-500 dark:text-gray-400">Loading...</p></div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <p className="text-gray-500 dark:text-gray-400">Loading...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Link to={`/product/${id}`} className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-6 transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Back to listing
+    <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
+      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+        <Link
+          to={`/product/${id}`}
+          className="mb-6 inline-flex items-center gap-2 text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to listing
         </Link>
 
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Edit Listing</h1>
+        <h1 className="mb-8 text-3xl font-bold text-gray-900 dark:text-white">Edit Listing</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-white dark:bg-gray-900 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-800 space-y-4">
+          <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                <Tag className="w-4 h-4" /> Title
+              <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <Tag className="h-4 w-4" /> Title
               </label>
-              <input type="text" name="title" required value={formData.title} onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors" />
+              <input
+                type="text"
+                name="title"
+                required
+                value={formData.title}
+                onChange={handleChange}
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  <DollarSign className="w-4 h-4" /> Price
+                <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <DollarSign className="h-4 w-4" /> Price
                 </label>
-                <input type="number" name="price" required min="0" step="0.01" value={formData.price} onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors" />
+                <input
+                  type="number"
+                  name="price"
+                  required
+                  min="0"
+                  step="0.01"
+                  value={formData.price}
+                  onChange={handleChange}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                />
               </div>
               <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  <Package className="w-4 h-4" /> Category
+                <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <Package className="h-4 w-4" /> Category
                 </label>
-                <select name="category" required value={formData.category} onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors">
+                <select
+                  name="category"
+                  required
+                  value={formData.category}
+                  onChange={handleChange}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                >
                   <option value="">Select</option>
-                  {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+                  {categories.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  <FileText className="w-4 h-4" /> File Format
+                <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <FileText className="h-4 w-4" /> File Format
                 </label>
-                <input type="text" name="fileFormat" value={formData.fileFormat} onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors" />
+                <input
+                  type="text"
+                  name="fileFormat"
+                  value={formData.fileFormat}
+                  onChange={handleChange}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                />
               </div>
               <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  <Package className="w-4 h-4" /> Engine
+                <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <Package className="h-4 w-4" /> Engine
                 </label>
-                <select name="engine" value={formData.engine} onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors">
+                <select
+                  name="engine"
+                  value={formData.engine}
+                  onChange={handleChange}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                >
                   <option value="">Select</option>
-                  {engines.map((e) => <option key={e} value={e}>{e}</option>)}
+                  {engines.map((e) => (
+                    <option key={e} value={e}>
+                      {e}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
 
             <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                <FileText className="w-4 h-4" /> Description
+              <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <FileText className="h-4 w-4" /> Description
               </label>
-              <textarea name="description" required rows={5} value={formData.description} onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none transition-colors" />
+              <textarea
+                name="description"
+                required
+                rows={5}
+                value={formData.description}
+                onChange={handleChange}
+                className="w-full resize-none rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              />
             </div>
           </div>
 
           <div className="flex gap-4">
-            <Link to={`/product/${id}`}
-              className="flex-1 text-center px-6 py-3 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+            <Link
+              to={`/product/${id}`}
+              className="flex-1 rounded-lg border border-gray-300 px-6 py-3 text-center text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            >
               Cancel
             </Link>
-            <button type="submit" disabled={isSaving}
-              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white rounded-lg transition-colors">
-              <Save className="w-4 h-4" />
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-purple-600 px-6 py-3 text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
+            >
+              <Save className="h-4 w-4" />
               {isSaving ? "Saving..." : "Save Changes"}
             </button>
           </div>
