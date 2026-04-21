@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
+import { API_BASE_URL } from "../utils/constants";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
 import { Save, ArrowLeft, Tag, DollarSign, Package, FileText } from "lucide-react";
@@ -37,7 +38,7 @@ export function EditListing() {
   useEffect(() => {
     if (!id) return;
     setIsLoading(true);
-    fetch(`/api/listings/${id}/`)
+    fetch(`${API_BASE_URL}/listings/${id}/`)
       .then((res) => res.json())
       .then((data) => {
         const item = data?.listing || data;

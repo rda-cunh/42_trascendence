@@ -1,53 +1,55 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Package, Search, MoreHorizontal, CheckCircle, XCircle, Eye, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router";
-import { mockAdminListings, Listing } from "../../data/mockData";
-
-interface MockListing extends Listing {
-  status?: string;
-  created?: string;
-}
+import { api } from "../../lib/api";
+import { Listing } from "../../types";
 
 export function ListingModeration() {
-  const [listings, setListings] = useState<MockListing[]>(
-    mockAdminListings.map((l) => ({
-      ...l,
-      status: "approved",
-      created: l.postedDate,
-    }))
-  );
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchListings = async () => {
+      try {
+        const data = await api.getListings();
+        const results = Array.isArray(data) ? data : data?.results || [];
+        setListings(results);
+      } catch (err) {
+        console.error("Failed to load listings:", err);
+        toast.error("Failed to load listings");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchListings();
+  }, []);
 
   const filtered = listings
     .filter((l) => filter === "all" || l.status === filter)
     .filter(
       (l) =>
-        l.title.toLowerCase().includes(search.toLowerCase()) ||
+        l.name.toLowerCase().includes(search.toLowerCase()) ||
         l.seller.toLowerCase().includes(search.toLowerCase())
     );
 
   const handleAction = (id: string, action: string) => {
-    setListings((prev) =>
-      prev.map((l) => {
-        if (l.id !== id) return l;
-        switch (action) {
-          case "approve":
-            return { ...l, status: "approved" };
-          case "reject":
-            return { ...l, status: "rejected" };
-          case "delete":
-            return l;
-          default:
-            return l;
-        }
-      })
-    );
     toast.success(`Listing ${action}d successfully`);
     setOpenMenu(null);
+    // TODO: Call API to update listing status
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <p className="text-gray-500 dark:text-gray-400">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
@@ -127,10 +129,7 @@ export function ListingModeration() {
                         </div>
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">
-                            {listing.title}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {listing.created}
+                            {listing.name}
                           </p>
                         </div>
                       </div>

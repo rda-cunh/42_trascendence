@@ -19,12 +19,15 @@ export function Register() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await register({
+      const data: any = {
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        phone: formData.phone || undefined,
-      });
+      };
+      if (formData.phone) {
+        data.phone = formData.phone;
+      }
+      await register(data);
       toast.success("Account created! You can now sign in.");
       navigate("/login");
     } catch (err) {

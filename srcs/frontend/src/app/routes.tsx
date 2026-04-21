@@ -10,7 +10,6 @@ import { Orders } from "./pages/Orders";
 import { OrderDetail } from "./pages/OrderDetail";
 import { Checkout } from "./pages/Checkout";
 import { EditListing } from "./pages/EditListing";
-import { SearchPage } from "./pages/Search";
 import { Chat } from "./pages/Chat";
 import { AdminDashboard } from "./pages/Admin/Dashboard";
 import { UserManagement } from "./pages/Admin/UserManagement";
@@ -58,14 +57,6 @@ export const router = createBrowserRouter([
     element: (
       <Layout>
         <ProductDetail />
-      </Layout>
-    ),
-  },
-  {
-    path: "/search",
-    element: (
-      <Layout>
-        <SearchPage />
       </Layout>
     ),
   },

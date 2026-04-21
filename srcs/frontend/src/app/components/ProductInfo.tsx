@@ -1,6 +1,6 @@
 import { MapPin, User, Calendar, Tag, Package } from "lucide-react";
-import { Listing } from "../data/mockListings";
 import { ReviewStars } from "./ReviewStars";
+import { Listing } from "../types";
 
 interface ProductInfoProps {
   listing: Listing;

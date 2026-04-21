@@ -3,7 +3,7 @@
  */
 
 // API Configuration
-export const API_BASE_URL = "/api";
+export const API_BASE_URL = (import.meta.env.VITE_API_URL ?? "/api").replace(/\/$/, "");
 export const API_TIMEOUT = 30000; // 30 seconds
 
 // Pagination
@@ -64,7 +64,6 @@ export const ROUTES = {
   LOGIN: "/login",
   REGISTER: "/register",
   PROFILE: "/profile",
-  PRODUCTS: "/search",
   PRODUCT_DETAIL: "/product/:id",
   SELL: "/sell",
   CART: "/cart",
