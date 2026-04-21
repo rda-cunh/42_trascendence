@@ -64,7 +64,6 @@ rm -f "$INT_CSR" "$SAN_CONF" "$CERTS_DIR"/*.srl
 
 echo "Setting standard file permissions..."
 chmod 644 "$CERTS_DIR"/*.crt
-chmod 644 "$INT_KEY"
-chmod 600 "$CA_KEY"
+chmod 600 "$CERTS_DIR"/*.key
 
 echo "PKI Initialization Complete."
