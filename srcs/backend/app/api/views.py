@@ -11,8 +11,8 @@ from urllib.parse import urlencode
 
 from . import serializers
 import requests
-import os
 import secrets
+import json
 
 # TODO LISTING ID PATCH
 # TODO LISTING ID DELETE
@@ -273,23 +273,53 @@ class auth_42_redirect(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
+        state = secrets.token_urlsafe(16) # CSRF (Cross Site Request Forgery) protection
         params = urlencode({
             "client_id":     settings.FORTYTWO_CLIENT_ID,
             "redirect_uri":  settings.FORTYTWO_REDIRECT_URI,
             "response_type": "code",
             "scope":         "public",
-            "state":         secrets.token_urlsafe(16),  # CSRF (Cross Site Request Forgery) protection
+            "state":         state,
         })
-        return django_redirect(f"https://api.intra.42.fr/oauth/authorize?{params}")
+        response = django_redirect(f"https://api.intra.42.fr/oauth/authorize?{params}")
+        response.set_cookie(
+            key="oauth42_state",
+            value=state,
+            httponly=True,
+            secure=True,
+            samesite="Lax",
+            max_age=300,    # state valid for 5 minutes
+            path="/api/auth/42/",
+        )
+        return response
 
 # --- OAUTH 42 - receives callback and issues tokens ---
 class auth_42_callback(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
+        def oauth_redirect(base_url, payload):
+            separator = "&" if "?" in base_url else "?"
+            return django_redirect(f"{base_url}{separator}{urlencode(payload)}")
+
+        provider_error = request.GET.get("error")
+        if provider_error:
+            return oauth_redirect(settings.OAUTH_FAILURE_REDIRECT, {"error": provider_error})
+
         code = request.GET.get("code")
+
+        callback_state = request.GET.get("state")   # request state from callback query params
+        stored_state = request.COOKIES.get("oauth42_state")
+
+        if not callback_state or not stored_state or callback_state != stored_state:
+            response = oauth_redirect(settings.OAUTH_FAILURE_REDIRECT, {"error": "invalid_oauth_state"})
+            response.delete_cookie("oauth42_state", path="/api/auth/42/")
+            return response
+
         if not code:
-            return Response({"error": "Missing code"}, status=400)
+            response = oauth_redirect(settings.OAUTH_FAILURE_REDIRECT, {"error": "missing_code"})
+            response.delete_cookie("oauth42_state", path="/api/auth/42/")
+            return response
 
         # exchange code for 42 access token
         token_resp = requests.post("https://api.intra.42.fr/oauth/token", data={
@@ -300,7 +330,9 @@ class auth_42_callback(APIView):
             "redirect_uri":  settings.FORTYTWO_REDIRECT_URI,
         })
         if token_resp.status_code != 200:
-            return Response({"error": "Token exchange failed"}, status=400)
+            response = oauth_redirect(settings.OAUTH_FAILURE_REDIRECT, {"error": "token_exchange_failed"})
+            response.delete_cookie("oauth42_state", path="/api/auth/42/")
+            return response
 
         access_token_42 = token_resp.json().get("access_token")
 
@@ -310,7 +342,9 @@ class auth_42_callback(APIView):
             headers={"Authorization": f"Bearer {access_token_42}"},
         )
         if profile_resp.status_code != 200:
-            return Response({"error": "Failed to fetch 42 profile"}, status=400)
+            response = oauth_redirect(settings.OAUTH_FAILURE_REDIRECT, {"error": "profile_fetch_failed"})
+            response.delete_cookie("oauth42_state", path="/api/auth/42/")
+            return response
 
         profile = profile_resp.json()
 
@@ -332,52 +366,57 @@ class auth_42_callback(APIView):
 
         elif reg_resp.status_code == 409:
             # in case of duplicate email — account already exists | return error as default for now
-            return Response(
-                {"error": "An account with this email already exists. Please log in with your password."},
-                status=409
-            )
+            response = oauth_redirect(settings.OAUTH_FAILURE_REDIRECT, {"error": "email_already_registered"})
+            response.delete_cookie("oauth42_state", path="/api/auth/42/")
+            return response
 
         elif reg_resp.status_code == 400:
             # validation error from data-service 
-            return Response(
-                {"error": "Registration failed", "details": reg_resp.data},
-                status=400
-            )
+            response = oauth_redirect(settings.OAUTH_FAILURE_REDIRECT, {"error": "registration_failed"})
+            response.delete_cookie("oauth42_state", path="/api/auth/42/")
+            return response
 
         else:
-            return Response({"error": "Data-service unavailable"}, status=502)
+            response = oauth_redirect(settings.OAUTH_FAILURE_REDIRECT, {"error": "data_service_unavailable"})
+            response.delete_cookie("oauth42_state", path="/api/auth/42/")
+            return response
 
         # user_data now has the data-service assigned id and we can create the shadow user for JWT generation
         shadow_user = get_or_create_shadow_user(user_data)
 
-        # normalize to the shape get_or_create_shadow_user() expects
-        user_data = {
-            "id":    profile["id"],
-            "email": profile["email"],
-            "name":  profile["displayname"],
-            "role":  "user",
-        }
+        # update user_data with any additional info from 42 profile 
+        user_data["name"] = profile.get("displayname") or user_data.get("name")
+        user_data["email"] = profile.get("email") or user_data.get("email")
+        user_data["role"] = user_data.get("role", "user")
+        oauth_external_user_id = str(profile["id"])
 
         # generate JWT tokens with info from 42 profile and data-service user data
         refresh = RefreshToken.for_user(shadow_user)
-        refresh["external_user_id"] = str(user_data["id"])
+        refresh["external_user_id"] = oauth_external_user_id
         refresh["name"]  = user_data.get("name")
         refresh["email"] = user_data.get("email")
         refresh["role"]  = user_data.get("role", "user")
 
         access_token = refresh.access_token
-        access_token["external_user_id"] = str(user_data["id"])
+        access_token["external_user_id"] = oauth_external_user_id
         access_token["name"]  = user_data.get("name")
         access_token["email"] = user_data.get("email")
         access_token["role"]  = user_data.get("role", "user")
 
         # same response as auth_login so frontend handle both cases the same way
-        response = Response({"access": str(access_token), "user": user_data})
+        response = oauth_redirect(
+            settings.OAUTH_SUCCESS_REDIRECT,
+            {
+                "access": str(access_token),
+                "user": json.dumps(user_data),
+            },
+        )
         response.set_cookie(
             key="refresh_token", value=str(refresh),
             httponly=True, secure=True, samesite="Strict",
             max_age=7*24*3600, path="/api/auth/",
         )
+        response.delete_cookie("oauth42_state", path="/api/auth/42/")
         return response
 
 # Product listings API
