@@ -25,15 +25,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedToken = localStorage.getItem("auth_token");
-    if (savedToken) {
-      setToken(savedToken);
-      api.setToken(savedToken);
-    }
-    setLoading(false);
+    const initAuth = () => {
+      const savedToken = localStorage.getItem("auth_token");
+      if (savedToken) {
+        setToken(savedToken);
+        api.setToken(savedToken);
+      }
+      setLoading(false);
+    };
+    initAuth();
   }, []);
 
   useEffect(() => {
+    const logoutInner = () => {
+      setToken(null);
+      setUser(null);
+      localStorage.removeItem("auth_token");
+      api.setToken(null);
+    };
+
     if (!token) return;
 
     const checkTokenExpiry = () => {
@@ -53,10 +63,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               localStorage.setItem("auth_token", newToken);
               api.setToken(newToken);
             })
-            .catch(() => logout());
+            .catch(() => logoutInner());
         }
       } catch {
-        logout();
+        logoutInner();
       }
     };
 
@@ -105,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {

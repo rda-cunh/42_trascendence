@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { ProductCard } from "../components/ProductCard";
 import { api } from "../lib/api";

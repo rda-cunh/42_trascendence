@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
 import { ArrowLeft, Package, Clock, CheckCircle, Truck, XCircle } from "lucide-react";
-import { Order, OrderStatus } from "../types";
+import { Order } from "../types";
 import { toast } from "sonner";
 
 const statusConfig: Record<
@@ -147,7 +148,7 @@ export function OrderDetail() {
                   className="flex items-center justify-between border-b border-gray-100 py-3 last:border-0 dark:border-gray-800"
                 >
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-white">{item.name}</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{(item as any).name || `Item ${item.id}`}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Qty: {item.quantity}</p>
                   </div>
                   <p className="font-semibold text-gray-900 dark:text-white">

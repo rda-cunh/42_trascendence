@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useCart } from "../contexts/CartContext";
-import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
 import { Trash2, CreditCard, ArrowLeft, MapPin } from "lucide-react";
 import { toast } from "sonner";
@@ -9,7 +8,6 @@ import { Link } from "react-router";
 
 export function Checkout() {
   const { items, removeItem, total, clear } = useCart();
-  const { token } = useAuth();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   const [address, setAddress] = useState({ line1: "", city: "", country: "" });

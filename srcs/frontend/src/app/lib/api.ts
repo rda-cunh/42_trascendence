@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const API_URL = "/api";
 
-interface ApiError {
+export interface ApiError {
   detail?: string;
   message?: string;
   [key: string]: any;

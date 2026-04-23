@@ -110,12 +110,12 @@ export function ReviewSection({
               <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-sm font-semibold text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
-                    {review.user.charAt(0)}
+                    {review.user?.charAt(0) || "?"}
                   </div>
-                  <span className="font-medium text-gray-900 dark:text-white">{review.user}</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{review.user || "Anonymous"}</span>
                 </div>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatDate(review.date)}
+                  {formatDate(review.date || new Date().toISOString())}
                 </span>
               </div>
               <ReviewStars rating={review.rating} size="sm" />

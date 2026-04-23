@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
 import { Package, Clock, CheckCircle, Truck, XCircle, ChevronRight } from "lucide-react";
-import { Order, OrderStatus } from "../types";
+import { Order } from "../types";
 
 const statusConfig: Record<
   string,
