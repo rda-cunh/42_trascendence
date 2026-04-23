@@ -82,7 +82,7 @@ export interface Review {
   id: string;
   product_id?: string;
   user_id?: string;
-  user?: string;  // username/name for display
+  user?: string; // username/name for display
   user_name?: string;
   rating: 1 | 2 | 3 | 4 | 5;
   text?: string;

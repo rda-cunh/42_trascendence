@@ -42,7 +42,9 @@ export function NotificationBell() {
                         <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-purple-500" />
                       )}
                       <div className={n.read ? "ml-4" : ""}>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{n.title}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {n.title}
+                        </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">{n.message}</p>
                         <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{n.time}</p>
                       </div>

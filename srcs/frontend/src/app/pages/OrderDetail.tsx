@@ -148,9 +148,7 @@ export function OrderDetail() {
                 >
                   <div>
                     <p className="font-medium text-gray-900 dark:text-white">{item.name}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Qty: {item.quantity}
-                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Qty: {item.quantity}</p>
                   </div>
                   <p className="font-semibold text-gray-900 dark:text-white">
                     ${item.price.toFixed(2)}

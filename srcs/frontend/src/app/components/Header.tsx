@@ -31,7 +31,6 @@ export function Header() {
           </Link>
 
           <nav className="flex items-center gap-2">
-
             {user && (
               <Link
                 to="/sell"
@@ -79,7 +78,9 @@ export function Header() {
                   <div className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-100 text-sm font-semibold text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
                     {(user.name || user.email).charAt(0).toUpperCase()}
                   </div>
-                  <span className="hidden text-sm font-medium md:inline">{user.name || user.email}</span>
+                  <span className="hidden text-sm font-medium md:inline">
+                    {user.name || user.email}
+                  </span>
                 </Link>
                 {user.role === "admin" && (
                   <Link

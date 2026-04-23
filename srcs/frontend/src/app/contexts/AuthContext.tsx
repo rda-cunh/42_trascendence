@@ -7,7 +7,12 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (data: { name: string; email: string; password: string; phone?: string }) => Promise<void>;
+  register: (data: {
+    name: string;
+    email: string;
+    password: string;
+    phone?: string;
+  }) => Promise<void>;
   logout: () => void;
   updateUser: (data: Partial<User>) => void;
 }
@@ -40,12 +45,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const fiveMinutes = 5 * 60 * 1000;
 
         if (timeUntilExpiry < fiveMinutes) {
-          api.refresh().then((res) => {
-            const newToken = res.access;
-            setToken(newToken);
-            localStorage.setItem("auth_token", newToken);
-            api.setToken(newToken);
-          }).catch(() => logout());
+          api
+            .refresh()
+            .then((res) => {
+              const newToken = res.access;
+              setToken(newToken);
+              localStorage.setItem("auth_token", newToken);
+              api.setToken(newToken);
+            })
+            .catch(() => logout());
         }
       } catch {
         logout();
@@ -65,7 +73,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     api.setToken(newToken);
   };
 
-  const register = async (data: { name: string; email: string; password: string; phone?: string }) => {
+  const register = async (data: {
+    name: string;
+    email: string;
+    password: string;
+    phone?: string;
+  }) => {
     const res = await api.register(data);
     const newToken = res.access;
     setToken(newToken);
@@ -82,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const updateUser = (data: Partial<User>) => {
-    setUser(prev => prev ? { ...prev, ...data } : null);
+    setUser((prev) => (prev ? { ...prev, ...data } : null));
   };
 
   return (

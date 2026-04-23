@@ -57,7 +57,10 @@ export function SellItem() {
       <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
         <h1 className="mb-8 text-3xl font-bold text-gray-900 dark:text-white">List Your Asset</h1>
 
-        <form onSubmit={handleSubmit} className="rounded-xl border border-gray-200 bg-white p-8 dark:border-gray-800 dark:bg-gray-900">
+        <form
+          onSubmit={handleSubmit}
+          className="rounded-xl border border-gray-200 bg-white p-8 dark:border-gray-800 dark:bg-gray-900"
+        >
           <div className="space-y-6">
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">

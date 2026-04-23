@@ -50,9 +50,7 @@ export function UserManagement() {
           <h1 className="flex items-center gap-2 text-3xl font-bold text-gray-900 dark:text-white">
             <Users className="h-8 w-8 text-purple-600" /> User Management
           </h1>
-          <p className="mt-1 text-gray-600 dark:text-gray-400">
-            Manage and monitor user accounts
-          </p>
+          <p className="mt-1 text-gray-600 dark:text-gray-400">Manage and monitor user accounts</p>
         </div>
 
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">

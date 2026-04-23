@@ -39,7 +39,8 @@ export function ProductDetail() {
             condition: listingData.status || "New",
             location: "Digital Download",
             seller: listingData.seller || "Creator Studio",
-            image: listingData.image || "https://images.unsplash.com/photo-1636189239307-9f3a701f30a8",
+            image:
+              listingData.image || "https://images.unsplash.com/photo-1636189239307-9f3a701f30a8",
             postedDate: new Date().toISOString().split("T")[0],
           });
         }
