@@ -14,7 +14,7 @@ These tables summarize the current module strategy for the project based on prog
 | **Web Major 3 – User interaction (chat, profiles, friends)** | 2 | Chat already being discussed/planned | [Ricardo + Erik] | Reuses users/auth and is easy to demo clearly. | **Keep** |
 | **Web Major 2 – Real-time features** | 2 | Chat idea exists | [TBD: Ricardo + Erik] | Good only if clearly separated from user interaction and truly real-time across clients. | **Check if is comulative** |
 | **DevOps Monitoring module – Prometheus + Grafana** | 2 | DevOps teammate is working on it | [Leonardo Vichi] | Better than microservices because it is more realistic and demonstrable if progress is real. | **Keep** |
-| **Total** | **4** |  |  |  |  |
+| **Total** | **14** |  |  |  |  |
 
 ## Best choices to add
 
