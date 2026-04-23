@@ -9,6 +9,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (data: { name: string; email: string; password: string; phone?: string }) => Promise<void>;
   logout: () => void;
+  updateUser: (data: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,7 +19,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Initialize from localStorage
   useEffect(() => {
     const savedToken = localStorage.getItem("auth_token");
     if (savedToken) {
@@ -28,7 +28,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, []);
 
-  // Auto-refresh token before expiry
   useEffect(() => {
     if (!token) return;
 
@@ -46,44 +45,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setToken(newToken);
             localStorage.setItem("auth_token", newToken);
             api.setToken(newToken);
-          }).catch((err) => {
-            console.error("Token refresh failed:", err);
-            logout();
-          });
+          }).catch(() => logout());
         }
-      } catch (err) {
-        console.error("Failed to check token expiry:", err);
+      } catch {
+        logout();
       }
     };
 
-    const interval = setInterval(checkTokenExpiry, 30000); // Check every 30 seconds
+    const interval = setInterval(checkTokenExpiry, 30000);
     return () => clearInterval(interval);
   }, [token]);
 
   const login = async (email: string, password: string) => {
-    try {
-      const res = await api.login(email, password);
-      const newToken = res.access;
-      setToken(newToken);
-      setUser(res.user);
-      localStorage.setItem("auth_token", newToken);
-      api.setToken(newToken);
-    } catch (err) {
-      throw err;
-    }
+    const res = await api.login(email, password);
+    const newToken = res.access;
+    setToken(newToken);
+    setUser(res.user);
+    localStorage.setItem("auth_token", newToken);
+    api.setToken(newToken);
   };
 
   const register = async (data: { name: string; email: string; password: string; phone?: string }) => {
-    try {
-      const res = await api.register(data);
-      const newToken = res.access;
-      setToken(newToken);
-      setUser(res.user);
-      localStorage.setItem("auth_token", newToken);
-      api.setToken(newToken);
-    } catch (err) {
-      throw err;
-    }
+    const res = await api.register(data);
+    const newToken = res.access;
+    setToken(newToken);
+    setUser(res.user);
+    localStorage.setItem("auth_token", newToken);
+    api.setToken(newToken);
   };
 
   const logout = () => {
@@ -93,8 +81,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     api.setToken(null);
   };
 
+  const updateUser = (data: Partial<User>) => {
+    setUser(prev => prev ? { ...prev, ...data } : null);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

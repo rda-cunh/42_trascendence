@@ -19,20 +19,11 @@ export function Register() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const data: any = {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-      };
-      if (formData.phone) {
-        data.phone = formData.phone;
-      }
-      await register(data);
+      await register(formData);
       toast.success("Account created! You can now sign in.");
       navigate("/login");
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Registration failed";
-      toast.error(errorMessage);
+      toast.error(err instanceof Error ? err.message : "Registration failed");
     } finally {
       setIsLoading(false);
     }
