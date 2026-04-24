@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from database import get_db_dep
-from models.product import ProductCreate, ProductImagesCreate, ProductUpdate, ProductResponse, ProductImagesResponse
+from models.product import ProductCreate, ProductImages, ProductUpdate, ProductResponse, ProductImagesResponse
 
 router = APIRouter(prefix='/api/listings', tags=['Products'])
 
 # POST /listings
 @router.post('/', response_model=ProductResponse, status_code=201)
-def	create_product(product_in: ProductCreate, seller_id: int, db=Depends(get_db_dep)):
+def	create_product(product_in: ProductCreate, db=Depends(get_db_dep)):
 	conn, cursor = db
 
 	cursor.execute('SELECT id FROM products WHERE slug = %s', (product_in.slug,))
@@ -18,24 +18,27 @@ def	create_product(product_in: ProductCreate, seller_id: int, db=Depends(get_db_
 		INSERT INTO products (seller_id, name, slug, description, price)
 		VALUES (%s, %s, %s, %s, %s)
 		''',
-		(seller_id, product_in.name, product_in.slug, product_in.description, product_in.price)
+		(product_in.user_id, product_in.name, product_in.slug, product_in.description, product_in.price)
 	)
 	new_id = conn.insert_id()
 	cursor.execute('SELECT * FROM products WHERE id = %s', (new_id,))
 	return ProductResponse(**cursor.fetchone())
 
-# GET /listings (with filter ?search or ?limit or ?skip)
+# Missing improve to show num of pages
+# GET /listings (with filter ?search=Test or ?page=1 or ?status=Active or ?seler_id=1)
 @router.get('/', response_model=list[ProductResponse])
 def	list_products(
-	skip:		int = 0,
-	limit:		int = 20,
+	page:		int = 1,
 	search:		str | None = Query(None, description='Name or description'),
 	status:		str | None = None,
 	seller_id:	int | None = None,
 	db=Depends(get_db_dep)
 ):
 	conn, cursor = db
-
+	limit = 10
+	skip = (page - 1) * limit
+	if page < 1:
+		raise HTTPException(400, "Invalid page")
 	sql = 'SELECT * FROM products WHERE 1=1'
 	params = []
 	
@@ -46,7 +49,7 @@ def	list_products(
 		sql += ' AND status = %s'
 		params.append(status)
 
-	if seller_id:
+	if seller_id is not None:
 		sql += ' AND seller_id = %s'
 		params.append(seller_id)
 
@@ -54,31 +57,55 @@ def	list_products(
 	params.extend([limit, skip])
 
 	cursor.execute(sql, params)
-	return [ProductResponse(**row) for row in cursor.fetchall()]
+	products = cursor.fetchall()
+	if not products:
+		return []
+	product_ids = [p['id'] for p in products]
+	placeholders = ','.join(['%s'] * len(product_ids))
 
-# GET /listings/seller/{seller_id}
-@router.get('/seller/{seller_id}/', response_model=list[ProductResponse])
-def get_seller_products(seller_id: int, db=Depends(get_db_dep)):
-	print("Test")
-	conn, cursor = db
 	cursor.execute(
-		'SELECT * FROM products WHERE seller_id = %s',
-		(seller_id,)
+		f'''
+		SELECT product_id, image_hash, display_order FROM product_images WHERE product_id IN ({placeholders}) ORDER BY display_order''', 
+		tuple(product_ids)
 	)
-	rows = cursor.fetchall()
-	return [ProductResponse(**row) for row in rows]
+	image_rows = cursor.fetchall()
+	images_map = {}
+	for img in image_rows:
+		pid = img['product_id']
+		images_map.setdefault(pid, []).append({
+			'image_hash': img['image_hash'],
+			'display_order': img['display_order']
+		})
+	for p in products:
+		p['images'] = images_map.get(p['id'], [])
+		del p['id']
+	return [ProductResponse(**p) for p in products]
 
-# GET /listings/seller/{product_id}
-@router.get('/seller/{product_id}/', response_model=list[ProductResponse])
+
+# TO DO IMPROVE
+# Return some user infos
+# GET /listings/{product_id}
+@router.get('/{product_id}/', response_model=ProductResponse)
 def get_id_products(product_id: int, db=Depends(get_db_dep)):
 	print("Test")
 	conn, cursor = db
 	cursor.execute(
-		'SELECT * FROM products WHERE id = %s',
+		'SELECT id, seller_id, name, slug, description, price, status, created_at FROM products WHERE id = %s',
 		(product_id,)
 	)
-	rows = cursor.fetchall()
-	return [ProductResponse(**row) for row in rows]
+	product = cursor.fetchone()
+	if not product:
+		raise HTTPException(status_code=404, detail='Product not found')
+
+	cursor.execute(
+		f'''
+		SELECT product_id, image_hash, display_order FROM product_images WHERE product_id = %s ORDER BY display_order''', 
+		(product['id'],)
+	)
+	image_rows = cursor.fetchall()
+	product['images'] = image_rows
+
+	return [ProductResponse(**product)]
 
 # PATCH /listings/{id}
 @router.patch('/{product_id}/', response_model=ProductResponse)
@@ -103,7 +130,9 @@ def update_products(product_id: int, product_in: ProductUpdate, db=Depends(get_d
 	cursor.execute('SELECT * FROM products WHERE id = %s', (product_id,))
 	return ProductResponse(**cursor.fetchone())
 
-
+# TO DO
+# Dont delete, just set as disable
+# Also "delete" images
 # DELETE /listings/{id}
 @router.delete('/{product_id}/', status_code=204)
 def delete_product(product_id: int, db=Depends(get_db_dep)):
@@ -116,7 +145,7 @@ def delete_product(product_id: int, db=Depends(get_db_dep)):
 # PRODUCT IMAGES
 
 @router.post('/{product_id}/images/', response_model=ProductImagesResponse, status_code=201)
-def	create_product_image(product_id: int, image_in: ProductImagesCreate, db=Depends(get_db_dep)):
+def	create_product_image(product_id: int, image_in: ProductImages, db=Depends(get_db_dep)):
 	conn, cursor = db
 
 	cursor.execute('SELECT * FROM products WHERE id = %s', (product_id,))
@@ -152,8 +181,12 @@ def	get_product_image(product_id: int, image_id: int, db=Depends(get_db_dep)):
 		raise HTTPException(status_code=404, detail='Image not found')
 	return ProductImagesResponse(**image)
 
-
-
+@router.delete('/{product_id}/images/{image_id}', status_code=204)
+def delete_user(product_id: int, image_id: int, db=Depends(get_db_dep)):
+	conn, cursor = db
+	cursor.execute('DELETE FROM product_images WHERE id = %s', (image_id,))
+	if cursor.rowcount == 0:
+		raise HTTPException(status_code=404, detail='Image not found')
 
 
 # POST /product_review
