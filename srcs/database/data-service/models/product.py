@@ -11,6 +11,7 @@ class ProductStatus(str, Enum):
 	deleted	= 'Deleted'
 
 class ProductCreate(BaseModel):
+	user_id:		int
 	name:			str
 	slug:			str
 	description:	Optional[str] = None
@@ -30,6 +31,10 @@ class ProductUpdate(BaseModel):
 	#stock:			Optional[int] = None
 	status:			Optional[ProductStatus] = None
 
+class ProductImages(BaseModel):
+	image_hash:		str
+	display_order:	int
+
 class ProductResponse(BaseModel):
 	id:				int
 	seller_id:		int
@@ -37,15 +42,9 @@ class ProductResponse(BaseModel):
 	slug:			str
 	description:	Optional[str]
 	price:			Decimal
-	#stock:			int
 	status:			ProductStatus
+	images:			list[ProductImages] = []
 	created_at:		datetime
-
-	model_config = {'from_attributes': True}
-
-class ProductImagesCreate(BaseModel):
-	image_hash:		str
-	display_order:	int
 
 class ProductImagesResponse(BaseModel):
 	id:				int
