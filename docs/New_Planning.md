@@ -6,21 +6,21 @@ These tables summarize the current module strategy for the project based on prog
 
 | Module | Points | Current status | Module lead (person names) | Why it stays | Decision |
 |---|---:|---|---|---|---|
-| **Web Major 1 – Framework for frontend and backend** | 2 | Under development | [TBD: Erik + Leonardo Vichi] | Foundation of the whole project and already in progress. | **Keep** |
-| **User Major 1 – Standard user management and authentication** | 2 | Backend implemented, frontend missing | [TBD: Raphael + Ricardo] | Strong progress already; core requirement for the app. | **Keep** |
-| **User Major 2 – Advanced permission system** | 2 | 3 roles already defined | [TBD: Raphael + Leonardo Maes] | Fits marketplace logic and reuses auth work. | **Keep** |
-| **Web Minor 10 – File upload and management system** | 1 | Planned / needed for pictures | [TBD: Raphael + Leonardo Maes] | Important for listings, assets, and marketplace usability. | **Keep** |
-| **User Minor 2 – Remote authentication with OAuth 2.0** | 1 | Backend already implemented | [TBD: Ricardo + Erik] | Cheap point because much of the backend work exists already. | **Keep** |
-| **Total** | **8** |  |  |  |  |
+| **Web Major 1 – Framework for frontend and backend** | 2 | Under development | [All] | Foundation of the whole project and already in progress. | **Keep** |
+| **User Major 1 – Standard user management and authentication** | 2 | Backend implemented, frontend missing | [Raphael + Ricardo + Erick] | Strong progress already; core requirement for the app. | **Keep** |
+| **User Major 2 – Advanced permission system** | 2 | 3 roles already defined | [Raphael + Leonardo Maes] | Fits marketplace logic and reuses auth work. | **Keep** |
+| **Web Minor 10 – File upload and management system** | 1 | Planned / needed for pictures | [Raphael + Leonardo Maes + Leonardo Vichi] | Important for listings, assets, and marketplace usability. | **Keep** |
+| **User Minor 2 – Remote authentication with OAuth 2.0** | 1 | Backend already implemented | [Ricardo + Erik] | Cheap point because much of the backend work exists already. | **Keep** |
+| **Web Major 3 – User interaction (chat, profiles, friends)** | 2 | Chat already being discussed/planned | [Ricardo + Erik] | Reuses users/auth and is easy to demo clearly. | **Keep** |
+| **Web Major 2 – Real-time features** | 2 | Chat idea exists | [TBD: Ricardo + Erik] | Good only if clearly separated from user interaction and truly real-time across clients. | **Check if is comulative** |
+| **DevOps Monitoring module – Prometheus + Grafana** | 2 | DevOps teammate is working on it | [Leonardo Vichi] | Better than microservices because it is more realistic and demonstrable if progress is real. | **Keep** |
+| **Total** | **14** |  |  |  |  |
 
 ## Best choices to add
 
 | Module | Points | Current status | Module lead (person names) | Why it is a good choice now | Decision |
 |---|---:|---|---|---|---|
-| **Web Major 3 – User interaction (chat, profiles, friends)** | 2 | Chat already being discussed/planned | [TBD: Erik + Raphael] | Reuses users/auth and is easy to demo clearly. | **High priority add** |
 | **Web Major 4 – Public API** | 2 | Endpoints already prepared to support it | [TBD: Raphael + Leonardo Vichi] | Good marketplace fit and easier to justify than microservices. | **High priority add** |
-| **DevOps Monitoring module – Prometheus + Grafana** | 1–2 | DevOps teammate is working on it | [TBD: Leonardo Vichi] | Better than microservices because it is more realistic and demonstrable if progress is real. | **Strong candidate** |
-| **Web Major 2 – Real-time features** | 2 | Chat idea exists | [TBD: Ricardo + Erik] | Good only if clearly separated from user interaction and truly real-time across clients. | **Conditional candidate** |
 | **Web Minor 4 – Notification system** | 1 | Not started | [TBD: Raphael + Ricardo] | Useful for a marketplace, but best as a backup if easy to derive from backend events. | **Backup candidate** |
 | **Total if all chosen** | **8–9** |  |  |  |  |
 

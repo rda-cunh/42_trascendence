@@ -9,3 +9,4 @@ include:
 
 volumes:
   certs_data:
+  db_data:
