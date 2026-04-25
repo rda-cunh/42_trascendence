@@ -13,8 +13,8 @@ interface AuthContextType {
     password: string;
     phone?: string;
   }) => Promise<void>;
-  logout: () => void;
-  updateUser: (data: Partial<User>) => void;
+  logout: () => Promise<void>;
+  updateUser: (data: Partial<User>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,12 +24,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const parseUserFromToken = (jwt: string): User | null => {
+    try {
+      const payload = JSON.parse(atob(jwt.split(".")[1]));
+      const tokenId = payload.external_user_id ?? payload.user_id ?? payload.sub;
+      if (!tokenId) return null;
+      return {
+        id: String(tokenId),
+        email: payload.email,
+        name: payload.name,
+        role: payload.role,
+      };
+    } catch {
+      return null;
+    }
+  };
+
   useEffect(() => {
-    const initAuth = () => {
+    const initAuth = async () => {
       const savedToken = localStorage.getItem("auth_token");
       if (savedToken) {
         setToken(savedToken);
         api.setToken(savedToken);
+
+        const fallbackUser = parseUserFromToken(savedToken);
+        if (fallbackUser) setUser(fallbackUser);
+
+        try {
+          const profile = await api.getProfile();
+          if (profile?.id) {
+            setUser({
+              id: String(profile.id),
+              email: profile.email,
+              name: profile.name,
+              phone: profile.phone,
+              role: profile.role,
+              status: profile.status?.toLowerCase(),
+            });
+          }
+        } catch {
+          // TODO: Keep fallback user from token if profile request fails.
+        }
       }
       setLoading(false);
     };
@@ -97,15 +132,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     api.setToken(newToken);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      if (token) {
+        await api.logout();
+      }
+    } catch {
+      // TODO: Clear local auth state even if server logout fails.
+    }
     setToken(null);
     setUser(null);
     localStorage.removeItem("auth_token");
     api.setToken(null);
   };
 
-  const updateUser = (data: Partial<User>) => {
-    setUser((prev) => (prev ? { ...prev, ...data } : null));
+  const updateUser = async (data: Partial<User>) => {
+    if (!user) return;
+
+    const payload = {
+      name: data.name,
+      phone: data.phone,
+    };
+
+    const updated = await api.updateProfile(payload);
+    setUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            ...data,
+            id: String(updated?.id ?? prev.id),
+            email: updated?.email ?? prev.email,
+            name: updated?.name ?? data.name ?? prev.name,
+            phone: updated?.phone ?? data.phone ?? prev.phone,
+            role: updated?.role ?? prev.role,
+            status: updated?.status?.toLowerCase() ?? prev.status,
+          }
+        : null
+    );
   };
 
   return (

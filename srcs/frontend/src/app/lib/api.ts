@@ -15,7 +15,7 @@ class ApiClient {
   }
 
   private async request<T>(
-    method: "GET" | "POST" | "PUT" | "DELETE",
+    method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
     path: string,
     body?: any
   ): Promise<T> {
@@ -58,6 +58,25 @@ class ApiClient {
 
   refresh() {
     return this.request<{ access: string }>("POST", "/auth/refresh/", {});
+  }
+
+  logout() {
+    return this.request<{ detail?: string }>("POST", "/auth/logout/", {});
+  }
+
+  getProfile() {
+    return this.request<any>("GET", "/auth/profile/");
+  }
+
+  updateProfile(data: { name?: string; phone?: string; avatar_url?: string }) {
+    return this.request<any>("PATCH", "/auth/profile/", data);
+  }
+
+  changePassword(password: string, newPassword: string) {
+    return this.request<any>("PATCH", "/auth/password/", {
+      password,
+      new_password: newPassword,
+    });
   }
 
   // LISTINGS

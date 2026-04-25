@@ -21,7 +21,7 @@ export function Checkout() {
     setIsProcessing(true);
     try {
       await api.createOrder({
-        items: items.map((i) => ({ listing_id: i.listing.id, quantity: i.quantity })),
+        items: items.map((i: typeof items[number]) => ({ listing_id: i.listing.id, quantity: i.quantity })),
         total,
         address: address.line1 ? address : undefined,
       });

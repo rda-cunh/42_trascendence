@@ -92,7 +92,9 @@ export function Header() {
                   </Link>
                 )}
                 <button
-                  onClick={logout}
+                  onClick={() => {
+                    void logout();
+                  }}
                   className="rounded-lg p-2 text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
                   title="Logout"
                 >
