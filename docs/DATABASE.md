@@ -4,50 +4,54 @@
 
 ### POST
 ```
-/api/orders                      Create new order
-/api/listings                    Create new product
-/api/listings/{product_id}/images Add product image
-/api/users                       Create new user
-/api/users/{user_id}/address     Add user address
+/api/orders/                          Create new order
+/api/listings/                        Create new product
+/api/listings/{product_id}/images/    Add product image
+/api/auth/register/                   Create new user
+/api/auth/login/                      User login
+/api/auth/address/{user_id}/          Add user address
 ```
 
 ### GET
 ```
-/api/orders/{order_id}                 Get specific order
-/api/orders/buyer/{buyer_id}           Get all orders for a buyer
+/api/orders/{order_id}/                 Get specific order
+/api/orders/buyer/{buyer_id}/           Get all orders for a buyer
 
-/api/listings                          List products (supports filters)
-                                    Example:
-                                    /listings?search=phone
+/api/listings/                          List products (supports filters)
+                                        Example:
+                                        /listings?search=phone
 
-/api/listings/seller/{seller_id}       List products by seller
+/api/listings/{product_id}/             See Specific product
 
-/api/listings/{product_id}/images      List all images of a product
-/api/listings/{product_id}/images/{image_id}
+/api/listings/{product_id}/images/      List all images of a product
+/api/listings/{product_id}/images/{image_id}/
 
-users                              List all users
-/api/users/{user_id}                   Get specific user
+/api/auth/profile/{user_id}/			Get Self profile
+/api/users/{user_id}/                   Get specific user
 
-/api/users/{user_id}/address           Get user addresses
+/api/auth/address/{user_id}/            Get user addresses
 ```
 
 ### PATCH
 ```
 (To be implemented)
 
-PATCH /api/users/{user_id}
-PATCH /api/listings/{product_id}
-PATCH /api/orders/{order_id}
-PATCH /api/users/{user_id}/address/{address_id}
+PATCH /api/auth/profile/{user_id}/ Update user infos
+PATCH /api/auth/profile/password/{user_id}/ Update password
+PATCH /api/auth/address/{user_id}/
+PATCH /api/listings/{product_id}/
+PATCH /api/orders/{order_id}/
 ```
 
 ### DELETE
 ```
-/api/listings/{product_id}/images/{image_id}  ( Delete image from a product )
-/api/listings/{product_id}  ( Delete a product from table )
+/api/listings/{product_id}/images/{image_id}/  ( Delete image from a product ) !
+/api/listings/{product_id}/  ( Delete a product from table )
 
-/api/users/{user_id}  (Delete user from table)  -- Normally not used (sets user as Deactivated)
-/api/users/{user_id}/address  ( Delete address from table )
+
+/api/auth/profile/{user_id}/  sets user as Deactivated
+/api/register/{user_id}/  (Delete user from table)  -- Normally not used (sets user as Deactivated)
+/api/users/address/{user_id}/  ( Delete address from table )
 ```
 
 
@@ -79,11 +83,10 @@ USER + USER_ADDRESS
 <details>
 <summary><h1> User </h1></summary>
 
-> ### Finishing other CRUDs to pull
 
-## - User (POST):
+# - User Register (POST):
 ```
-curl -X POST http://data-service:9000/api/users/ -H "Content-Type: application/json" -d \
+curl -X POST http://data-service:9000/api/auth/register/ -H "Content-Type: application/json" -d \
 '{ \
 "name" : "Person Name",
 "email" : "example@email.com",
@@ -93,74 +96,56 @@ curl -X POST http://data-service:9000/api/users/ -H "Content-Type: application/j
 "avatar_url" : "hashToImage" (optional)
 }'
 ```
-**Response(Correct case):**
+
+# - User Login (POST):
 ```
-{
-"name":"Person Name",
-"email":"example@email.com",
-"phone":"123456789",
-"avatar_url":null,
-"id":1,
-"status":"Active",
-"created_at":"2026-03-11T15:47:28",
-"updated_at":"2026-03-11T15:47:28"
-}
-```
-**Response(Email duplicate):**
-```
-{"detail":"Email already registered"}
+curl -X POST http://data-service:9000/api/auth/login/ -H "Content-Type: application/json" -d \
+'{ \
+"name" : "Person Name",
+"password" : "examplepassword"
+}'
 ```
 
-
-## - User (GET all):
+# - User self profile (GET {user_id})
+### (With pagination)
 ```
-curl -X GET http://data-service:9000/api/users/
-```
-(Show all users in the table)
-
-
-## - User (GET {user_id})
-```
-curl -X GET http://data-service:9000/api/users/{user_id}
-```
-**Response(Correct case):**
-```
-{
-"name":"Person Name",
-"email":"example@email.com",
-"phone":"123456789",
-"avatar_url":"avatar.png",
-"id":1,
-"status":"Active",
-"created_at":"2026-03-11T14:23:16",
-"updated_at":"2026-03-11T14:23:16"
-}
-```
-**Response(Failed case):**
-```
-{"detail":"User not found"}
+curl -X GET http://data-service:9000/api/auth/profile/{user_id}/?page=1
 ```
 
+# - User (PATCH):
+### (All fields are optional, so just put in, what you want to update)
+```
+curl -X PATCH http://data-service:9000/api/auth/profile/{user_id}/ -H "Content-Type: application/json" -d \
+'{ \
+"name" : "New Name",
+"email" : "NewEmail@email.com",
+"phone" : "NewPassword",
+"status" : "Banned",
+"avatar_url" : "NewHash"
+}'
+```
 
-## - User (PATCH):
+# - User Password (PATCH):
 ```
-(To be implemented)
+curl -X PATCH http://data-service:9000/api/auth/profile/password/{user_id}/ -H "Content-Type: application/json" -d \
+'{ \
+"oldPass" : "123456789",
+"newPass" : "NewPassword"
+}'
 ```
 
+# - User Register (DELETE):
+### Delete from table (Not used)
+```
+curl -X DELETE http://data-service:9000/api/auth/register/
+```
 
-## - User (DELETE):
+# - User Register (DELETE):
+### Set as deactivated (Normally used)
 ```
-DELETE http://data-service:9000/api/users/{user_id}
+curl -X DELETE http://data-service:9000/api/auth/register/
 ```
-(Delete specific user from table)
-**Response(Failed case):**
-```
-{"detail":"User not found"}
-```
-**Response(Correct case):**
-```
-nothing
-```
+
 </details>
 
 
@@ -170,9 +155,9 @@ nothing
 <details>
 <summary><h1> User Address </h1></summary>
 
-## - User Address (POST):
+# - User Address (POST):
 ```
-curl -X POST "http://data-service:9000/api/users/{user_id}/address" \
+curl -X POST "http://data-service:9000/api/users/address/{user_id}/" \
 -H "Content-Type: application/json" \
 -d '{
   "street": "Rua das Flores",
@@ -183,69 +168,32 @@ curl -X POST "http://data-service:9000/api/users/{user_id}/address" \
   "country": "Portugal"
 }'
 ```
-**Response(Correct case):**
+
+# - User Address (GET)
 ```
-{
-"id":1,
-"street":"Rua das Flores",
-"number":"123",
-"city":"Porto",
-"state":"Porto",
-"postal_code":"4000-001",
-"country":"Portugal",
-"created_at":"2026-03-13T19:18:45",
-"updated_at":"2026-03-13T19:18:45"
-}
-```
-**Response(User have a address):**
-```
-{"detail":"User already have a address"}
+curl -X GET http://data-service:9000/api/users/address/{user_id}/ \
 ```
 
-
-## - User Address (GET)
+# - User Address (PATCH):
+### (All fields are optional, so just put in, what you want to update)
 ```
-curl -X GET http://data-service:9000/api/users/{user_id}/address \
-```
-**Response(Correct case):**
-```
-{
-"id":1,
-"street":"Rua das Flores",
-"number":"123",
-"city":"Porto",
-"state":"Porto",
-"postal_code":"4000-001",
-"country":"Portugal",
-"created_at":"2026-03-13T19:18:45",
-"updated_at":"2026-03-13T19:18:45"
-}
-```
-**Response(Failed case):**
-```
-{"detail":"Address not found"}
+curl -X PATCH "http://data-service:9000/api/users/address/{user_id}/" \
+-H "Content-Type: application/json" \
+-d '{
+  "street": "New address",
+  "number": "321",
+  "city": "Lisbon",
+  "state": "Lisbon",
+  "postal_code": "1234-567",
+  "country": "Portugal"
+}'
 ```
 
-
-## - User Address (PATCH):
+# - User Address (DELETE):
 ```
-(To be implemented)
+curl -X DELETE http://data-service:9000/api/users/address/{user_id}/
 ```
-
-
-## - User Address (DELETE):
-```
-curl -X DELETE http://data-service:9000/api/users/{user_id}/address
-```
-(Delete specific user from table)
-**Response(Failed case):**
-```
-{"detail":"Address not found"}
-```
-**Response(Correct case):**
-```
-nothing
-```
+(Delete specific user address from table)
 
 </details>
 
@@ -256,112 +204,50 @@ nothing
 <details>
 <summary><h1> Products </h1></summary>
 
-## - Products (POST):
+# - Add Products (POST):
 ```
 curl -X POST http://data-service:9000/api/listings/?seller_id=1 \
 -H "Content-Type: application/json" \
 -d '{
+  "user_id": "2",
   "name": "Product Name",
   "slug": "product-slug",
   "description": "This is a test description",
   "price": 99.90
 }'
 ```
-**Response(Correct case):**
-```
-{
-"id":1,
-"seller_id":1,
-"name":"Product Name",
-"slug":"product-slug",
-"description":"This is a test description",
-"price":"99.90",
-"status":"Active",
-"created_at":"2026-03-14T16:17:26"
-}
-```
-**Response(Slug used):**
-```
-{"detail":"Slug already in use"}
-```
-
-
-## - Products (GET) ( Search in name and description)
-```
-curl "http://data-service:9000/api/listings/?search=test"
-```
-**Response(Correct case):**
-```
-[
-{
-"id":2,
-"seller_id":2,
-"name":"Product Name1",
-"slug":"product-slug1",
-"description":"This is a test description",
-"price":"99.90",
-"status":"Active",
-"created_at":"2026-03-14T16:23:39"
-},
-{
-"id":1,
-"seller_id":1,
-"name":"Product Name",
-"slug":"product-slug",
-"description":"This is a test description",
-"price":"99.90","status":"Active",
-"created_at":"2026-03-14T16:17:26"
-}
-]
-```
-**Response(Failed case):**
-```
-[]
-```
-
-## - Products (GET) ( Per seller)
-```
-curl "http://data-service:9000/api/listings/seller/{seller_id}
-```
-**Response(Correct case):**
-```
-[
-{
-"id":1,
-"seller_id":1,
-"name":"Product Name",
-"slug":"product-slug",
-"description":"This is a test description",
-"price":"99.90","status":"Active",
-"created_at":"2026-03-14T16:17:26"
-}
-]
-```
-**Response(Failed case):**
-```
-[]
-```
 
 
 
-## - Products  (PATCH):
+# - Products (GET) ( Search in name and description)
 ```
-(To be implemented)
+curl "http://data-service:9000/api/listings/?page=2&search=test&status=Active"
 ```
 
 
-## - Products  (DELETE):
+# - Products (GET {product_id})
 ```
-curl -X DELETE http://data-service:9000/api/listings/{product_id}
+curl "http://data-service:9000/api/listings/{product_id}/
 ```
-(Delete specific product from table)
-**Response(Failed case):**
+
+
+# - Products  (PATCH):
 ```
-{"detail":"Product not found"}
+curl -X PATCH http://data-service:9000/api/listings/{product_id}/ \
+-H "Content-Type: application/json" \
+-d '{
+  "name": "Product Name",
+  "slug": "product-slug",
+  "description": "This is a test description",
+  "price": 99.90,
+  "status": "Paused"
+}'
 ```
-**Response(Correct case):**
+
+
+# - Products  (DELETE):
 ```
-nothing
+curl -X DELETE http://data-service:9000/api/listings/{product_id}/
 ```
 
 </details>
@@ -373,7 +259,7 @@ nothing
 <details>
 <summary><h1> Product Images </h1></summary>
 
-## - Product Images (POST):
+# - Product Images (POST):
 ```
 curl -X POST "http://data-service:9000/api/listings/{product_id}/images" \
 -H "Content-Type: application/json" \
@@ -382,51 +268,29 @@ curl -X POST "http://data-service:9000/api/listings/{product_id}/images" \
   "display_order": "1"
 }'
 ```
-**Response(Correct case):**
+
+# - Product Images (GET)
 ```
-{
-"id":1,
-"product_id":2,
-"image_hash":"test-hash",
-"display_order":2,
-"created_at":"2026-03-14T16:34:57"
-}
-```
-**Response(Failed case):**
-```
-{"detail":"Product not found"}
+curl -X GET "http://data-service:9000/api/listings/{product_id}/images/"
 ```
 
 
-## - Product Images (GET)
+# - Product Images (GET)
 ```
-curl "http://data-service:9000/api/listings/{product_id}/images/{image_id}"
-```
-**Response(Correct case):**
-```
-{
-"id":1,
-"product_id":2,
-"image_hash":"test-hash",
-"display_order":2,
-"created_at":"2026-03-14T16:34:57"
-}
-```
-**Response(Failed case):**
-```
-{"detail":"Image not found"}
+curl -X GET "http://data-service:9000/api/listings/{product_id}/images/{image_id}/"
 ```
 
 
-## - Product Images (PATCH):
+
+# - Product Images (PATCH):
 ```
 (To be implemented)
 ```
 
 
-## - Product Images (DELETE):
+# - Product Images (DELETE):
 ```
-(To be implemented)
+curl -X DELETE "http://data-service:9000/api/listings/{product_id}/images/{image_id}/"
 ```
 
 </details>
@@ -438,7 +302,7 @@ curl "http://data-service:9000/api/listings/{product_id}/images/{image_id}"
 <details>
 <summary><h1> Orders & Order Items </h1></summary>
 
-## - Orders (POST):
+# - Orders (POST):
 ```
 curl -X POST http://data-service:9000/api/orders/ -H "Content-Type: application/json" -d '{
   "buyer_id": 1,
@@ -498,9 +362,9 @@ curl -X POST http://data-service:9000/api/orders/ -H "Content-Type: application/
 ```
 
 
-## - Orders  (GET)
+# - Orders  (GET)
 ```
-curl "http://data-service:9000/api/orders/{order_id}"
+curl "http://data-service:9000/api/orders/{order_id}/"
 ```
 **Response(Correct case):**
 ```
@@ -542,54 +406,25 @@ curl "http://data-service:9000/api/orders/{order_id}"
 {"detail":"Order not found"}
 ```
 
+
+# - Orders  (GET) Specific order
+```
+curl "http://data-service:9000/api/orders/{order_id}/"
+```
+
+
 ## - Orders  (GET) Per user (all orders)
 ```
-curl "http://data-service:9000/api/orders/buyer/{user_id}"
+curl "http://data-service:9000/api/orders/buyer/{user_id}/"
 ```
-**Response(Correct case):**
-```
-{
-"id":1,
-"code":"ORD-1172EEFF",
-"buyer_id":1,
-"buyer_address_id":1,
-"status":"Pending",
-"subtotal":"299.70",
-"total":"299.70",
-"notes":"This is a test",
-"created_at":"2026-03-14T16:48:25",
-"items":
-[
-{
-"id":1,
-"product_id":2,
-"product_name":"Product Name1",
-"price":"99.90",
-"qty":1,
-"subtotal":"99.90",
-"seller_id":1
-},
-{
-"id":2,
-"product_id":2,
-"product_name":"Product Name1",
-"price":"99.90",
-"qty":2,
-"subtotal":"199.80",
-"seller_id":1
-}
-]
-}
-```
-**Response(Failed case):**
-```
-[]
-```
+
 
 
 ## - Orders  (PATCH):
 ```
-(To be implemented)
+curl -X POST http://data-service:9000/api/orders/ -H "Content-Type: application/json" -d '{
+  "status": Paid
+}'
 ```
 
 
