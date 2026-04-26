@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
+import { API_BASE_URL } from "../utils/constants";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
 import { Save, ArrowLeft, Tag, DollarSign, Package, FileText } from "lucide-react";
@@ -35,11 +36,12 @@ export function EditListing() {
   const engines = ["Unity", "Unreal Engine", "Godot", "GameMaker", "Any Engine", "Other"];
 
   useEffect(() => {
-    if (!id) return;
-    setIsLoading(true);
-    fetch(`/api/listings/${id}/`)
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchListing = async () => {
+      if (!id) return;
+      setIsLoading(true);
+      try {
+        const res = await fetch(`${API_BASE_URL}/listings/${id}/`);
+        const data = await res.json();
         const item = data?.listing || data;
         setFormData({
           title: item.name || item.title || "",
@@ -49,9 +51,13 @@ export function EditListing() {
           fileFormat: item.fileFormat || "",
           engine: item.engine || "",
         });
-      })
-      .catch(() => toast.error("Failed to load listing"))
-      .finally(() => setIsLoading(false));
+      } catch {
+        toast.error("Failed to load listing");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchListing();
   }, [id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,8 +74,7 @@ export function EditListing() {
           description: formData.description,
           fileFormat: formData.fileFormat,
           engine: formData.engine,
-        },
-        token
+        }
       );
       toast.success("Listing updated successfully!");
       navigate(`/product/${id}`);

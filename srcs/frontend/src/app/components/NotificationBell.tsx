@@ -1,10 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { Bell } from "lucide-react";
-import { mockNotifications } from "../data/mockData";
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
-  const unreadCount = mockNotifications.filter((n) => !n.read).length;
+  // TODO: Load notifications from api when endpoint is available
+  const notifications: any[] = [];
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <div className="relative">
@@ -28,25 +30,33 @@ export function NotificationBell() {
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Notifications</h3>
             </div>
             <div className="max-h-64 overflow-y-auto">
-              {mockNotifications.map((n) => (
-                <div
-                  key={n.id}
-                  className={`border-b border-gray-100 p-3 last:border-0 dark:border-gray-800 ${
-                    !n.read ? "bg-purple-50 dark:bg-purple-900/10" : ""
-                  }`}
-                >
-                  <div className="flex items-start gap-2">
-                    {!n.read && (
-                      <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-purple-500" />
-                    )}
-                    <div className={n.read ? "ml-4" : ""}>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{n.title}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{n.message}</p>
-                      <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{n.time}</p>
+              {notifications.length > 0 ? (
+                notifications.map((n) => (
+                  <div
+                    key={n.id}
+                    className={`border-b border-gray-100 p-3 last:border-0 dark:border-gray-800 ${
+                      !n.read ? "bg-purple-50 dark:bg-purple-900/10" : ""
+                    }`}
+                  >
+                    <div className="flex items-start gap-2">
+                      {!n.read && (
+                        <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-purple-500" />
+                      )}
+                      <div className={n.read ? "ml-4" : ""}>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {n.title}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{n.message}</p>
+                        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{n.time}</p>
+                      </div>
                     </div>
                   </div>
+                ))
+              ) : (
+                <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                  No notifications
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </>

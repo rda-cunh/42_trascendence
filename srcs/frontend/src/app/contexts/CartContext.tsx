@@ -1,14 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { Listing } from "../data/mockListings";
-
-interface CartItem {
-  listing: Listing;
-  quantity: number;
-}
+import { Listing, CartItem as CartItemType } from "../types";
 
 interface CartContextType {
-  items: CartItem[];
+  items: CartItemType[];
   addItem: (listing: Listing) => void;
   removeItem: (listingId: string) => void;
   clear: () => void;
@@ -19,7 +14,7 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>(() => {
+  const [items, setItems] = useState<CartItemType[]>(() => {
     const stored = localStorage.getItem("cart_items");
     return stored ? JSON.parse(stored) : [];
   });
