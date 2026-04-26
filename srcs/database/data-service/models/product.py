@@ -28,12 +28,18 @@ class ProductUpdate(BaseModel):
 	name:			Optional[str] = None
 	description:	Optional[str] = None
 	price:			Optional[Decimal] = None
-	#stock:			Optional[int] = None
 	status:			Optional[ProductStatus] = None
 
 class ProductImages(BaseModel):
 	image_hash:		str
 	display_order:	int
+
+# TO DO
+class SellerModel(BaseModel):
+	# is_owner:			bool
+	name:			str
+	email:			str
+	avatar_url:		str
 
 class ProductResponse(BaseModel):
 	id:				int
@@ -45,9 +51,10 @@ class ProductResponse(BaseModel):
 	status:			ProductStatus
 	images:			list[ProductImages] = []
 	created_at:		datetime
+	seller:			SellerModel = []
 
 class ProductImagesResponse(BaseModel):
-	id:				int
+	# id:				int
 	product_id:		int
 	image_hash:		str
 	display_order:	int
