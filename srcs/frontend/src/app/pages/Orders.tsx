@@ -2,16 +2,8 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
-import { mockOrders } from "../data/mockData";
 import { Package, Clock, CheckCircle, Truck, XCircle, ChevronRight } from "lucide-react";
-
-interface Order {
-  id: string;
-  status: string;
-  total: number;
-  created_at: string;
-  items?: Array<Record<string, unknown>>;
-}
+import { Order } from "../types";
 
 const statusConfig: Record<
   string,
@@ -45,30 +37,33 @@ const statusConfig: Record<
 };
 
 export function Orders() {
-  const { token } = useAuth();
-  const [orders, setOrders] = useState<Order[]>(
-    mockOrders.map((o) => ({
-      id: o.id,
-      status: o.status,
-      total: o.total,
-      created_at: new Date(o.date).toISOString(),
-      items: [],
-    }))
-  );
-  const [isLoading, setIsLoading] = useState(Boolean(token));
+  const { user, token } = useAuth();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!token) return;
-    api
-      .getOrders(token)
-      .then((data) => {
-        if (data?.results) setOrders(data.results);
-      })
-      .catch(() => {
-        /* use mock data */
-      })
-      .finally(() => setIsLoading(false));
-  }, [token]);
+    const fetchOrders = async () => {
+      if (!user || !token) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const data = await api.getOrders();
+        if (data?.results) {
+          setOrders(data.results);
+        } else if (Array.isArray(data)) {
+          setOrders(data);
+        }
+      } catch (err) {
+        console.error("Failed to load orders:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [user, token]);
 
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString("en-US", {
@@ -76,6 +71,25 @@ export function Orders() {
       month: "short",
       day: "numeric",
     });
+
+  if (!user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 transition-colors dark:bg-gray-950">
+        <div className="text-center">
+          <h2 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
+            Sign in required
+          </h2>
+          <p className="mb-4 text-gray-600 dark:text-gray-400">Please log in to view your orders</p>
+          <Link
+            to="/login"
+            className="rounded-lg bg-purple-600 px-6 py-3 text-white transition-colors hover:bg-purple-700"
+          >
+            Sign In
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
