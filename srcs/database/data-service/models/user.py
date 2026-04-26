@@ -15,11 +15,12 @@ class UserProducts(BaseModel):
 	images:			list[ProductImages] = []
 
 class UserResponse(BaseModel):
-	name:		str
-	email:		str
-	avatar_url:	Optional[str] = None
-	created_at:	datetime
-	pages:		int
-	listings:	list[UserProducts] = []
+	name:			str
+	email:			str
+	avatar_url:		Optional[str] = None
+	created_at:		datetime
+	owner:			bool
+	pages:			int
+	listings:		list[UserProducts] = []
 
 

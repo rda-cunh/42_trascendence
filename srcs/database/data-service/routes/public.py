@@ -77,6 +77,8 @@ def	get_user_products(user_id: int, limit: int = 20, db=Depends(get_db_dep)):
 # GET /users/{user_id}/listings
 
 # Filters
+# TO DO 
+# Change to pagination
 # GET /listings (?search=test ?limit=5 ?skip=10)
 @router.get('/listings/', response_model=list[ProductResponse])
 def	list_products(

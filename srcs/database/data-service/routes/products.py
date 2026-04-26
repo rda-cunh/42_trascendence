@@ -4,6 +4,40 @@ from models.product import ProductCreate, ProductImages, ProductUpdate, ProductR
 
 router = APIRouter(prefix='/api/listings', tags=['Products'])
 
+# TO DO IMPROVE
+# Retornar aqui uma flag bool, se é owner ou não
+# Se for owner pode editar, se não, pode comprar
+def GetProductInfo(db, product_id:	int):
+	conn, cursor = db
+	cursor.execute(
+		'SELECT id, seller_id, name, slug, description, price, status, created_at FROM products WHERE id = %s',
+		(product_id,)
+	)
+	product = cursor.fetchone()
+	if not product:
+		raise HTTPException(status_code=404, detail='Product not found')
+	
+	cursor.execute(
+		f'''SELECT product_id, image_hash, display_order FROM product_images WHERE product_id = %s ORDER BY display_order''',
+		(product['id'],)
+	)
+	image_rows = cursor.fetchall()
+	product['images'] = image_rows
+
+	cursor.execute(
+		f'''SELECT name, email, avatar_url FROM users WHERE id = %s''',
+		(product['seller_id'])
+	)
+	user = cursor.fetchone()
+
+	# TO DO
+	# if product['seller_id'] == current_user['id']:
+	# 	user['is_owner'] = True
+	# Can edit or can buy
+
+	product['seller'] = user
+	return product
+
 # POST /listings
 @router.post('/', response_model=ProductResponse, status_code=201)
 def	create_product(product_in: ProductCreate, db=Depends(get_db_dep)):
@@ -21,8 +55,8 @@ def	create_product(product_in: ProductCreate, db=Depends(get_db_dep)):
 		(product_in.user_id, product_in.name, product_in.slug, product_in.description, product_in.price)
 	)
 	new_id = conn.insert_id()
-	cursor.execute('SELECT * FROM products WHERE id = %s', (new_id,))
-	return ProductResponse(**cursor.fetchone())
+	product = GetProductInfo(db, new_id)
+	return ProductResponse(**product)
 
 # Missing improve to show num of pages
 # GET /listings (with filter ?search=Test or ?page=1 or ?status=Active or ?seler_id=1)
@@ -78,34 +112,13 @@ def	list_products(
 		})
 	for p in products:
 		p['images'] = images_map.get(p['id'], [])
-		del p['id']
 	return [ProductResponse(**p) for p in products]
 
-
-# TO DO IMPROVE
-# Return some user infos
 # GET /listings/{product_id}
 @router.get('/{product_id}/', response_model=ProductResponse)
 def get_id_products(product_id: int, db=Depends(get_db_dep)):
-	print("Test")
-	conn, cursor = db
-	cursor.execute(
-		'SELECT id, seller_id, name, slug, description, price, status, created_at FROM products WHERE id = %s',
-		(product_id,)
-	)
-	product = cursor.fetchone()
-	if not product:
-		raise HTTPException(status_code=404, detail='Product not found')
-
-	cursor.execute(
-		f'''
-		SELECT product_id, image_hash, display_order FROM product_images WHERE product_id = %s ORDER BY display_order''', 
-		(product['id'],)
-	)
-	image_rows = cursor.fetchall()
-	product['images'] = image_rows
-
-	return [ProductResponse(**product)]
+	product = GetProductInfo(db, product_id)
+	return ProductResponse(**product)
 
 # PATCH /listings/{id}
 @router.patch('/{product_id}/', response_model=ProductResponse)
@@ -127,8 +140,8 @@ def update_products(product_id: int, product_in: ProductUpdate, db=Depends(get_d
 		f'UPDATE products SET {set_clause} WHERE id = %s',
 		values
 	)
-	cursor.execute('SELECT * FROM products WHERE id = %s', (product_id,))
-	return ProductResponse(**cursor.fetchone())
+	product = GetProductInfo(db, product_id)
+	return ProductResponse(**product)
 
 # TO DO
 # Dont delete, just set as disable
@@ -165,17 +178,17 @@ def	create_product_image(product_id: int, image_in: ProductImages, db=Depends(ge
 
 	return (ProductImagesResponse(**new_image))
 
-@router.get('/{product_id}/images/', response_model=ProductImagesResponse)
+@router.get('/{product_id}/images/', response_model=list[ProductImagesResponse])
 def	list_product_images(product_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
-	cursor.execute('SELECT * FROM product_images WHERE product_id = %s', (product_id,))
+	cursor.execute('SELECT id, product_id, image_hash, display_order, created_at FROM product_images WHERE product_id = %s', (product_id,))
 	rows = cursor.fetchall()
 	return [ProductImagesResponse(**row) for row in rows]
 
 @router.get('/{product_id}/images/{image_id}', response_model=ProductImagesResponse)
 def	get_product_image(product_id: int, image_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
-	cursor.execute('SELECT * FROM product_images WHERE product_id = %s AND id = %s', (product_id, image_id,))
+	cursor.execute('SELECT id, product_id, image_hash, display_order, created_at FROM product_images WHERE product_id = %s AND id = %s', (product_id, image_id,))
 	image = cursor.fetchone()
 	if not image:
 		raise HTTPException(status_code=404, detail='Image not found')

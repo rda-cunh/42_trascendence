@@ -70,3 +70,29 @@ class UserAddressResponse(BaseModel):
 	updated_at: datetime
 
 	model_config = {'from_attributes': True}
+
+class ProductStatus(str, Enum):
+	draft	= 'Draft'
+	active	= 'Active'
+	paused	= 'Paused'
+	deleted	= 'Deleted'
+
+class ProductImages(BaseModel):
+	image_hash:		str
+	display_order:	int
+
+class ProductResponse(BaseModel):
+	name:			str
+	slug:			str
+	description:	str
+	price:			Decimal
+	status:			ProductStatus
+	images:			list[ProductImages] = []
+
+class ProfileResponse(UserBase):
+	name:			str
+	email:			str
+	phone:			str
+	avatar_url:		str
+	owner:			bool
+	listings:		list[ProductResponse] = []

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 import pymysql
 import hashlib
 from database import get_db_dep
-from models.auth import UserCreate, UserAddressCreate, UserUpdate, UserPasswordUpdate,UserAddressUpdate, UserResponse, UserAddressResponse
+from models.auth import *
 
 router = APIRouter(prefix='/api/auth', tags=['Users'])
 
@@ -77,17 +77,51 @@ def login_user(user_in: UserLogin, db=Depends(get_db_dep)):
 
 
 
-
 # TO DO
 # Check token to see self profile
 @router.get('/profile/{user_id}/', response_model=UserResponse)
-def	get_user(user_id: int, db=Depends(get_db_dep)):
+def	get_user(user_id: int, page: int = 1, db=Depends(get_db_dep)):
 	conn, cursor = db
-	cursor.execute('SELECT * FROM users WHERE id = %s', (user_id))
+	limit = 10
+	skip = (page - 1) * limit
+
+	cursor.execute('SELECT name, email, phone, avatar_url FROM users WHERE id = %s', (user_id,))
 	user = cursor.fetchone()
 	if not user:
 		raise HTTPException(status_code=404, detail='User not found')
-	return UserResponse(**user)
+	
+	cursor.execute('SELECT COUNT(*) FROM products WHERE seller_id = %s AND status = %s', (user_id, 'Active'))
+	n_prod = cursor.fetchone()['COUNT(*)']
+	user['pages'] = (n_prod // 10) if (n_prod % 10) == 0 else (n_prod // 10 + 1)
+
+	cursor.execute('SELECT id, name, slug, description, price, status FROM products WHERE seller_id = %s ORDER BY created_at DESC LIMIT %s OFFSET %S', (user_id, limit, skip))
+	products = cursor.fetchall()
+	user['owner'] = True		## Check user_id and seller_id
+	if not products:
+		user['listings'] = []
+		return ProfileResponse(**user)
+
+	product_ids = [p['id'] for p in products]
+	placeholders = ','.join(['%s'] * len(product_ids))
+
+	cursor.execute(f'''SELECT product_id, image_hash, display_order FROM product_images WHERE product_id IN ({placeholders}) ORDER BY display_order''',
+				tuple(product_ids))
+	
+	image_rows = cursor.fetchall()
+	images_map = {}
+
+	for img in image_rows:
+		pid = img['product_id']
+		images_map.setdefault(pid, []).append({
+			'image_hash': img['image_hash'],
+			'display_order': img['display_order']
+		})
+
+	for p in products:
+		p['images'] = images_map.get(p['id'], [])
+		del p['id']
+	user['listings'] = products
+	return ProfileResponse(**user)
 
 # Update user infos
 @router.patch('/profile/{user_id}/', response_model=UserResponse, status_code=200)

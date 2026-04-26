@@ -24,6 +24,7 @@ def	get_profile(user_id: int, page: int = 1, db=Depends(get_db_dep)):
 
 	cursor.execute('SELECT id, name, description, price FROM products WHERE seller_id = %s ORDER BY created_at DESC LIMIT %s OFFSET %s', (user_id, limit, skip))
 	products = cursor.fetchall()
+	user['owner'] = False		## Check user_id and seller_id
 	if not products:
 		user['listings'] = []
 		return UserResponse(**user)
