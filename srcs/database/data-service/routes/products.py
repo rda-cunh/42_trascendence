@@ -31,7 +31,7 @@ def GetProductInfo(db, product_id:	int):
 	user = cursor.fetchone()
 
 	# TO DO
-	# if product['seller_id'] == current_user['id']:
+	# if product['seller_id'] == current_user['id'] || current_user['role'] == 'Admin':
 	# 	user['is_owner'] = True
 	# Can edit or can buy
 
@@ -87,7 +87,7 @@ def	list_products(
 		sql += ' AND seller_id = %s'
 		params.append(seller_id)
 
-	sql += ' ORDER BY created_at DESC LIMIT %s OFFSET %s'	# Pagination
+	sql += ' ORDER BY created_at DESC LIMIT %s OFFSET %s'
 	params.extend([limit, skip])
 
 	cursor.execute(sql, params)

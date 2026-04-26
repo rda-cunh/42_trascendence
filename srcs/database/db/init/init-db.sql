@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(255) NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   phone VARCHAR(30) NULL DEFAULT NULL,
+  role ENUM('user', 'admin') NOT NULL DEFAULT 'user',
   status ENUM('Active','Suspended','Banned','Deactivated') NOT NULL DEFAULT 'Active',
   avatar_url VARCHAR(255),
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

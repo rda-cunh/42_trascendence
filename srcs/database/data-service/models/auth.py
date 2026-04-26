@@ -10,6 +10,10 @@ class UserStatus(str, Enum):
 	baned		= 'Baned'
 	deactivated	= 'Deactivated'
 
+class UserRole(str, Enum):
+	user		= 'User'
+	admin		= 'Admin'
+
 class UserBase(BaseModel):
 	name: str
 	email:		str
@@ -37,6 +41,7 @@ class UserPasswordUpdate(BaseModel):
 class UserResponse(UserBase):
 	id:			int
 	status:		UserStatus
+	role:		UserRole
 	created_at:	datetime
 	updated_at:	datetime
 
