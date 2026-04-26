@@ -16,7 +16,6 @@ class ProductCreate(BaseModel):
 	slug:			str
 	description:	Optional[str] = None
 	price:			Decimal
-	#stock:			int = 0
 
 	@field_validator('price')
 	@classmethod
