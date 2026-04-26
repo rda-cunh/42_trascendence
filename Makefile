@@ -78,17 +78,20 @@ check-docker:
        exit 1; \
     fi'
 
+OS_ID := $(shell . /etc/os-release && echo $$ID)
+OS_CODENAME := $(shell . /etc/os-release && echo $$VERSION_CODENAME)
+
 setup-docker: check-root
 	@$(EXEC) "if ! command -v docker >/dev/null 2>&1; then \
-		apt-get update -o Dir::Etc::sourcelist=\"sources.list\" -o Dir::Etc::sourceparts=\"-\" && \
-		apt-get install -y ca-certificates curl && \
-		install -m 0755 -d /etc/apt/keyrings && \
-		curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc && \
-		chmod a+r /etc/apt/keyrings/docker.asc && \
-		printf \"Types: deb\nURIs: https://download.docker.com/linux/debian\nSuites: \$$(. /etc/os-release && echo \"\$$VERSION_CODENAME\")\nComponents: stable\nSigned-By: /etc/apt/keyrings/docker.asc\n\" | tee /etc/apt/sources.list.d/docker.sources > /dev/null && \
-		apt-get update && \
-		apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin; \
-	fi"
+       apt-get update -o Dir::Etc::sourcelist=\"sources.list\" -o Dir::Etc::sourceparts=\"-\" && \
+       apt-get install -y ca-certificates curl && \
+       install -m 0755 -d /etc/apt/keyrings && \
+       curl -fsSL https://download.docker.com/linux/$(OS_ID)/gpg -o /etc/apt/keyrings/docker.asc && \
+       chmod a+r /etc/apt/keyrings/docker.asc && \
+       printf \"Types: deb\nURIs: https://download.docker.com/linux/$(OS_ID)\nSuites: $(OS_CODENAME)\nComponents: stable\nSigned-By: /etc/apt/keyrings/docker.asc\n\" | tee /etc/apt/sources.list.d/docker.sources > /dev/null && \
+       apt-get update && \
+       apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin; \
+    fi"
 
 sync-files: remove-files
 	@if [ "$(SERVER)" != "local" ]; then \

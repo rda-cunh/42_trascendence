@@ -3,5 +3,5 @@ Django
 djangorestframework
 djangorestframework-simplejwt[crypto] #for JWT authentication and later upgrade on keys
 django-cors-headers #for CORS (Cross-Origin Resource Sharing) handling (browser security feature)
-#gunicorn #may be useful
+gunicorn #may be useful
 #psycopg #missing for postgres, or other for database integration
