@@ -22,7 +22,15 @@ def proxy_chat_request(method, endpoint, data=None, params=None):
 
     # send the request to data-service
     response = requests.request(
-        method=method,
+        method=
+        )
+
+    async def chat_message(self, event):
+        # takes a message that was broadcast to the group and sends it through the websocket to the connected client
+        await self.send(text_data=json.dumps({
+            "type": "message",
+            "message": event["message"],
+        }))method,
         url=url,
         json=data,
         params=params,
