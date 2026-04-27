@@ -432,7 +432,7 @@ class chat_conversations(APIView):
         )
 
     def post(self, request):
-        """ creates or fetchs the conversation for a listing """.
+        """ creates or fetchs the conversation for a listing """
 
         serializer = serializers.ChatConversationCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
