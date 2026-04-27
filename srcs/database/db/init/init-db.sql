@@ -127,3 +127,34 @@ CREATE TABLE IF NOT EXISTS payments (
   KEY idx_payments_order (order_id),
   CONSTRAINT fk_payments_order FOREIGN KEY (order_id) REFERENCES orders (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS conversations (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  listing_id BIGINT UNSIGNED NOT NULL,
+  buyer_id BIGINT UNSIGNED NOT NULL,
+  seller_id BIGINT UNSIGNED NOT NULL,
+  last_message TEXT NULL DEFAULT NULL,
+  last_message_at TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_conversation_listing (listing_id),
+  KEY idx_conversation_buyer (buyer_id),
+  KEY idx_conversation_seller (seller_id),
+  CONSTRAINT fk_conversation_listing FOREIGN KEY (listing_id) REFERENCES products (id),
+  CONSTRAINT fk_conversation_buyer FOREIGN KEY (buyer_id) REFERENCES users (id),
+  CONSTRAINT fk_conversation_seller FOREIGN KEY (seller_id) REFERENCES users (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS messages (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  conversation_id BIGINT UNSIGNED NOT NULL,
+  sender_id  BIGINT UNSIGNED NOT NULL,
+  content TEXT NULL DEFAULT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  read_at TIMESTAMP NULL,
+  PRIMARY KEY (id),
+  KEY idx_messages_conversation (conversation_id),
+  KEY idx_messages_sender (sender_id),
+  CONSTRAINT fk_messages_conversation FOREIGN KEY (conversation_id) REFERENCES conversations (id),
+  CONSTRAINT fk_messages_sender FOREIGN KEY (sender_id) REFERENCES users (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

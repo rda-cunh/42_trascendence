@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import pymysql
-from routes import public, products, orders, auth, users
+from routes import public, products, orders, auth, users, chat
 
 app = FastAPI(title='Marketplace DB Gateway',
 			)
@@ -34,6 +34,7 @@ app.include_router(products.router)
 app.include_router(orders.router)
 app.include_router(users.router)
 app.include_router(auth.router)
+app.include_router(chat.router)
 
 @app.get('/health', tags=['System'])
 def health():

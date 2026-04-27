@@ -41,7 +41,7 @@ class UserPasswordUpdate(BaseModel):
 class UserResponse(UserBase):
 	id:			int
 	status:		UserStatus
-	role:		UserRole
+	# role:		UserRole
 	created_at:	datetime
 	updated_at:	datetime
 
