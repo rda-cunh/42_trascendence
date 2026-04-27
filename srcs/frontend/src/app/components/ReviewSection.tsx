@@ -1,18 +1,26 @@
 import { useState } from "react";
 import { ReviewStars } from "./ReviewStars";
-import { Review } from "../data/mockData";
+import { api } from "../lib/api";
+import { Review } from "../types";
 import { toast } from "sonner";
 
 interface ReviewSectionProps {
+  listingId: string;
   reviews: Review[];
   isLoggedIn: boolean;
-  onSubmitReview?: (rating: number, text: string) => void;
+  onReviewSubmitted?: () => void;
 }
 
-export function ReviewSection({ reviews, isLoggedIn, onSubmitReview }: ReviewSectionProps) {
+export function ReviewSection({
+  listingId,
+  reviews,
+  isLoggedIn,
+  onReviewSubmitted,
+}: ReviewSectionProps) {
   const [newReview, setNewReview] = useState({ rating: 0, text: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!isLoggedIn) {
@@ -25,12 +33,23 @@ export function ReviewSection({ reviews, isLoggedIn, onSubmitReview }: ReviewSec
       return;
     }
 
-    if (onSubmitReview) {
-      onSubmitReview(newReview.rating, newReview.text);
-    }
+    setIsSubmitting(true);
+    try {
+      await api.createReview({
+        listing_id: listingId,
+        rating: newReview.rating,
+        comment: newReview.text,
+      });
 
-    toast.success("Review submitted!");
-    setNewReview({ rating: 0, text: "" });
+      toast.success("Review submitted!");
+      setNewReview({ rating: 0, text: "" });
+      onReviewSubmitted?.();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to submit review";
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const formatDate = (dateString: string) =>
@@ -72,35 +91,42 @@ export function ReviewSection({ reviews, isLoggedIn, onSubmitReview }: ReviewSec
           />
           <button
             type="submit"
-            className="rounded-lg bg-purple-600 px-4 py-2 text-sm text-white transition-colors hover:bg-purple-700"
+            disabled={isSubmitting}
+            className="rounded-lg bg-purple-600 px-4 py-2 text-sm text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
           >
-            Submit
+            {isSubmitting ? "Submitting..." : "Submit"}
           </button>
         </div>
       </form>
 
       {/* Reviews list */}
       <div className="space-y-4">
-        {reviews.map((review) => (
-          <div
-            key={review.id}
-            className="border-b border-gray-100 pb-4 last:border-0 dark:border-gray-800"
-          >
-            <div className="mb-2 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-sm font-semibold text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
-                  {review.user.charAt(0)}
+        {reviews.length > 0 ? (
+          reviews.map((review) => (
+            <div
+              key={review.id}
+              className="border-b border-gray-100 pb-4 last:border-0 dark:border-gray-800"
+            >
+              <div className="mb-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-sm font-semibold text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+                    {review.user?.charAt(0) || "?"}
+                  </div>
+                  <span className="font-medium text-gray-900 dark:text-white">{review.user || "Anonymous"}</span>
                 </div>
-                <span className="font-medium text-gray-900 dark:text-white">{review.user}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {formatDate(review.date || new Date().toISOString())}
+                </span>
               </div>
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                {formatDate(review.date)}
-              </span>
+              <ReviewStars rating={review.rating} size="sm" />
+              <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">{review.text}</p>
             </div>
-            <ReviewStars rating={review.rating} size="sm" />
-            <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">{review.text}</p>
+          ))
+        ) : (
+          <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+            No reviews yet. Be the first to review this asset!
           </div>
-        ))}
+        )}
       </div>
     </div>
   );

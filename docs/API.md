@@ -65,6 +65,18 @@ Body: { password, new_password }
 Returns: { detail: "Password updated." }
 Auth required: Yes (Bearer header)
 
+#### GET /api/auth/42/
+Starts the 42 OAuth login flow by redirecting the user to the 42 authorization page.
+Body: (none)
+Returns: HTTP redirect to 42 OAuth authorize endpoint
+Auth required: No
+
+#### GET /api/auth/42/callback/
+OAuth callback endpoint used by 42 after user authorization. Validates state, exchanges code, and redirects to frontend success/error URL.
+Body: (none)
+Returns: HTTP redirect to configured frontend URL with auth result
+Auth required: No
+
 ### Listing
 
 These endpoints are related to the creation, deletion and editing of product listings.

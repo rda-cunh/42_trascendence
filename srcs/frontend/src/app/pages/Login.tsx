@@ -19,8 +19,7 @@ export function Login() {
       toast.success("Welcome back!");
       navigate("/");
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Login failed";
-      toast.error(errorMessage);
+      toast.error(err instanceof Error ? err.message : "Login failed");
     } finally {
       setIsLoading(false);
     }
