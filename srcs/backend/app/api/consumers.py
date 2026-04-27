@@ -126,10 +126,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # distribute the message to the group
         await self.channel_layer.group_send(
             self.group_name,
-            {chat_message
+            {
                 "type": "chat.message",         # this maps into chat_message method (websocket pattern)
                 "message": saved_message,
-            }
+            },
         )
 
     async def chat_message(self, event):
@@ -154,12 +154,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except (TokenError, KeyError, ValueError):
             return None
 
-        def _user_can_access_conversation(self, conversation_id, user_id):
+    def _user_can_access_conversation(self, conversation_id, user_id):
         """ asking the data-service if user belongs to conversation - only buyer or seller """
 
         status_code, conversation = proxy_chat_request(
             method="GET",
-            endpoint=f"/chat/conversations/{conversation_id}/",
+            endpoint=f"/chat/conversations/by-id/{conversation_id}/",
         )
 
         if status_code != 200:
