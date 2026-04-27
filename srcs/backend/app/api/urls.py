@@ -36,6 +36,8 @@ from .views import (
     order_id,
     auth_42_redirect,
     auth_42_callback,
+    chat_conversations,
+    chat_messages,
 )
 
 urlpatterns = [
@@ -50,7 +52,7 @@ urlpatterns = [
         path("listings/<int:product_id>/review/", listings_review.as_view()),
         path("listings/<int:product_id>/review/<int:review_id>/", listings_review.as_view()),
         
-        # auth [everything under /api/auth]
+        # auth paths [everything under /api/auth]
         path("auth/register/", auth_register.as_view()),
         path("auth/login/", auth_login.as_view()),
         path("auth/logout/", auth_logout.as_view()),
@@ -60,7 +62,11 @@ urlpatterns = [
         path("auth/42/", auth_42_redirect.as_view()),
         path("auth/42/callback/", auth_42_callback.as_view()),
 
-        # orders path
+        # chat paths
+        path("chat/conversations/", chat_conversations.as_view()),
+        path("chat/conversations/<int:conversation_id>/messages/", chat_messages.as_view()),
+
+        # orders paths
         path("orders/<int:id>/", order_id.as_view()),
         path("orders/", order_create.as_view()),
         path("payment/<int:order_id>/", payment_id.as_view()),

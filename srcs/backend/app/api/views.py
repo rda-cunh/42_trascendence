@@ -419,6 +419,41 @@ class auth_42_callback(APIView):
         response.delete_cookie("oauth42_state", path="/api/auth/42/")
         return response
 
+# --- CHAT API interfaces ---
+class chat_conversations(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """ lists all conversations for the user (retrieved from JWT) """
+        return proxy_request(
+            "GET",
+            "/chat/conversations/",
+            params={"user_id": request.user.id}
+        )
+
+    def post(self, request):
+        """ creates or fetchs the conversation for a listing """.
+
+        serializer = serializers.ChatConversationCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        payload = {
+            "listing_id": serializer.validated_data["listing_id"],
+            "buyer_id": request.user.id,
+        }
+
+        return proxy_request("POST", "/chat/conversations/", data=payload)
+
+class chat_messages(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, conversation_id):
+        """ gets message history for one conversation """
+        return proxy_request(
+            "GET",
+            f"/chat/conversations/{conversation_id}/messages/"
+        )
+
 # Product listings API
 
 class listing_id(APIView):
