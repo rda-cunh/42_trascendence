@@ -1,250 +1,147 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Upload, DollarSign, Package, Tag, FileText } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
 import { toast } from "sonner";
 
 export function SellItem() {
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const { token } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    title: "",
-    price: "",
-    category: "",
-    condition: "",
+    name: "",
     description: "",
-    fileFormat: "",
-    engine: "",
+    price: "",
+    category: "3D Models",
+    image: "",
   });
-
-  const categories = [
-    "3D Models",
-    "2D Assets",
-    "Shaders",
-    "Textures",
-    "VFX",
-    "Audio",
-    "UI/UX",
-    "Scripts",
-    "Other",
-  ];
-
-  const engines = ["Unity", "Unreal Engine", "Godot", "GameMaker", "Any Engine", "Other"];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setIsLoading(true);
+
     try {
-      if (token) {
-        await api.createListing(
-          {
-            name: formData.title,
-            price: parseFloat(formData.price),
-            category: formData.category,
-            description: formData.description,
-            status: formData.condition || "New",
-            fileFormat: formData.fileFormat,
-            engine: formData.engine,
-          },
-          token
-        );
-      }
+      await api.createListing({
+        name: formData.name,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        category: formData.category,
+        image: formData.image,
+      });
+
       toast.success("Asset listed successfully!");
       navigate("/");
-    } catch {
-      // Demo mode fallback
-      toast.success("Asset listed! (demo mode)");
-      navigate("/");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to list asset";
+      toast.error(message);
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  if (!user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <div className="text-center">
+          <h2 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
+            Sign in required
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">Please log in to list an asset</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
-      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
-            Sell Your Game Asset
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Share your creation with the game dev community
-          </p>
-        </div>
+      <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
+        <h1 className="mb-8 text-3xl font-bold text-gray-900 dark:text-white">List Your Asset</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Image Upload */}
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-colors dark:border-gray-800 dark:bg-gray-900">
-            <label className="mb-3 block text-sm font-semibold text-gray-900 dark:text-white">
-              Asset Preview Images
-            </label>
-            <div className="cursor-pointer rounded-lg border-2 border-dashed border-gray-300 p-12 text-center transition-colors hover:border-purple-400 dark:border-gray-700 dark:hover:border-purple-500">
-              <Upload className="mx-auto mb-3 h-12 w-12 text-gray-400 dark:text-gray-500" />
-              <p className="mb-1 text-gray-600 dark:text-gray-400">
-                Click to upload or drag and drop
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-500">PNG, JPG up to 10MB</p>
-            </div>
-          </div>
-
-          {/* Basic Information */}
-          <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-colors dark:border-gray-800 dark:bg-gray-900">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-              Basic Information
-            </h2>
-
+        <form
+          onSubmit={handleSubmit}
+          className="rounded-xl border border-gray-200 bg-white p-8 dark:border-gray-800 dark:bg-gray-900"
+        >
+          <div className="space-y-6">
             <div>
-              <label
-                htmlFor="title"
-                className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                <Tag className="h-4 w-4" /> Asset Title *
+              <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                Asset Name
               </label>
               <input
                 type="text"
-                id="title"
-                name="title"
                 required
-                value={formData.title}
-                onChange={handleChange}
-                placeholder="e.g., Holographic Shader Pack"
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                Description
+              </label>
+              <textarea
+                required
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                rows={4}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label
-                  htmlFor="price"
-                  className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  <DollarSign className="h-4 w-4" /> Price (USD) *
+                <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                  Price ($)
                 </label>
                 <input
                   type="number"
-                  id="price"
-                  name="price"
                   required
                   min="0"
                   step="0.01"
                   value={formData.price}
-                  onChange={handleChange}
-                  placeholder="0.00"
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 />
               </div>
-              <div>
-                <label
-                  htmlFor="category"
-                  className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  <Package className="h-4 w-4" /> Category *
-                </label>
-                <select
-                  id="category"
-                  name="category"
-                  required
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                >
-                  <option value="">Select a category</option>
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label
-                  htmlFor="fileFormat"
-                  className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  <FileText className="h-4 w-4" /> File Format *
-                </label>
-                <input
-                  type="text"
-                  id="fileFormat"
-                  name="fileFormat"
-                  required
-                  value={formData.fileFormat}
-                  onChange={handleChange}
-                  placeholder="e.g., FBX, PNG, Shader Graph"
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="engine"
-                  className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  <Package className="h-4 w-4" /> Compatible Engine *
+                <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                  Category
                 </label>
                 <select
-                  id="engine"
-                  name="engine"
-                  required
-                  value={formData.engine}
-                  onChange={handleChange}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 >
-                  <option value="">Select engine</option>
-                  {engines.map((eng) => (
-                    <option key={eng} value={eng}>
-                      {eng}
-                    </option>
-                  ))}
+                  <option>3D Models</option>
+                  <option>2D Assets</option>
+                  <option>Shaders</option>
+                  <option>Textures</option>
+                  <option>VFX</option>
+                  <option>Audio</option>
+                  <option>UI/UX</option>
                 </select>
               </div>
             </div>
 
             <div>
-              <label
-                htmlFor="description"
-                className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                <FileText className="h-4 w-4" /> Description *
+              <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                Image URL
               </label>
-              <textarea
-                id="description"
-                name="description"
-                required
-                rows={6}
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="Describe your asset in detail. Include features, what's included, technical specs, etc."
-                className="w-full resize-none rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              <input
+                type="url"
+                value={formData.image}
+                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               />
             </div>
-          </div>
 
-          {/* Submit */}
-          <div className="flex gap-4">
-            <button
-              type="button"
-              onClick={() => navigate("/")}
-              className="flex-1 rounded-lg border border-gray-300 px-6 py-3 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-            >
-              Cancel
-            </button>
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="flex-1 rounded-lg bg-purple-600 px-6 py-3 text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
+              disabled={isLoading}
+              className="w-full rounded-lg bg-purple-600 py-3 font-medium text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
             >
-              {isSubmitting ? "Listing..." : "List Asset"}
+              {isLoading ? "Listing..." : "List Asset"}
             </button>
           </div>
         </form>

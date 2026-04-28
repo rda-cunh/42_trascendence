@@ -3,11 +3,10 @@
 // ==================== User Types ====================
 export interface User {
   id: string;
-  name: string;
   email: string;
+  name?: string;
   phone?: string;
-  avatar_url?: string;
-  role: "user" | "seller" | "admin";
+  role?: "user" | "seller" | "admin";
   status?: "active" | "suspended" | "banned";
   created_at?: string;
 }
@@ -23,7 +22,7 @@ export interface AuthResponse {
   tokens?: AuthTokens;
 }
 
-// ==================== Product Types ====================
+// ==================== Product/Listing Types ====================
 export interface Product {
   id: string;
   title: string;
@@ -43,6 +42,9 @@ export interface Product {
   downloads?: number;
   rating?: number;
 }
+
+// Alias for consistency with codebase
+export type Listing = Product;
 
 export type ProductCategory =
   | "3D Models"
@@ -78,17 +80,20 @@ export type OrderStatus = "pending" | "processing" | "shipped" | "completed" | "
 // ==================== Review Types ====================
 export interface Review {
   id: string;
-  product_id: string;
-  user_id: string;
-  user_name: string;
+  product_id?: string;
+  user_id?: string;
+  user?: string; // username/name for display
+  user_name?: string;
   rating: 1 | 2 | 3 | 4 | 5;
-  text: string;
-  created_at: string;
+  text?: string;
+  comment?: string;
+  date?: string;
+  created_at?: string;
 }
 
 // ==================== Cart Types ====================
 export interface CartItem {
-  product: Product;
+  listing: Listing;
   quantity: number;
 }
 
