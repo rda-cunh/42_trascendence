@@ -41,6 +41,16 @@ def GetExistingChat(cursor, id):
 
 	return chat
 
+@router.get('/conversations/by-id/{conv_id}', response_model=UserConversation)
+def GetConversationById(conv_id: int, db=Depends(get_db_dep)):
+	_, cursor = db
+	chat = GetExistingChat(cursor, conv_id)
+	if chat is None:
+		raise HTTPException(status_code=404, detail="Conversation not found")
+
+	chat['other_id'] = chat['seller_id']
+	return UserConversation(**chat)
+
 @router.post('/conversations/', response_model=UserConversation, status_code=200)
 def PostConversation(conv_in: PostConversation, db=Depends(get_db_dep)):
 	conn, cursor = db
@@ -51,7 +61,7 @@ def PostConversation(conv_in: PostConversation, db=Depends(get_db_dep)):
 	)
 	result = cursor.fetchone()
 	if result is not None:
-		chat = GetExistingChat(cursor, result[0])
+		chat = GetExistingChat(cursor, result['id'])
 		if chat is None:
 			raise HTTPException(status_code=404, detail="Conversation not found")
 		chat['other_id'] = conv_in.seller_id
