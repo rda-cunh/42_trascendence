@@ -1,4 +1,5 @@
 services:
+
   prometheus:
     image: prom/prometheus:v3
     container_name: prometheus
@@ -37,5 +38,34 @@ services:
       - prometheus_data:/prometheus
     restart: always
     depends_on:
+      pki-init:
+        condition: service_completed_successfully
+
+  grafana:
+    image: grafana/grafana:13.0
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_SERVER_PROTOCOL=https
+      - GF_SERVER_CERT_FILE=/certs/${INT_CRT_NAME:-internal.crt}
+      - GF_SERVER_CERT_KEY=/certs/${INT_KEY_NAME:-internal.key}
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/metrics
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+      - GF_SECURITY_CSRF_ADDITIONAL_HEADERS=X-Forwarded-Host
+    volumes:
+      - certs_data:/certs:ro
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    restart: always
+    entrypoint: []
+    command: >
+      sh -c "
+      cp /certs/${CA_CRT_NAME:-ca.crt} /tmp/ca.crt &&
+      exec /run.sh
+      "
+    depends_on:
+      prometheus:
+        condition: service_started
       pki-init:
         condition: service_completed_successfully
