@@ -1,0 +1,15 @@
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+
+scrape_configs:
+
+  # ── Prometheus self-scrape ─────────────────────────────────
+  - job_name: 'prometheus'
+    scheme: https
+    tls_config:
+      ca_file:   /certs/__CA_CRT_NAME__
+      cert_file: /certs/__INT_CRT_NAME__
+      key_file:  /certs/__INT_KEY_NAME__
+    static_configs:
+      - targets: ['prometheus:9090']
