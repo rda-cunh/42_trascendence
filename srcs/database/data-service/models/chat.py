@@ -8,8 +8,6 @@ class PostConversation(BaseModel):
 	user_id:			int
 	seller_id:			int
 
-
-
 class ConversationMessages(BaseModel):
 	id:			int
 	sender_id:	int
@@ -18,12 +16,12 @@ class ConversationMessages(BaseModel):
 
 class UserInfo(BaseModel):
 	name:		str
-	avatar_url:	str
+	avatar_url:	Optional[str]	# changed from str to Optional[str] to allow for null values (if user has no avatar). This will help in tests.
 
 class ListingInfo(BaseModel):
 	name:		str
 	price:		Decimal
-	image_hash:	str
+	image_hash:	Optional[str]	# changed from str to Optional[str] to allow for null values (if listing has no image).This will help in tests.
 
 class UserConversation(BaseModel):
 	id:					int

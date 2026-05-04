@@ -427,8 +427,7 @@ class chat_conversations(APIView):
         """ lists all conversations for the user (retrieved from JWT) """
         return proxy_request(
             "GET",
-            "/chat/conversations/",
-            params={"user_id": request.user.id}
+            f"/chat/conversations/{request.user.id}/"
         )
 
     def post(self, request):
