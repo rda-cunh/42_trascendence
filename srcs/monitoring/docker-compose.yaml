@@ -53,6 +53,7 @@ services:
       - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/metrics
       - GF_SERVER_SERVE_FROM_SUB_PATH=true
       - GF_SECURITY_CSRF_ADDITIONAL_HEADERS=X-Forwarded-Host
+      - GF_LOG_LEVEL=error
     volumes:
       - certs_data:/certs:ro
       - grafana_data:/var/lib/grafana
@@ -67,5 +68,46 @@ services:
     depends_on:
       prometheus:
         condition: service_started
+      pki-init:
+        condition: service_completed_successfully
+
+  mysqld-exporter:
+    image: prom/mysqld-exporter:v0.19.0
+    container_name: mysqld-exporter
+    environment:
+      - CA_CRT_NAME=${CA_CRT_NAME:-ca.crt}
+      - INT_CRT_NAME=${INT_CRT_NAME:-internal.crt}
+      - INT_KEY_NAME=${INT_KEY_NAME:-internal.key}
+      - MYSQL_EXPORTER_USER=${MYSQL_EXPORTER_USER:-monitoring_exporter}
+      - MYSQL_EXPORTER_PASSWORD=${MYSQL_EXPORTER_PASSWORD:-monitoring_exporter_change_me}
+      - TMPL=/etc/mysqld-exporter/templates
+      - CONF=/tmp
+    entrypoint: []
+    command: >
+      sh -xc "
+      sed
+      -e 's|__MYSQL_EXPORTER_USER__|'$$MYSQL_EXPORTER_USER'|g'
+      -e 's|__MYSQL_EXPORTER_PASSWORD__|'$$MYSQL_EXPORTER_PASSWORD'|g'
+      -e 's|__CA_CRT_NAME__|'$$CA_CRT_NAME'|g'
+      -e 's|__INT_CRT_NAME__|'$$INT_CRT_NAME'|g'
+      -e 's|__INT_KEY_NAME__|'$$INT_KEY_NAME'|g'
+      $$TMPL/my.cnf.template > $$CONF/.my.cnf &&
+      sed
+      -e 's|__INT_CRT_NAME__|'$$INT_CRT_NAME'|g'
+      -e 's|__INT_KEY_NAME__|'$$INT_KEY_NAME'|g'
+      $$TMPL/web-config.yml.template > $$CONF/web-config.yml &&
+      chmod 600 $$CONF/.my.cnf &&
+      exec /bin/mysqld_exporter
+      --config.my-cnf=$$CONF/.my.cnf
+      --web.config.file=$$CONF/web-config.yml
+      "
+    volumes:
+      - ./mysqld-exporter/my.cnf.template:/etc/mysqld-exporter/templates/my.cnf.template:ro
+      - ./mysqld-exporter/web-config.yml.template:/etc/mysqld-exporter/templates/web-config.yml.template:ro
+      - certs_data:/certs:ro
+    restart: always
+    depends_on:
+      database:
+        condition: service_healthy
       pki-init:
         condition: service_completed_successfully

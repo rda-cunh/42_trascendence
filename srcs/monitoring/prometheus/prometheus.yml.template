@@ -4,7 +4,6 @@ global:
 
 scrape_configs:
 
-  # ── Prometheus self-scrape ─────────────────────────────────
   - job_name: 'prometheus'
     scheme: https
     tls_config:
@@ -13,3 +12,12 @@ scrape_configs:
       key_file:  /certs/__INT_KEY_NAME__
     static_configs:
       - targets: ['prometheus:9090']
+
+  - job_name: 'mysqld-exporter'
+    scheme: https
+    tls_config:
+      ca_file:   /certs/__CA_CRT_NAME__
+      cert_file: /certs/__INT_CRT_NAME__
+      key_file:  /certs/__INT_KEY_NAME__
+    static_configs:
+      - targets: ['mysqld-exporter:9104']

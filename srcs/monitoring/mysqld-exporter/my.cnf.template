@@ -1,0 +1,8 @@
+[client]
+host=database
+port=3306
+user=__MYSQL_EXPORTER_USER__
+password=__MYSQL_EXPORTER_PASSWORD__
+ssl-ca=/certs/__CA_CRT_NAME__
+ssl-cert=/certs/__INT_CRT_NAME__
+ssl-key=/certs/__INT_KEY_NAME__
