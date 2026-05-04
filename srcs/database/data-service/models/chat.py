@@ -13,6 +13,7 @@ class ConversationMessages(BaseModel):
 	sender_id:	int
 	content:	str
 	read_at:	Optional[datetime]
+	created_at:	datetime
 
 class UserInfo(BaseModel):
 	name:		str

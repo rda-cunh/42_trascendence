@@ -20,11 +20,6 @@ services:
       sh -c "
       python3 manage.py makemigrations &&
       python3 manage.py migrate &&
-      gunicorn backend.wsgi:application
-      --bind 0.0.0.0:8000
-      --workers 3
-      --reload
-      --log-level debug
-      --certfile=/certs/$${INT_CRT_NAME}
-      --keyfile=/certs/$${INT_KEY_NAME}
+      daphne -e ssl:8000:privateKey=/certs/$${INT_KEY_NAME}:certKey=/certs/$${INT_CRT_NAME}
+      backend.asgi:application
       "

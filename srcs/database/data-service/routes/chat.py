@@ -36,7 +36,7 @@ def GetExistingChat(cursor, id):
 	chat = GetConversationInfo(cursor, id)
 	if chat is None:
 		return None
-	cursor.execute('SELECT id, sender_id, content, read_at FROM messages WHERE conversation_id = %s ORDER BY created_at ASC', (id,))
+	cursor.execute('SELECT id, sender_id, content, read_at, created_at FROM messages WHERE conversation_id = %s ORDER BY created_at ASC', (id,))
 	chat['history'] = cursor.fetchall()
 
 	return chat
@@ -164,7 +164,7 @@ def GetMessages(conv_id: int, db=Depends(get_db_dep)):
 
 	cursor.execute(
 		'''
-		SELECT id, sender_id, content, read_at
+		SELECT id, sender_id, content, read_at, created_at
 		FROM messages
 		WHERE conversation_id = %s
 		ORDER BY created_at ASC
@@ -198,7 +198,7 @@ def SendMessage(conv_id: int, conv_in: SendMessage, db=Depends(get_db_dep)):
 	cursor.execute('UPDATE conversations SET last_message = %s, last_message_at = CURRENT_TIMESTAMP WHERE id = %s', 
 				(conv_in.content, conv_id))
 	cursor.execute(
-		'SELECT id, sender_id, content, read_at FROM messages WHERE id = %s',
+		'SELECT id, sender_id, content, read_at, created_at FROM messages WHERE id = %s',
 		(new_id,)
 	)
 	message = cursor.fetchone()
