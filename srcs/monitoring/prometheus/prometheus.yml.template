@@ -49,3 +49,13 @@ scrape_configs:
       key_file:  /certs/__INT_KEY_NAME__
     static_configs:
       - targets: ['backend:8000']
+
+  - job_name: 'data-service'
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      ca_file:   /certs/__CA_CRT_NAME__
+      cert_file: /certs/__INT_CRT_NAME__
+      key_file:  /certs/__INT_KEY_NAME__
+    static_configs:
+      - targets: ['data-service:9000']
