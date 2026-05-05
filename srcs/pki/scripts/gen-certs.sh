@@ -52,6 +52,8 @@ DNS.7 = grafana
 DNS.8 = data-service
 DNS.9 = frontend
 DNS.10 = mysqld-exporter
+DNS.11 = node-exporter
+DNS.12 = cadvisor
 EOF
 
 echo "Generating Certificate Signing Request (CSR)..."
