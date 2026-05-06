@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User } from "../types";
-import { api } from "../lib/api";
+import { api, getAccessToken, normalizeUser, parseUserFromToken } from "../lib/api";
 
 interface AuthContextType {
   user: User | null;
@@ -15,6 +15,8 @@ interface AuthContextType {
   }) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (data: Partial<User>) => Promise<void>;
+  completeOAuthLogin: (accessToken: string, userData?: unknown) => Promise<void>;
+  startOAuth42: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,23 +26,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const parseUserFromToken = (jwt: string): User | null => {
-    try {
-      const payload = JSON.parse(atob(jwt.split(".")[1]));
-      const tokenId = payload.external_user_id ?? payload.user_id ?? payload.sub;
-      if (!tokenId) return null;
-      return {
-        id: String(tokenId),
-        email: payload.email,
-        name: payload.name,
-        role: payload.role,
-      };
-    } catch {
-      return null;
-    }
+  const clearAuthState = () => {
+    setToken(null);
+    setUser(null);
+    localStorage.removeItem("auth_token");
+    api.setToken(null);
+  };
+
+  const persistAuth = (newToken: string, nextUser: User | null) => {
+    setToken(newToken);
+    setUser(nextUser);
+    localStorage.setItem("auth_token", newToken);
+    api.setToken(newToken);
   };
 
   useEffect(() => {
+    api.setTokenChangeHandler((newToken) => {
+      if (newToken) {
+        setToken(newToken);
+        localStorage.setItem("auth_token", newToken);
+      } else {
+        clearAuthState();
+      }
+    });
+
     const initAuth = async () => {
       const savedToken = localStorage.getItem("auth_token");
       if (savedToken) {
@@ -63,22 +72,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             });
           }
         } catch {
-          // TODO: Keep fallback user from token if profile request fails.
+          if (!fallbackUser) clearAuthState();
         }
       }
       setLoading(false);
     };
     initAuth();
+
+    return () => api.setTokenChangeHandler(null);
   }, []);
 
   useEffect(() => {
-    const logoutInner = () => {
-      setToken(null);
-      setUser(null);
-      localStorage.removeItem("auth_token");
-      api.setToken(null);
-    };
-
     if (!token) return;
 
     const checkTokenExpiry = () => {
@@ -93,15 +97,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           api
             .refresh()
             .then((res) => {
-              const newToken = res.access;
+              const newToken = getAccessToken(res);
+              if (!newToken) throw new Error("Missing refreshed token");
               setToken(newToken);
+              setUser((prev) => normalizeUser(res, newToken) ?? prev);
               localStorage.setItem("auth_token", newToken);
               api.setToken(newToken);
             })
-            .catch(() => logoutInner());
+            .catch(() => clearAuthState());
         }
       } catch {
-        logoutInner();
+        clearAuthState();
       }
     };
 
@@ -111,11 +117,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const res = await api.login(email, password);
-    const newToken = res.access;
-    setToken(newToken);
-    setUser(res.user);
-    localStorage.setItem("auth_token", newToken);
+    const newToken = getAccessToken(res);
+    if (!newToken) throw new Error("Login response did not include an access token");
+
     api.setToken(newToken);
+    const profile = await api.getProfile().catch(() => null);
+    persistAuth(newToken, normalizeUser(profile ?? res, newToken));
   };
 
   const register = async (data: {
@@ -124,12 +131,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string;
     phone?: string;
   }) => {
-    const res = await api.register(data);
-    const newToken = res.access;
-    setToken(newToken);
-    setUser(res.user);
-    localStorage.setItem("auth_token", newToken);
-    api.setToken(newToken);
+    await api.register({
+      name: data.name,
+      email: data.email,
+      password: data.password,
+      phone: data.phone || undefined,
+    });
   };
 
   const logout = async () => {
@@ -140,10 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // TODO: Clear local auth state even if server logout fails.
     }
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem("auth_token");
-    api.setToken(null);
+    clearAuthState();
   };
 
   const updateUser = async (data: Partial<User>) => {
@@ -171,8 +175,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const completeOAuthLogin = async (accessToken: string, userData?: unknown) => {
+    api.setToken(accessToken);
+    const profile = await api.getProfile().catch(() => null);
+    persistAuth(accessToken, normalizeUser(profile ?? userData, accessToken));
+  };
+
+  const startOAuth42 = () => {
+    window.location.assign(api.getOAuth42Url());
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, updateUser }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        loading,
+        login,
+        register,
+        logout,
+        updateUser,
+        completeOAuthLogin,
+        startOAuth42,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
