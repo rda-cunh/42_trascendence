@@ -184,3 +184,40 @@ services:
     depends_on:
       pki-init:
         condition: service_completed_successfully
+
+  nginx-exporter-gateway:
+    build:
+      context: ./nginx-exporter-gateway
+      args:
+        NGINX_PROMETHEUS_EXPORTER_VERSION: 1.4.2
+        ALPINE_VERSION: 3.20
+    container_name: nginx-exporter-gateway
+    environment:
+      - CA_CRT_NAME=${CA_CRT_NAME:-ca.crt}
+      - INT_CRT_NAME=${INT_CRT_NAME:-internal.crt}
+      - INT_KEY_NAME=${INT_KEY_NAME:-internal.key}
+      - TMPL=/etc/nginx-exporter/templates
+      - CONF=/tmp
+    entrypoint: []
+    command: >
+      sh -xc "
+      sed
+      -e 's|__INT_CRT_NAME__|'$$INT_CRT_NAME'|g'
+      -e 's|__INT_KEY_NAME__|'$$INT_KEY_NAME'|g'
+      $$TMPL/web-config.yml.template > $$CONF/web-config.yml &&
+      exec /bin/nginx-prometheus-exporter
+      --nginx.scrape-uri=https://gateway:8443/stub_status
+      --nginx.ssl-verify
+      --nginx.ssl-ca-cert=/certs/$$CA_CRT_NAME
+      --web.listen-address=:9113
+      --web.config.file=$$CONF/web-config.yml
+      "
+    volumes:
+      - ./nginx-exporter-gateway/web-config.yml.template:/etc/nginx-exporter/templates/web-config.yml.template:ro
+      - certs_data:/certs:ro
+    restart: always
+    depends_on:
+      gateway:
+        condition: service_started
+      pki-init:
+        condition: service_completed_successfully

@@ -59,3 +59,12 @@ scrape_configs:
       key_file:  /certs/__INT_KEY_NAME__
     static_configs:
       - targets: ['data-service:9000']
+
+  - job_name: 'nginx-exporter-gateway'
+    scheme: https
+    tls_config:
+      ca_file:   /certs/__CA_CRT_NAME__
+      cert_file: /certs/__INT_CRT_NAME__
+      key_file:  /certs/__INT_KEY_NAME__
+    static_configs:
+      - targets: ['nginx-exporter-gateway:9113']
