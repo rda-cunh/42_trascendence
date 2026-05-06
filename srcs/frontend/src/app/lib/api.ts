@@ -14,6 +14,30 @@ interface RequestOptions {
   retryOnUnauthorized?: boolean;
 }
 
+function pickFirstErrorValue(value: unknown): string | null {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const nested = pickFirstErrorValue(entry);
+      if (nested) return nested;
+    }
+    return null;
+  }
+
+  if (value && typeof value === "object") {
+    for (const nestedValue of Object.values(value as Record<string, unknown>)) {
+      const nested = pickFirstErrorValue(nestedValue);
+      if (nested) return nested;
+    }
+  }
+
+  return null;
+}
+
 export function getAccessToken(data: any): string | null {
   return data?.access ?? data?.access_token ?? data?.token ?? data?.tokens?.access ?? null;
 }
@@ -157,10 +181,21 @@ class ApiClient {
   }
 
   private getErrorMessage(data: any, fallback: string) {
-    if (typeof data?.detail === "string") return data.detail;
-    if (typeof data?.message === "string") return data.message;
-    if (typeof data?.error === "string") return data.error;
-    if (Array.isArray(data?.non_field_errors)) return data.non_field_errors.join(" ");
+    const detail = pickFirstErrorValue(data?.detail);
+    if (detail) return detail;
+
+    const message = pickFirstErrorValue(data?.message);
+    if (message) return message;
+
+    const error = pickFirstErrorValue(data?.error);
+    if (error) return error;
+
+    const nonFieldErrors = pickFirstErrorValue(data?.non_field_errors);
+    if (nonFieldErrors) return nonFieldErrors;
+
+    const fieldError = pickFirstErrorValue(data);
+    if (fieldError) return fieldError;
+
     return fallback || "Request failed";
   }
 

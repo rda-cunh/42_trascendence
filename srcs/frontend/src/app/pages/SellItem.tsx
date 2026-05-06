@@ -28,6 +28,17 @@ export function SellItem() {
     e.preventDefault();
     if (!user) return;
 
+    const trimmedTitle = formData.title.trim();
+    if (trimmedTitle.length < 3) {
+      toast.error("Title must be at least 3 characters long");
+      return;
+    }
+
+    if (!slug || slug.length < 3) {
+      toast.error("Title must contain letters or numbers to generate a valid slug");
+      return;
+    }
+
     const price = Number.parseFloat(formData.price);
     if (!Number.isFinite(price) || price <= 0) {
       toast.error("Price must be higher than zero");
@@ -44,22 +55,44 @@ export function SellItem() {
     try {
       const listing = await api.createListing(
         {
-          name: formData.title.trim(),
+          name: trimmedTitle,
           slug,
           description: buildShaderDescription(formData.notes, formData.code),
           price,
-          category: "Shaders",
-          fileFormat: "GLSL",
-          engine: "Three.js",
         },
         user.id
       );
 
+      const listingId = listing?.id ?? listing?.product_id;
+
       toast.success("Shader listed successfully!");
-      navigate(listing?.id ? `/product/${listing.id}` : "/");
+      if (listingId) {
+        navigate(`/product/${String(listingId)}`);
+      } else {
+        toast("Shader published, but the listing page could not be opened automatically.");
+        navigate("/");
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to list shader";
-      toast.error(message);
+      const lowered = message.toLowerCase();
+
+      if (
+        lowered.includes("seller_id") ||
+        lowered.includes("query") ||
+        lowered.includes("field required")
+      ) {
+        toast.error("Publishing is temporarily unavailable due to a server listing configuration issue.");
+      } else {
+        toast.error(message);
+      }
+
+      if (import.meta.env.DEV) {
+        console.error("SellItem publish failed", {
+          message,
+          slug,
+          userId: user.id,
+        });
+      }
     } finally {
       setIsLoading(false);
     }
