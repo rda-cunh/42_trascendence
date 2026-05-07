@@ -31,6 +31,7 @@ ALLOWED_HOSTS = [
     'transcendence.42.fr',
     'localhost',
     '127.0.0.1',
+    'gateway',
     ]
 
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARD_PROTO', 'https')
