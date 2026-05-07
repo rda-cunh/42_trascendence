@@ -1,47 +1,36 @@
 import json
+import os
 from urllib.parse import parse_qs
 
-import requests
+import httpx                        # httpx is an alternative to requests that supports async
 from django.conf import settings
 from channels.generic.websocket import AsyncWebsocketConsumer
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.exceptions import TokenError
 
-def proxy_chat_request(method, endpoint, data=None, params=None):
-    """Helper function to proxy HTTP requests to data-service with JWT authentication"""
+# httpx ignores REQUESTS_CA_BUNDLE, so resolve the internal CA bundle ourselves and pass it via verify=
+_CA_BUNDLE = os.environ.get("REQUESTS_CA_BUNDLE") or os.environ.get("SSL_CERT_FILE")
+_HTTPX_VERIFY = _CA_BUNDLE if _CA_BUNDLE else True
 
-    # builds the url, ensuring the endpoint starts with a slash
+async def proxy_chat_request_async(method, endpoint, data=None, params=None):
+    """ helper function to proxy requests from the ChatConsumer to the data-service for chat """
+
     base_url = settings.DATA_SERVICE_URL.rstrip("/")
-    endpoint_path = endpoint if endpoint.startswith("/") else f"/{endpoint}"
-    url = f"{base_url}{endpoint_path}"
+    url = f"{base_url}/{endpoint.lstrip('/')}"
+    headers = {"X-Internal-Token": settings.DATA_SERVICE_TOKEN}
 
-    # Include the internal token for authentication with data-service
-    headers = {
-        "X-Internal-Token": settings.DATA_SERVICE_TOKEN,
-    }
+    async with httpx.AsyncClient(timeout=5.0, verify=_HTTPX_VERIFY) as client:
+        response = await client.request(method, url, json=data, params=params, headers=headers)
 
-    # send the request to data-service
-    response = requests.request(
-        method=method,
-        url=url,
-        json=data,
-        params=params,
-        headers=headers,
-        timeout=5,
-    )
-
-    # handle empty responses (204 No Content) or non-JSON
     if response.status_code == 204 or not response.content:
         return response.status_code, {}
-
-    # try to parse JSON response
     try:
         return response.status_code, response.json()
     except ValueError:
         return response.status_code, {"detail": response.text}
 
 class ChatConsumer(AsyncWebsocketConsumer):
-    """ MVP real-time chat consumer"""
+    """ MVP real-time chat consumer """
 
     async def connect(self):
         """ accept the webSocket connection """
@@ -64,7 +53,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.user_id = user_id
 
         # check if user is allowed to access the conversation
-        is_allowed = self._user_can_access_conversation(
+        is_allowed = await self._user_can_access_conversation(
             conversation_id=self.conversation_id,
             user_id=self.user_id,
         )
@@ -105,7 +94,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         # save message into data-service and validate the return code
-        status_code, saved_message = proxy_chat_request(
+        status_code, saved_message = await proxy_chat_request_async(
             method="POST",
             endpoint=f"/chat/conversations/{self.conversation_id}/messages/",
             data={
@@ -122,6 +111,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "upstream_response": saved_message,
             }))
             return
+
+        # data-service ConversationMessages model omits conversation_id but frontend needs it to update the conversation list preview, so we attach it here
+        saved_message["conversation_id"] = int(self.conversation_id)
 
         # distribute the message to the group
         await self.channel_layer.group_send(
@@ -154,18 +146,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except (TokenError, KeyError, ValueError):
             return None
 
-    def _user_can_access_conversation(self, conversation_id, user_id):
+    async def _user_can_access_conversation(self, conversation_id, user_id):
         """ asking the data-service if user belongs to conversation - only buyer or seller """
-
-        status_code, conversation = proxy_chat_request(
-            method="GET",
-            endpoint=f"/chat/conversations/by-id/{conversation_id}/",
-        )
-
+        status_code, conversation = await proxy_chat_request_async("GET", f"/chat/conversations/by-id/{conversation_id}/")
         if status_code != 200:
             return False
-
-        buyer_id = conversation.get("buyer_id")
-        seller_id = conversation.get("seller_id")
-
-        return user_id in {buyer_id, seller_id}
+        return user_id in {conversation.get("buyer_id"), conversation.get("seller_id")}

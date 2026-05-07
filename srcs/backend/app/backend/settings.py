@@ -87,11 +87,14 @@ TEMPLATES = [
 WSGI_APPLICATION = 'backend.wsgi.application'
 ASGI_APPLICATION = 'backend.asgi.application'
 
-# Internal message bus that lets one WebSocket connection notify others in the same chat room
-# Later we will replace the in-memory channel layer (single process) with a Redis for better performance and scalability
+# Channels config for WebSocket support, using Redis as the channel layer backend
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(os.environ.get("REDIS_HOST", "redis"),
+                       int(os.environ.get("REDIS_PORT", 6379)))],
+        },
     }
 }
 

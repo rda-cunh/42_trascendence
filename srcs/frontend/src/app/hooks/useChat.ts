@@ -28,8 +28,16 @@ export function useChat(accessToken: string | null): UseChatResult {
   const socketRef = useRef<ChatSocket | null>(null);
   const selectedConversationId = selectedConversation?.id ?? null;
 
+  // tracks the latest token in a ref so a silent refresh updates would not shutdown open webSockets
+  const tokenRef = useRef(accessToken);
+  useEffect(() => {
+    tokenRef.current = accessToken;
+  }, [accessToken]);
+
+  const hasToken = accessToken !== null;
+
   const refreshConversations = useCallback(async () => {
-    if (!accessToken) {
+    if (!tokenRef.current) {
       setConversations([]);
       setSelectedConversation(null);
       setLoadingConversations(false);
@@ -40,7 +48,7 @@ export function useChat(accessToken: string | null): UseChatResult {
     try {
       setLoadingConversations(true);
       setError(null);
-      const data = await fetchConversations(accessToken);
+      const data = await fetchConversations();
       setConversations(data);
 
       if (!selectedConversationId && data.length > 0) {
@@ -54,7 +62,7 @@ export function useChat(accessToken: string | null): UseChatResult {
     } finally {
       setLoadingConversations(false);
     }
-  }, [accessToken, selectedConversationId]);
+  }, [selectedConversationId]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -62,7 +70,7 @@ export function useChat(accessToken: string | null): UseChatResult {
   }, [refreshConversations]);
 
   useEffect(() => {
-    if (!selectedConversationId || !accessToken) {
+    if (!selectedConversationId || !hasToken) {
       socketRef.current?.disconnect();
       socketRef.current = null;
       return;
@@ -75,14 +83,19 @@ export function useChat(accessToken: string | null): UseChatResult {
         setLoadingMessages(true);
         setError(null);
 
-        const history = await fetchMessages(selectedConversationId, accessToken);
+        const history = await fetchMessages(selectedConversationId);
         if (!cancelled) {
           setMessages(history);
         }
 
+        // Read the latest token at connect time — a silent refresh between
+        // render and here should use the new value, not a stale closure.
+        const tokenForSocket = tokenRef.current;
+        if (!tokenForSocket) return;
+
         socketRef.current?.disconnect();
 
-        const socket = new ChatSocket(selectedConversationId, accessToken, {
+        const socket = new ChatSocket(selectedConversationId, tokenForSocket, {
           onOpen: () => {
             if (!cancelled) setSocketConnected(true);
           },
@@ -145,7 +158,7 @@ export function useChat(accessToken: string | null): UseChatResult {
       socketRef.current = null;
       setSocketConnected(false);
     };
-  }, [selectedConversationId, accessToken]);
+  }, [selectedConversationId, hasToken]);
 
   const selectConversation = (conversation: Conversation) => {
     setSelectedConversation(conversation);

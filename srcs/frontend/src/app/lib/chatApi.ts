@@ -2,8 +2,9 @@ import type { Conversation, Message, CreateConversationPayload } from "../types/
 
 const API_BASE = "/api";
 
-function getAuthHeaders(token?: string | null) {
-  const accessToken = token ?? localStorage.getItem("auth_token");
+// always read the token from localStorage at request time. AuthContext keeps localStorage in sync on login, register, etc.
+function getAuthHeaders() {
+  const accessToken = localStorage.getItem("auth_token");
   const headers: HeadersInit = {
     "Content-Type": "application/json",
   };
@@ -30,10 +31,10 @@ async function handleJsonResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function fetchConversations(token?: string | null): Promise<Conversation[]> {
+export async function fetchConversations(): Promise<Conversation[]> {
   const response = await fetch(`${API_BASE}/chat/conversations/`, {
     method: "GET",
-    headers: getAuthHeaders(token),
+    headers: getAuthHeaders(),
     credentials: "include",
   });
 
@@ -41,12 +42,11 @@ export async function fetchConversations(token?: string | null): Promise<Convers
 }
 
 export async function createOrGetConversation(
-  payload: CreateConversationPayload,
-  token?: string | null
+  payload: CreateConversationPayload
 ): Promise<Conversation> {
   const response = await fetch(`${API_BASE}/chat/conversations/`, {
     method: "POST",
-    headers: getAuthHeaders(token),
+    headers: getAuthHeaders(),
     credentials: "include",
     body: JSON.stringify(payload),
   });
@@ -54,13 +54,10 @@ export async function createOrGetConversation(
   return handleJsonResponse<Conversation>(response);
 }
 
-export async function fetchMessages(
-  conversationId: number,
-  token?: string | null
-): Promise<Message[]> {
+export async function fetchMessages(conversationId: number): Promise<Message[]> {
   const response = await fetch(`${API_BASE}/chat/conversations/${conversationId}/messages/`, {
     method: "GET",
-    headers: getAuthHeaders(token),
+    headers: getAuthHeaders(),
     credentials: "include",
   });
 

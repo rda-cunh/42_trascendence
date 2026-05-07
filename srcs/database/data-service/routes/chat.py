@@ -41,7 +41,7 @@ def GetExistingChat(cursor, id):
 
 	return chat
 
-@router.get('/conversations/by-id/{conv_id}', response_model=UserConversation)
+@router.get('/conversations/by-id/{conv_id}/', response_model=UserConversation)
 def GetConversationById(conv_id: int, db=Depends(get_db_dep)):
 	_, cursor = db
 	chat = GetExistingChat(cursor, conv_id)

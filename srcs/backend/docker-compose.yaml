@@ -1,4 +1,15 @@
 services:
+  redis:
+    image: redis:7-alpine        # alpine ~30MB
+    container_name: redis
+    restart: always
+    expose:
+      - "6379"                   # internal only
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   backend:
     container_name: backend
     build: ./app
@@ -8,6 +19,8 @@ services:
       - REQUESTS_CA_BUNDLE=/certs/${CA_CRT_NAME:-ca.crt}
       - DJANGO_SETTINGS_MODULE=backend.settings
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     volumes:
       - certs_data:/certs:ro
     restart: always
@@ -16,6 +29,8 @@ services:
         condition: service_completed_successfully
       data-service:
         condition: service_started
+      redis:
+        condition: service_healthy
     command: >
       sh -c "
       python3 manage.py makemigrations &&
