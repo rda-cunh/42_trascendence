@@ -6,14 +6,14 @@ These tables summarize the current module strategy for the project based on prog
 
 | Module | Points | Current status | Module lead (person names) | Notes / Decisions |
 |---|---:|---|---|---|
-| [**Web Major 1 – Framework for frontend and backend**](#web-major-1--framework-for-frontend-and-backend) | 2 | **Completed** | [All] | Foundation of the whole project. **Completed.** |
-| [**User Major 1 – Standard user management and authentication**](#user-major-1--standard-user-management-and-authentication) | 2 | Backend implemented, frontend missing | [Raphael + Ricardo + Erick] | Strong progress already; core requirement for the app. **Keep.** |
-| [**User Major 2 – Advanced permission system**](#user-major-2--advanced-permission-system) | 2 | 3 roles already defined | [Raphael + Leonardo Maes] | Fits marketplace logic and reuses auth work. **Keep.** |
-| [**Web Minor 10 – File upload and management system**](#web-minor-10--file-upload-and-management-system) | 1 | Planned / needed for pictures | [Raphael + Leonardo Maes + Leonardo Vichi] | Important for listings, assets, and marketplace usability. **Keep.** |
-| [**User Minor 2 – Remote authentication with OAuth 2.0**](#user-minor-2--remote-authentication-with-oauth-20) | 1 | Backend already implemented | [Ricardo + Erik] | Cheap point because much of the backend work exists already. **Keep.** |
-| [**Web Major 3 – User interaction (chat, profiles, friends)**](#web-major-3--user-interaction-chat-profiles-friends) | 2 | Chat already being discussed/planned | [Ricardo + Erik] | Reuses users/auth and is easy to demo clearly. **Keep.** |
-| [**Web Major 2 – Real-time features**](#web-major-2--real-time-features) | 2 | Chat idea exists | [TBD: Ricardo + Erik] | Good only if clearly separated from user interaction and truly real-time across clients. **Check if cumulative.** |
-| [**DevOps Monitoring module – Prometheus + Grafana**](#devops-monitoring-module--prometheus--grafana) | 2 | DevOps teammate is working on it | [Leonardo Vichi] | Better than microservices because it is more realistic and demonstrable if progress is real. **Keep.** |
+| [**Web Major 1 – Framework for frontend and backend**](#web-major-1--framework-for-frontend-and-backend) | 2 | **Completed** | All | Foundation of the whole project. **Completed.** |
+| [**User Major 1 – Standard user management and authentication**](#user-major-1--standard-user-management-and-authentication) | 2 | Features missing | **Raphael** + Ricardo + Erik | TO DO: upload avatar; add user as friends and online status; profile page **Keep.** |
+| [**User Major 2 – Advanced permission system**](#user-major-2--advanced-permission-system) | 2 | Features Missing | **Raphael** + Leonardo Maes | TO DO: view, edit and delete users; diffent views based on role. **Keep.** |
+| [**Web Minor 9 – Advanced search**](#web-minor-9--advanced-search) | 1 | Frontend Missing | **Leonardo** + Rapahel + Erik | Cheap point because much of the backend work exists already. **Keep.** |
+| [**User Minor 2 – Remote authentication with OAuth 2.0**](#user-minor-2--remote-authentication-with-oauth-20) | 1 | Frontend Missing | **Ricardo** + Erik | Cheap point because much of the backend work exists already. **Keep.** |
+| [**Web Major 3 – User interaction (chat, profiles, friends)**](#web-major-3--user-interaction-chat-profiles-friends) | 2 | Features missing | **Ricardo** + Erik | TO DO: Improve chat; profile system and user info; friend system; user profile. **Keep.** |
+| [**Web Major 2 – Real-time features**](#web-major-2--real-time-features) | 2 | Features missing | **Ricardo** + Erik | TO DO: Chat, online status, notifications (?). **Check if cumulative.** |
+| [**DevOps Monitoring module – Prometheus + Grafana**](#devops-monitoring-module--prometheus--grafana) | 2 | PR for validation | **Leonardo Vichi** | Better than microservices because it is more realistic and demonstrable if progress is real. **Keep.** |
 | **Total** | **14** |  |  |  |
 
 ## Best choices to add
@@ -28,10 +28,10 @@ These tables summarize the current module strategy for the project based on prog
 
 | Module | Points | Current status | Module lead (person names) | Notes / Decisions |
 |---|---:|---|---|---|
+| [**Web Minor 10 – File upload and management system**](#web-minor-10--file-upload-and-management-system) | 1 | Planned / needed for pictures initially | [N/A – dropping] | Important for listings, assets, and marketplace usability, but adds complexity. **Drop.** |
 | [**DevOps Major 3 – Backend as microservices**](#devops-major-3--backend-as-microservices) | 2 | Not implemented | [N/A – dropping] | High complexity, no progress, and team already wants to drop it. **Drop.** |
 | [**Module of Choice – Payment system for the marketplace**](#module-of-choice--payment-system-for-the-marketplace) | 1–2 | Not implemented | [N/A – dropping] | Adds custom justification burden and full purchase-flow complexity. **Drop.** |
 | [**Gaming Major 5 – Advanced 3D graphics**](#gaming-major-5--advanced-3d-graphics) | 2 | No demo shown yet | [N/A – dropping] | Frontend-heavy and risky with no visible group progress yet. **Drop unless immediate progress appears.** |
-| [**Web Minor 9 – Advanced search**](#web-minor-9--advanced-search) | 1 | Not implemented | [N/A – dropping] | You already said it is not a good idea right now, so it should leave the shortlist. **Drop for now.** |
 | [**User Minor 4 – User activity analytics**](#user-minor-4--user-activity-analytics) | 1 | Not implemented | [N/A – dropping] | Not necessary for your rescue plan and no current progress. **Drop.** |
 | [**AI Minor 1 – Content moderation AI**](#ai-minor-1--content-moderation-ai) | 1 | Not implemented | [N/A – dropping] | Adds complexity without helping the core delivery target. **Drop.** |
 | [**DevOps Major 1 – ELK / log management**](#devops-major-1--elk--log-management) | 2 | Not started | [N/A – dropping] | Lower priority and less realistic than the monitoring work already underway. **Drop.** |
@@ -74,19 +74,14 @@ These tables summarize the current module strategy for the project based on prog
 - Roles management such as admin, user, guest, moderator, etc.
 - Different views and actions based on user role.
 
-### Web Minor 10 – File upload and management system
+### Web Minor 9 – Advanced search
 
-**Module number and name:** Web Minor 10 – File upload and management system
+**Module number and name:** Web Minor 9 – Advanced search
 
-**Justification:** A marketplace needs image and file handling for listings and user content. This module adds visible value and supports a common feature set that is easy to demonstrate.
+**Justification:** Advanced search can be useful in a marketplace, and can ensure a quick win
 
 **Requirements from the subject:**
-- Support multiple file types, including images and documents.
-- Client-side and server-side validation for type, size, and format.
-- Secure file storage with proper access control.
-- File preview functionality where applicable.
-- Progress indicators for uploads.
-- Ability to delete uploaded files.
+- Implement advanced search functionality with filters, sorting, and pagination.
 
 ### User Minor 2 – Remote authentication with OAuth 2.0
 
@@ -194,14 +189,19 @@ These tables summarize the current module strategy for the project based on prog
 - Implement advanced rendering techniques.
 - Ensure smooth performance and user interaction.
 
-### Web Minor 9 – Advanced search
+### Web Minor 10 – File upload and management system
 
-**Module number and name:** Web Minor 9 – Advanced search
+**Module number and name:** Web Minor 10 – File upload and management system
 
-**Justification:** Advanced search can be useful in a marketplace, but it is not essential at this stage and the team already considers it a weak short-term choice. It should be removed from the active shortlist for now.
+**Justification:** A marketplace needs image and file handling for listings and user content. This module adds visible value and supports a common feature set that is easy to demonstrate.
 
 **Requirements from the subject:**
-- Implement advanced search functionality with filters, sorting, and pagination.
+- Support multiple file types, including images and documents.
+- Client-side and server-side validation for type, size, and format.
+- Secure file storage with proper access control.
+- File preview functionality where applicable.
+- Progress indicators for uploads.
+- Ability to delete uploaded files.
 
 ### User Minor 4 – User activity analytics
 
@@ -233,4 +233,3 @@ These tables summarize the current module strategy for the project based on prog
 - Use Kibana for visualization and dashboards.
 - Implement log retention and archiving policies.
 - Secure access to all components.
-
