@@ -12,10 +12,14 @@ export function Profile() {
     phone: user?.phone || "",
   });
 
-  const handleSave = () => {
-    updateUser(formData);
-    setEditing(false);
-    toast.success("Profile updated successfully");
+  const handleSave = async () => {
+    try {
+      await updateUser(formData);
+      setEditing(false);
+      toast.success("Profile updated successfully");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update profile");
+    }
   };
 
   return (

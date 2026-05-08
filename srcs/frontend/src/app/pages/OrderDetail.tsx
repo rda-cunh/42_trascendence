@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
-import { getOrderDetails } from "../data/mockData";
 import { ArrowLeft, Package, Clock, CheckCircle, Truck, XCircle } from "lucide-react";
+import { Order } from "../types";
+import { toast } from "sonner";
 
 const statusConfig: Record<
   string,
@@ -38,22 +40,49 @@ const statusConfig: Record<
 
 export function OrderDetail() {
   const { id } = useParams();
-  const { token } = useAuth();
-  const [order, setOrder] = useState<Record<string, unknown> | null>(getOrderDetails(id || ""));
-  const [isLoading, setIsLoading] = useState(Boolean(token && id));
+  const { user } = useAuth();
+  const [order, setOrder] = useState<Order | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!token || !id) return;
-    api
-      .getOrder(id, token)
-      .then((data) => {
-        if (data?.order) setOrder(data.order);
-      })
-      .catch(() => {
-        /* use mock */
-      })
-      .finally(() => setIsLoading(false));
-  }, [id, token]);
+    const fetchOrder = async () => {
+      if (!user || !id) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const data = await api.getOrder(id);
+        setOrder(data);
+      } catch (err) {
+        console.error("Failed to load order:", err);
+        toast.error("Failed to load order");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOrder();
+  }, [id, user]);
+
+  if (!user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 transition-colors dark:bg-gray-950">
+        <div className="text-center">
+          <h2 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
+            Sign in required
+          </h2>
+          <p className="mb-4 text-gray-600 dark:text-gray-400">Please log in to view orders</p>
+          <Link
+            to="/login"
+            className="rounded-lg bg-purple-600 px-6 py-3 text-white transition-colors hover:bg-purple-700"
+          >
+            Sign In
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -113,24 +142,20 @@ export function OrderDetail() {
           <div className="p-6">
             <h3 className="mb-4 font-semibold text-gray-900 dark:text-white">Items</h3>
             <div className="space-y-3">
-              {(order.items as Array<{ name: string; quantity?: number; price: number }>)?.map(
-                (item, i: number) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between border-b border-gray-100 py-3 last:border-0 dark:border-gray-800"
-                  >
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">{item.name}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Qty: {item.quantity || 1}
-                      </p>
-                    </div>
-                    <p className="font-semibold text-gray-900 dark:text-white">
-                      ${item.price.toFixed(2)}
-                    </p>
+              {order.items?.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between border-b border-gray-100 py-3 last:border-0 dark:border-gray-800"
+                >
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">{(item as any).name || `Item ${item.id}`}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Qty: {item.quantity}</p>
                   </div>
-                )
-              )}
+                  <p className="font-semibold text-gray-900 dark:text-white">
+                    ${item.price.toFixed(2)}
+                  </p>
+                </div>
+              ))}
             </div>
 
             <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4 dark:border-gray-800">

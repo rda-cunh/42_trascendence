@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useCart } from "../contexts/CartContext";
-import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
 import { Trash2, CreditCard, ArrowLeft, MapPin } from "lucide-react";
 import { toast } from "sonner";
@@ -9,7 +8,6 @@ import { Link } from "react-router";
 
 export function Checkout() {
   const { items, removeItem, total, clear } = useCart();
-  const { token } = useAuth();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   const [address, setAddress] = useState({ line1: "", city: "", country: "" });
@@ -19,29 +17,21 @@ export function Checkout() {
       toast.error("Your cart is empty");
       return;
     }
+
     setIsProcessing(true);
     try {
-      if (token) {
-        await api.createOrder(
-          {
-            items: items.map((i) => ({
-              listing_id: i.listing.id,
-              quantity: i.quantity,
-            })),
-            total,
-            address: address.line1 ? address : undefined,
-          },
-          token
-        );
-      }
+      await api.createOrder({
+        items: items.map((i: typeof items[number]) => ({ listing_id: i.listing.id, quantity: i.quantity })),
+        total,
+        address: address.line1 ? address : undefined,
+      });
+
       clear();
       toast.success("Order placed successfully!");
       navigate("/orders");
-    } catch {
-      // Simulate success for demo
-      clear();
-      toast.success("Order placed successfully! (demo mode)");
-      navigate("/orders");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to place order";
+      toast.error(message);
     } finally {
       setIsProcessing(false);
     }
@@ -76,7 +66,6 @@ export function Checkout() {
         <h1 className="mb-8 text-3xl font-bold text-gray-900 dark:text-white">Checkout</h1>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          {/* Cart Items */}
           <div className="space-y-4 lg:col-span-2">
             <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
               <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
@@ -117,55 +106,36 @@ export function Checkout() {
               </div>
             </div>
 
-            {/* Delivery info */}
             <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
               <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
                 <MapPin className="h-5 w-5" /> Delivery Information
               </h2>
               <div className="space-y-4">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Address
-                  </label>
-                  <input
-                    type="text"
-                    value={address.line1}
-                    onChange={(e) => setAddress({ ...address, line1: e.target.value })}
-                    placeholder="123 Main St"
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      City
-                    </label>
-                    <input
-                      type="text"
-                      value={address.city}
-                      onChange={(e) => setAddress({ ...address, city: e.target.value })}
-                      placeholder="City"
-                      className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Country
-                    </label>
-                    <input
-                      type="text"
-                      value={address.country}
-                      onChange={(e) => setAddress({ ...address, country: e.target.value })}
-                      placeholder="Country"
-                      className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                    />
-                  </div>
-                </div>
+                <input
+                  type="text"
+                  value={address.line1}
+                  onChange={(e) => setAddress({ ...address, line1: e.target.value })}
+                  placeholder="Address"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                />
+                <input
+                  type="text"
+                  value={address.city}
+                  onChange={(e) => setAddress({ ...address, city: e.target.value })}
+                  placeholder="City"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                />
+                <input
+                  type="text"
+                  value={address.country}
+                  onChange={(e) => setAddress({ ...address, country: e.target.value })}
+                  placeholder="Country"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                />
               </div>
             </div>
           </div>
 
-          {/* Order Total */}
           <div>
             <div className="sticky top-24 rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
               <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Payment</h2>
@@ -173,10 +143,6 @@ export function Checkout() {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
                   <span className="text-gray-900 dark:text-white">${total.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Tax</span>
-                  <span className="text-gray-900 dark:text-white">$0.00</span>
                 </div>
                 <div className="flex justify-between border-t border-gray-200 pt-3 dark:border-gray-800">
                   <span className="font-semibold text-gray-900 dark:text-white">Total</span>

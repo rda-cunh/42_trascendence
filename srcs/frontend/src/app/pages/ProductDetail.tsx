@@ -1,59 +1,62 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router";
-import { Listing } from "../data/mockListings";
 import { ArrowLeft, ShoppingCart, CreditCard } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
-import { useFetch } from "../hooks/useFetch";
 import { ProductInfo } from "../components/ProductInfo";
 import { ReviewSection } from "../components/ReviewSection";
-import { mockReviews } from "../data/mockData";
+import { api } from "../lib/api";
+import { Listing, Review } from "../types";
 import { toast } from "sonner";
-
-interface ProductData {
-  listing?: {
-    product_id: string | number;
-    name?: string;
-    price?: number;
-    description?: string;
-    category?: string;
-    status?: string;
-    image?: string;
-  };
-}
 
 export function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addItem } = useCart();
   const { user } = useAuth();
-  const [reviews] = useState(mockReviews);
   const [listing, setListing] = useState<Listing | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Use custom hook for data fetching
-  const { isLoading } = useFetch<ProductData>(`/api/listings/${id}/`, {
-    onSuccess: (data) => {
-      if (data?.listing) {
-        const item = data.listing;
-        setListing({
-          id: String(item.product_id),
-          title: item.name || "Untitled",
-          price: item.price || 0,
-          description: item.description || "",
-          category: item.category || "3D Models",
-          condition: item.status || "New",
-          location: "Digital Download",
-          seller: "Creator Studio",
-          image: item.image || "https://images.unsplash.com/photo-1636189239307-9f3a701f30a8",
-          postedDate: new Date().toISOString().split("T")[0],
-        });
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id) return;
+
+      try {
+        const [listingData, reviewsData] = await Promise.all([
+          api.getListing(id),
+          api.getReviews(id),
+        ]);
+
+        if (listingData?.product_id || listingData?.id) {
+          setListing({
+            id: String(listingData.product_id || listingData.id),
+            title: listingData.name || "Untitled",
+            price: listingData.price || 0,
+            description: listingData.description || "",
+            category: listingData.category || "3D Models",
+            condition: listingData.status || "New",
+            location: "Digital Download",
+            seller: listingData.seller || "Creator Studio",
+            image:
+              listingData.image || "https://images.unsplash.com/photo-1636189239307-9f3a701f30a8",
+            postedDate: new Date().toISOString().split("T")[0],
+          });
+        }
+
+        if (Array.isArray(reviewsData)) {
+          setReviews(reviewsData);
+        }
+      } catch (err) {
+        console.error("Failed to load listing:", err);
+      } finally {
+        setIsLoading(false);
       }
-    },
-    onError: () => {
-      // Failed to fetch listing
-    },
-  });
+    };
+
+    fetchData();
+  }, [id]);
 
   const handleAddToCart = () => {
     if (!listing) return;
@@ -77,8 +80,11 @@ export function ProductDetail() {
     navigate("/checkout");
   };
 
-  const handleSubmitReview = (_rating: number, _text: string) => {
-    // Handle review submission logic here
+  const handleReviewSubmitted = () => {
+    // Reload reviews after new one is submitted
+    if (id) {
+      api.getReviews(id).then(setReviews).catch(console.error);
+    }
   };
 
   if (isLoading) {
@@ -178,7 +184,12 @@ export function ProductDetail() {
         </div>
 
         {/* Reviews Section */}
-        <ReviewSection reviews={reviews} isLoggedIn={!!user} onSubmitReview={handleSubmitReview} />
+        <ReviewSection
+          listingId={id || ""}
+          reviews={reviews}
+          isLoggedIn={!!user}
+          onReviewSubmitted={handleReviewSubmitted}
+        />
       </div>
     </div>
   );

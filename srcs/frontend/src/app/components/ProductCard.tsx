@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import { MapPin, Clock } from "lucide-react";
-import { Listing } from "../data/mockListings";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { Listing } from "../types";
 
 interface ProductCardProps {
   listing: Listing;
