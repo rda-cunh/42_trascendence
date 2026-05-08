@@ -454,3 +454,86 @@ curl -X POST http://data-service:9000/api/orders/ -H "Content-Type: application/
 <summary><h1> Payments </h1></summary>
 (To be implemented)
 </details>
+
+
+<details>
+<summary><h1> Chat </h1></summary>
+
+## Endpoints
+
+# Create/Get Conversation
+```
+POST '/api/chat/conversations/'
+{
+"listing_id" : "1",
+"user_id" : "5",
+"seller_id" : "7"
+}
+```
+
+# Get all chats from a user
+```
+GET '/api/chat/conversations/'
+```
+
+# Get message history
+```
+GET '/api/chat/conversations/{conversation_id}/messages/'
+```
+
+# Send message
+```
+POST '/api/chat/conversations/{conversation_id}/messages/'
+{
+"sender_id" : "1",
+"content" : "Hello world!"
+}
+```
+
+</details>
+
+<details>
+<summary><h1> Friend </h1></summary>
+
+## Endpoints
+
+# Send Invite
+```
+curl --insecure -X POST "https://localhost/api/friends/add/" \
+	-H "Content-Type: application/json" \
+	-d '{"user_id": 1, "friend_id": 2}'
+```
+
+# Accept invite
+```
+curl --insecure -X PATCH "https://localhost/api/friends/accept/{invite_id}/"
+```
+
+# Reject invite
+```
+curl --insecure -X DELETE "https://localhost/api/friends/reject/{invite_id}/"
+```
+
+# Remove Friend
+```
+curl --insecure -X DELETE "https://localhost/api/friends/{invite_id}/"
+```
+
+# Pending invites
+```
+curl -X GET "https://localhost/api/friends/{user_id}/"
+
+curl -X GET "https://localhost/api/friends/{user_id}/?limit=5"
+
+curl -X GET "https://localhost/api/friends/{user_id}/?limit=5&offset=10"
+```
+
+# Friends Feed
+```
+curl -X GET "https://localhost/api/friends/feed/{user_id}/"
+
+curl -X GET "https://localhost/api/friends/feed/{user_id}/?page=2"
+
+curl -X GET "https://localhost/api/friends/feed/{user_id}/?search=test"
+```
+</details>
