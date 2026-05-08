@@ -15,8 +15,7 @@ interface AuthContextType {
   }) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (data: Partial<User>) => Promise<void>;
-  completeOAuthLogin: (accessToken: string, userData?: unknown) => Promise<void>;
-  startOAuth42: () => void;
+  loginWithOAuth: (accessToken: string, oauthUser?: User) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -131,12 +130,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string;
     phone?: string;
   }) => {
-    await api.register({
-      name: data.name,
-      email: data.email,
-      password: data.password,
-      phone: data.phone || undefined,
-    });
+    const res = await api.register(data);
+    const newToken = res.access;
+    setToken(newToken);
+    setUser(res.user);
+    localStorage.setItem("auth_token", newToken);
+    api.setToken(newToken);
+  };
+
+  const loginWithOAuth = async (accessToken: string, oauthUser?: User) => {
+    setToken(accessToken);
+    localStorage.setItem("auth_token", accessToken);
+    api.setToken(accessToken);
+
+    if (oauthUser) {
+      setUser(oauthUser);
+    } else {
+      const fallback = parseUserFromToken(accessToken);
+      if (fallback) setUser(fallback);
+    }
+
+    try {
+      const profile = await api.getProfile();
+      if (profile?.id) {
+        setUser({
+          id: String(profile.id),
+          email: profile.email,
+          name: profile.name,
+          phone: profile.phone,
+          role: profile.role,
+          status: profile.status?.toLowerCase(),
+        });
+      }
+    } catch {
+      // Keep token-derived or backend-provided user if profile fetch fails.
+    }
   };
 
   const logout = async () => {
@@ -187,17 +215,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{
-        user,
-        token,
-        loading,
-        login,
-        register,
-        logout,
-        updateUser,
-        completeOAuthLogin,
-        startOAuth42,
-      }}
+      value={{ user, token, loading, login, register, logout, updateUser, loginWithOAuth }}
     >
       {children}
     </AuthContext.Provider>
