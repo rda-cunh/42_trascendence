@@ -15,6 +15,7 @@ interface AuthContextType {
   }) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (data: Partial<User>) => Promise<void>;
+  loginWithOAuth: (accessToken: string, oauthUser?: User) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -132,6 +133,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     api.setToken(newToken);
   };
 
+  const loginWithOAuth = async (accessToken: string, oauthUser?: User) => {
+    setToken(accessToken);
+    localStorage.setItem("auth_token", accessToken);
+    api.setToken(accessToken);
+
+    if (oauthUser) {
+      setUser(oauthUser);
+    } else {
+      const fallback = parseUserFromToken(accessToken);
+      if (fallback) setUser(fallback);
+    }
+
+    try {
+      const profile = await api.getProfile();
+      if (profile?.id) {
+        setUser({
+          id: String(profile.id),
+          email: profile.email,
+          name: profile.name,
+          phone: profile.phone,
+          role: profile.role,
+          status: profile.status?.toLowerCase(),
+        });
+      }
+    } catch {
+      // Keep token-derived or backend-provided user if profile fetch fails.
+    }
+  };
+
   const logout = async () => {
     try {
       if (token) {
@@ -172,7 +202,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, updateUser }}>
+    <AuthContext.Provider
+      value={{ user, token, loading, login, register, logout, updateUser, loginWithOAuth }}
+    >
       {children}
     </AuthContext.Provider>
   );
