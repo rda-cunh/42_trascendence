@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.exceptions import PermissionDenied
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
@@ -473,11 +474,17 @@ class listing_id(APIView):
     def patch(self, request, id):
         serializer = serializers.listingIdPatch(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        return proxy_request("PATCH", f"/listings/{id}", serializer.validated_data)
+
+        product_data = proxy_request("GET", f"/listings/{id}/").data
+        if not request.user.id == product_data.get("owner_id") or is_admin(request):
+            raise PermissionDenied("You do not have permission to edit this product.")
+        return proxy_request("PATCH", f"/listings/{id}/", serializer.validated_data)
 
     def delete(self, request, id):
-        # TODO add authentication verification and provide id to data-service
-        return proxy_request("DELETE", f"/listings/{id}")
+        product_data = proxy_request("GET", f"/listings/{id}/").data
+        if not request.user.id == product_data.get("owner_id") or is_admin(request):
+            raise PermissionDenied("You do not have permission to delete this product.")
+        return proxy_request("DELETE", f"/listings/{id}/")
 
 
 class listing_full(APIView):
@@ -511,6 +518,9 @@ class seller_product(APIView):
 
 class listings_image(APIView):
     def post(self, request, product_id):
+        product_data = proxy_request("GET", f"/listings/{product_id}/").data
+        if not request.user.id == product_data.get("owner_id") or is_admin(request):
+            raise PermissionDenied("You do not have permission to add this image.")
         return proxy_request("POST", f"/listings/{product_id}/images/")
 
     def get(self, request, product_id):
@@ -522,20 +532,15 @@ class listings_image_id(APIView):
         return proxy_request("GET", f"/listings/{product_id}/images/{image_id}/")
 
     def delete(self, request, product_id, image_id):
+        product_data = proxy_request("GET", f"/listings/{product_id}/").data
+        if not request.user.id == product_data.get("owner_id") or is_admin(request):
+            raise PermissionDenied("You do not have permission to edit this product.")
         return proxy_request("DELETE", f"/listings/{product_id}/images/{image_id}/")
 
-
-    def delete(self, request, product_id, review_id):
-        # serializer = listingsPost(data=request.data, partial=True)
-        # serializer.is_valid(raise_exception=True)
-
-        return proxy_request("DELETE", f"listings/{product_id}/review/{review_id}/")
 
 # orders API
 
 class order_create(APIView):
-
-    # this get_permission is how i can set auth requirement for different methods.
 
     def get(self, request):
         # This API should have JWT_STRING, ?page=num&status=created
@@ -591,24 +596,28 @@ class user_id(APIView):
 
 class public_user_list(APIView):
     permission_classes = [AllowAny]
+
     def get(self, request):
         return proxy_request("GET", "/public/users/")
 
 
 class public_user_id(APIView):
     permission_classes = [AllowAny]
+
     def get(self, request, id):
         return proxy_request("GET", f"/public/users/{id}/")
 
 
 class public_listing_id(APIView):
     permission_classes = [AllowAny]
+
     def get(self, request, id):
         return proxy_request("GET", f"/public/listings/{id}/")
 
 
 class public_listing_full(APIView):
     permission_classes = [AllowAny]
+
     def get(self, request):
         return proxy_request("GET", "/public/listings/")
 
@@ -641,17 +650,5 @@ class manage_admins(APIView):
 
     def delete(self, request, user_id):
         return proxy_request("DELETE", f"/admin/manage/{user_id}/")
-
-
-class product_admin(APIView):
-    permission_classes = [IsAuthenticated, IsAdminRole]
-
-    def patch(self, request, item_id):
-        serializer = serializers.listingIdPatch(data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        return proxy_request("PATCH", f"/admin/product/{item_id}", serializer.validated_data)
-
-    def delete(self, request, item_id):
-        return proxy_request("DELETE", f"/admin/product/{item_id}/")
 
 # graphana
