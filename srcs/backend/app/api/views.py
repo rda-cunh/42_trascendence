@@ -614,13 +614,26 @@ class public_listing_full(APIView):
 
 # ADMIN API
 
-class user_ban(APIView):
+# return list of banned users
+class admin_bans(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
 
-    def delete(self, request, id):
+    def get(self, request):
+        return proxy_request("GET", f"/admin/bans/")
+
+
+class manage_bans(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    # to change for post later on a new api, to add to a ban list
+    def post(self, request, id):
         return proxy_request("DELETE", f"/auth/profile/{user_id}/")
 
-class manage_admin(APIView):
+    #unban funcionality
+    # def delete(self, request, id):
+    #    return proxy_request("POST", f"/auth/profile/{user_id}/")
+
+class manage_admins(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
 
     def post(self, request, user_id):

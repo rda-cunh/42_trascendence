@@ -42,6 +42,10 @@ from .views import (
     auth_42_callback,
     chat_conversations,
     chat_messages,
+    admin_bans,
+    manage_admins,
+    product_admin,
+    manage_bans,
 )
 
 urlpatterns = [
@@ -84,4 +88,10 @@ urlpatterns = [
         path("public/listings/", public_listing_full.as_view()),
         path("public/users/", public_user_list.as_view()),
         path("public/users/<int:id>/", public_user_id.as_view()),
+
+        # admin paths
+        path("admin/bans/<int:id>/", manage_bans.as_view()),
+        path("admin/bans/", admin_bans.as_view()),
+        path("admin/product/<int:id>/", product_admin.as_view()),
+        path("admin/manage/<int:id>/", manage_admins.as_view()),
 ]
