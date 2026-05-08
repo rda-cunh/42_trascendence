@@ -2,7 +2,6 @@ import { Link, useLocation } from "react-router";
 import {
   Gamepad2,
   PlusCircle,
-  Search,
   Moon,
   Sun,
   LogIn,
@@ -32,18 +31,6 @@ export function Header() {
           </Link>
 
           <nav className="flex items-center gap-2">
-            <Link
-              to="/search"
-              className={`flex items-center gap-2 rounded-lg px-3 py-2 transition-colors ${
-                location.pathname === "/" || location.pathname === "/search"
-                  ? "bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
-                  : "text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
-              }`}
-            >
-              <Search className="h-5 w-5" />
-              <span className="hidden sm:inline">Browse</span>
-            </Link>
-
             {user && (
               <Link
                 to="/sell"
@@ -89,9 +76,11 @@ export function Header() {
                   className="flex items-center gap-2 rounded-lg px-3 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
                 >
                   <div className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-100 text-sm font-semibold text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
-                    {user.name.charAt(0).toUpperCase()}
+                    {(user.name || user.email).charAt(0).toUpperCase()}
                   </div>
-                  <span className="hidden text-sm font-medium md:inline">{user.name}</span>
+                  <span className="hidden text-sm font-medium md:inline">
+                    {user.name || user.email}
+                  </span>
                 </Link>
                 {user.role === "admin" && (
                   <Link
@@ -103,7 +92,9 @@ export function Header() {
                   </Link>
                 )}
                 <button
-                  onClick={logout}
+                  onClick={() => {
+                    void logout();
+                  }}
                   className="rounded-lg p-2 text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
                   title="Logout"
                 >

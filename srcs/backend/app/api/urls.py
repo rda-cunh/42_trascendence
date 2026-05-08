@@ -34,6 +34,8 @@ from .views import (
     auth_password,
     order_create,
     order_id,
+    auth_42_redirect,
+    auth_42_callback,
 )
 
 urlpatterns = [
@@ -54,7 +56,9 @@ urlpatterns = [
         path("auth/logout/", auth_logout.as_view()),
         path("auth/refresh/", auth_refresh.as_view()),
         path("auth/profile/", auth_profile.as_view()),
-        path("auth/password/",  auth_password.as_view()),
+        path("auth/password/", auth_password.as_view()),
+        path("auth/42/", auth_42_redirect.as_view()),
+        path("auth/42/callback/", auth_42_callback.as_view()),
 
         # orders path
         path("orders/<int:id>/", order_id.as_view()),
