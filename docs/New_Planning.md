@@ -10,9 +10,9 @@ These tables summarize the current module strategy for the project based on prog
 | [**User Major 1 – Standard user management and authentication**](#user-major-1--standard-user-management-and-authentication) | 2 | Features missing | **Raphael** + Ricardo + Erik | TO DO: upload avatar; add user as friends and online status; profile page **Keep.** |
 | [**User Major 2 – Advanced permission system**](#user-major-2--advanced-permission-system) | 2 | Features Missing | **Raphael** + Leonardo Maes | TO DO: view, edit and delete users; diffent views based on role. **Keep.** |
 | [**Web Minor 9 – Advanced search**](#web-minor-9--advanced-search) | 1 | Frontend Missing | **Leonardo** + Rapahel + Erik | Cheap point because much of the backend work exists already. **Keep.** |
-| [**User Minor 2 – Remote authentication with OAuth 2.0**](#user-minor-2--remote-authentication-with-oauth-20) | 1 | **Completed** | **Ricardo** | Cheap point because much of the backend work exists already. **Keep.** |
-| [**Web Major 3 – User interaction (chat, profiles, friends)**](#web-major-3--user-interaction-chat-profiles-friends) | 2 | Features missing | **Ricardo** + Erik | TO DO: profile system + friend system **Keep.** |
-| [**Web Major 2 – Real-time features**](#web-major-2--real-time-features) | 2 | Features missing | **Ricardo** | Chat already fullfill are requeriments and we can add adtional real time features later (i.e. notifications, online status). **Keep.** |
+| [**User Minor 2 – Remote authentication with OAuth 2.0**](#user-minor-2--remote-authentication-with-oauth-20) | 1 | Frontend Missing | **Ricardo** + Erik | Cheap point because much of the backend work exists already. **Keep.** |
+| [**Web Major 3 – User interaction (chat, profiles, friends)**](#web-major-3--user-interaction-chat-profiles-friends) | 2 | Features missing | **Ricardo** + Erik | TO DO: Improve chat; profile system and user info; friend system; user profile. **Keep.** |
+| [**Web Major 2 – Real-time features**](#web-major-2--real-time-features) | 2 | Features missing | **Ricardo** + Erik | TO DO: Chat, online status, notifications (?). **Check if cumulative.** |
 | [**DevOps Monitoring module – Prometheus + Grafana**](#devops-monitoring-module--prometheus--grafana) | 2 | PR for validation | **Leonardo Vichi** | Better than microservices because it is more realistic and demonstrable if progress is real. **Keep.** |
 | **Total** | **14** |  |  |  |
 
