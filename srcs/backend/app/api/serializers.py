@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-
 # -- AUTH SERIALIZERS --
 
 class RegisterSerializer(serializers.Serializer):
@@ -22,7 +21,7 @@ class ProfilePatchSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=150, required=False, allow_null=True)
     phone = serializers.CharField(max_length=13, required=False, allow_null=True)
     avatar_url = serializers.URLField(required=False, allow_null=True)
-
+from rest_framework import serializers
 class ChangePasswordSerializer(serializers.Serializer):
     """PATCH /api/auth/password/"""
     password = serializers.CharField(min_length=8, max_length=64, write_only=True)
@@ -58,6 +57,11 @@ class CustomTokenPairSerializer(TokenObtainPairSerializer):
         token['role'] = user.get('role')
         return token
 
+# -- CHAT SERIALIZERS --
+
+class ChatConversationCreateSerializer(serializers.Serializer):
+    """POST /api/chat/conversations/ — create a new conversation"""
+    listing_id = serializers.IntegerField(min_value=1)
 
 # -- LISTINGS SERIALIZERS --
 

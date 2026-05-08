@@ -28,6 +28,7 @@ CREATE TABLE `users` (
   `email` varchar(255) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
   `phone` varchar(30) DEFAULT NULL,
+  `role` enum('user', 'admin') NOT NULL DEFAULT 'user',
   `status` enum('Active','Suspended','Banned','Deactivated') NOT NULL DEFAULT 'Active',
   `avatar_url` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -44,10 +45,11 @@ CREATE TABLE `users` (
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
-(1,'Seller 1','seller1@email.com','15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 001','Active','avatar.png','2026-03-22 09:00:00','2026-03-22 09:00:00'),
-(2,'Seller 2','seller2@email.com','15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 002','Active','avatar.png','2026-03-22 09:01:00','2026-03-22 09:01:00'),
-(3,'Buyer 1', 'buyer1@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 003','Active','avatar.png', '2026-03-22 09:02:00','2026-03-22 09:02:00'),
-(4,'Buyer 2', 'buyer2@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 004','Active','avatar.png', '2026-03-22 09:03:00','2026-03-22 09:03:00');
+(2,'Seller 2','seller2@email.com','15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 002','user','Active','avatar.png','2026-03-22 09:01:00','2026-03-22 09:01:00'),
+(1,'Seller 1','seller1@email.com','15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 001','user','Active','avatar.png','2026-03-22 09:00:00','2026-03-22 09:00:00'),
+(3,'Buyer 1', 'buyer1@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 003','user','Active','avatar.png', '2026-03-22 09:02:00','2026-03-22 09:02:00'),
+(4,'Buyer 2', 'buyer2@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 004','user','Active','avatar.png', '2026-03-22 09:03:00','2026-03-22 09:03:00'),
+(5,'Admin', 'adm@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 004','admin','Active','avatar.png', '2026-03-22 09:03:00','2026-03-22 09:03:00');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -61,10 +63,8 @@ DROP TABLE IF EXISTS `users_address`;
 CREATE TABLE `users_address` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `users_id` bigint unsigned NOT NULL,
-  `label` varchar(50) DEFAULT NULL,
   `street` varchar(255) NOT NULL,
   `number` varchar(255) DEFAULT NULL,
-  `complement` varchar(255) DEFAULT NULL,
   `city` varchar(255) NOT NULL,
   `state` varchar(255) NOT NULL,
   `postal_code` varchar(255) NOT NULL,
@@ -84,10 +84,10 @@ CREATE TABLE `users_address` (
 LOCK TABLES `users_address` WRITE;
 /*!40000 ALTER TABLE `users_address` DISABLE KEYS */;
 INSERT INTO `users_address` VALUES
-(1,1,'Home','Rua das Flores',       '12', NULL,     'Porto', 'Porto', '4000-001','PT','2026-03-22 09:00:00','2026-03-22 09:00:00'),
-(2,2,'Home','Avenida da Liberdade', '250','Apto 5B', 'Lisboa','Lisboa','1250-096','PT','2026-03-22 09:01:00','2026-03-22 09:01:00'),
-(3,3,'Home','Rua de Santa Catarina','88', NULL,     'Porto', 'Porto', '4000-447','PT','2026-03-22 09:02:00','2026-03-22 09:02:00'),
-(4,4,'Home','Largo do Carmo',       '3',  '2º Dto', 'Lisboa','Lisboa','1200-092','PT','2026-03-22 09:03:00','2026-03-22 09:03:00');
+(1,1,'Rua das Flores',       '12',  'Porto', 'Porto', '4000-001','PT','2026-03-22 09:00:00','2026-03-22 09:00:00'),
+(2,2,'Avenida da Liberdade', '250', 'Lisboa','Lisboa','1250-096','PT','2026-03-22 09:01:00','2026-03-22 09:01:00'),
+(3,3,'Rua de Santa Catarina','88',  'Porto', 'Porto', '4000-447','PT','2026-03-22 09:02:00','2026-03-22 09:02:00'),
+(4,4,'Largo do Carmo',       '3',   'Lisboa','Lisboa','1200-092','PT','2026-03-22 09:03:00','2026-03-22 09:03:00');
 /*!40000 ALTER TABLE `users_address` ENABLE KEYS */;
 UNLOCK TABLES;
 
