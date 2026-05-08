@@ -8,6 +8,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.shortcuts import redirect as django_redirect
 from urllib.parse import urlencode
+from .permissions import IsAdminRole
 
 from . import serializers
 import requests
@@ -19,6 +20,13 @@ import json
 # TODO LISTING GET
 # TODO ORDER GET, POST
 # TODO ORDER ID GET, PATCH
+
+# admin check for non-admin exclusive behaviours
+def is_admin(request):
+    token = request.auth
+    if token is None:
+        return False
+    return token.get('role') == 'admin'
 
 # data-service proxy configuration
 def proxy_request(method, endpoint, data=None, params=None):
@@ -543,3 +551,23 @@ class user_list(APIView):
 class user_id(APIView):
     def get(self, request, id):
         return proxy_request("GET", f"/users/{id}/")
+
+
+# ADMIN API
+
+class user_ban(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    def delete(self, request, id):
+        return proxy_request("DELETE", f"/admin/users/{id}/")
+
+
+class product_admin(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    def patch(self, request, item_id):
+        serializer = serializers.listingIdPatch(data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        return proxy_request("PATCH", f"/admin/product/{item_id}", serializer.validated_data)
+
+    def delete(self, request, id):
+        return proxy_request("DELETE", f"/admin/product/{item_id}/")
+
