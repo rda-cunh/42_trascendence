@@ -11,11 +11,11 @@ class ProductStatus(str, Enum):
 	deleted	= 'Deleted'
 
 class ProductCreate(BaseModel):
+	user_id:		int
 	name:			str
 	slug:			str
 	description:	Optional[str] = None
 	price:			Decimal
-	#stock:			int = 0
 
 	@field_validator('price')
 	@classmethod
@@ -27,8 +27,18 @@ class ProductUpdate(BaseModel):
 	name:			Optional[str] = None
 	description:	Optional[str] = None
 	price:			Optional[Decimal] = None
-	#stock:			Optional[int] = None
 	status:			Optional[ProductStatus] = None
+
+class ProductImages(BaseModel):
+	image_hash:		str
+	display_order:	int
+
+# TO DO
+class SellerModel(BaseModel):
+	# is_owner:			bool
+	name:			str
+	email:			str
+	avatar_url:		str
 
 class ProductResponse(BaseModel):
 	id:				int
@@ -37,18 +47,13 @@ class ProductResponse(BaseModel):
 	slug:			str
 	description:	Optional[str]
 	price:			Decimal
-	#stock:			int
 	status:			ProductStatus
+	images:			list[ProductImages] = []
 	created_at:		datetime
-
-	model_config = {'from_attributes': True}
-
-class ProductImagesCreate(BaseModel):
-	image_hash:		str
-	display_order:	int
+	seller:			SellerModel = []
 
 class ProductImagesResponse(BaseModel):
-	id:				int
+	# id:				int
 	product_id:		int
 	image_hash:		str
 	display_order:	int
