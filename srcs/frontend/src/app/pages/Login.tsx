@@ -76,6 +76,25 @@ export function Login() {
           </button>
         </form>
 
+        <div className="my-6 flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+          <span className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
+          <span>OR</span>
+          <span className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            window.location.href = "/api/auth/42/";
+          }}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white py-3 font-medium text-gray-900 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
+        >
+          <span className="flex h-5 w-5 items-center justify-center rounded-sm bg-black font-bold text-white dark:bg-white dark:text-black">
+            42
+          </span>
+          Sign in with 42
+        </button>
+
         <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
           Don't have an account?{" "}
           <Link

@@ -373,10 +373,13 @@ class auth_42_callback(APIView):
             user_data = reg_resp.data
 
         elif reg_resp.status_code == 409:
-            # in case of duplicate email — account already exists | return error as default for now
-            response = oauth_redirect(settings.OAUTH_FAILURE_REDIRECT, {"error": "email_already_registered"})
-            response.delete_cookie("oauth42_state", path="/api/auth/42/")
-            return response
+            # account already exists — fetch existing user (re-login via 42 OAuth)
+            lookup_resp = proxy_request("GET", "/auth/by-email/", params={"email": user_data_42["email"]})
+            if lookup_resp.status_code != 200:
+                response = oauth_redirect(settings.OAUTH_FAILURE_REDIRECT, {"error": "user_lookup_failed"})
+                response.delete_cookie("oauth42_state", path="/api/auth/42/")
+                return response
+            user_data = lookup_resp.data
 
         elif reg_resp.status_code == 400:
             # validation error from data-service 
@@ -426,6 +429,40 @@ class auth_42_callback(APIView):
         )
         response.delete_cookie("oauth42_state", path="/api/auth/42/")
         return response
+
+# --- CHAT API interfaces ---
+class chat_conversations(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """ lists all conversations for the user (retrieved from JWT) """
+        return proxy_request(
+            "GET",
+            f"/chat/conversations/{request.user.id}/"
+        )
+
+    def post(self, request):
+        """ creates or fetchs the conversation for a listing """
+
+        serializer = serializers.ChatConversationCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        payload = {
+            "listing_id": serializer.validated_data["listing_id"],
+            "buyer_id": request.user.id,
+        }
+
+        return proxy_request("POST", "/chat/conversations/", data=payload)
+
+class chat_messages(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, conversation_id):
+        """ gets message history for one conversation """
+        return proxy_request(
+            "GET",
+            f"/chat/conversations/{conversation_id}/messages/"
+        )
 
 # Product listings API
 

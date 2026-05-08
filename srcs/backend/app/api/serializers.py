@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-
 # -- AUTH SERIALIZERS --
 
 class RegisterSerializer(serializers.Serializer):
@@ -58,6 +57,11 @@ class CustomTokenPairSerializer(TokenObtainPairSerializer):
         token['role'] = user.get('role')
         return token
 
+# -- CHAT SERIALIZERS --
+
+class ChatConversationCreateSerializer(serializers.Serializer):
+    """POST /api/chat/conversations/ — create a new conversation"""
+    listing_id = serializers.IntegerField(min_value=1)
 
 # -- LISTINGS SERIALIZERS --
 
