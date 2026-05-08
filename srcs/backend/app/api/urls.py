@@ -18,6 +18,8 @@ from django.urls import path
 from .views import (
     listing_id,
     listing_full,
+    public_listing_id,
+    public_listing_full,
     payment_id,
     seller_product,
     seller_id,
@@ -25,7 +27,9 @@ from .views import (
     listings_image,
     listings_review,
     user_list,
+    public_user_list,
     user_id,
+    public_user_id,
     auth_register,
     auth_login,
     auth_logout,
@@ -68,4 +72,10 @@ urlpatterns = [
         # user paths
         path("users/", user_list.as_view()),
         path("users/<int:id>/", user_id.as_view()),
+
+        # public paths
+        path("public/listings/<int:id>/", public_listing_id.as_view()),
+        path("public/listings/", public_listing_full.as_view()),
+        path("public/users/", public_user_list.as_view()),
+        path("public/users/<int:id>/", public_user_id.as_view()),
 ]
