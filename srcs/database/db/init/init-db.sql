@@ -158,3 +158,19 @@ CREATE TABLE IF NOT EXISTS messages (
   CONSTRAINT fk_messages_conversation FOREIGN KEY (conversation_id) REFERENCES conversations (id),
   CONSTRAINT fk_messages_sender FOREIGN KEY (sender_id) REFERENCES users (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS friendship (
+	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	user_id BIGINT UNSIGNED NOT NULL,
+	friend_id BIGINT UNSIGNED NOT NULL,
+	status ENUM('Pending', 'Accepted', 'Rejected') NOT NULL DEFAULT 'Pending',
+	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	PRIMARY KEY (id),
+	UNIQUE KEY uq_friendship (user_id, friend_id),
+	KEY idx_friendship_friend (friend_id),
+	KEY idx_friendship_status (status),
+	CONSTRAINT chk_no_self_friend CHECK (user_id != friend_id),
+	CONSTRAINT fk_friendship_requester FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+	CONSTRAINT fk_friendship_addressee FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
