@@ -365,10 +365,13 @@ class auth_42_callback(APIView):
             user_data = reg_resp.data
 
         elif reg_resp.status_code == 409:
-            # in case of duplicate email — account already exists | return error as default for now
-            response = oauth_redirect(settings.OAUTH_FAILURE_REDIRECT, {"error": "email_already_registered"})
-            response.delete_cookie("oauth42_state", path="/api/auth/42/")
-            return response
+            # account already exists — fetch existing user (re-login via 42 OAuth)
+            lookup_resp = proxy_request("GET", "/auth/by-email/", params={"email": user_data_42["email"]})
+            if lookup_resp.status_code != 200:
+                response = oauth_redirect(settings.OAUTH_FAILURE_REDIRECT, {"error": "user_lookup_failed"})
+                response.delete_cookie("oauth42_state", path="/api/auth/42/")
+                return response
+            user_data = lookup_resp.data
 
         elif reg_resp.status_code == 400:
             # validation error from data-service 

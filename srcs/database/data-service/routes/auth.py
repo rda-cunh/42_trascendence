@@ -55,6 +55,17 @@ def delete_user(user_id: int, db=Depends(get_db_dep)):
 
 
 
+# internal lookup by email (used by backend OAuth flow on duplicate-email)
+@router.get('/by-email/', response_model=UserResponse, status_code=200)
+def get_user_by_email(email: str, db=Depends(get_db_dep)):
+	conn, cursor = db
+	cursor.execute('SELECT * FROM users WHERE email = %s', (email,))
+	user = cursor.fetchone()
+	if not user:
+		raise HTTPException(status_code=404, detail='User not found')
+	return UserResponse(**user)
+
+
 # @router.post('/login', response_model=200)
 # email and password
 @router.post('/login/', response_model=UserResponse, status_code=200)
