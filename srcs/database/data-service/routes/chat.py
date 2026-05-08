@@ -36,10 +36,20 @@ def GetExistingChat(cursor, id):
 	chat = GetConversationInfo(cursor, id)
 	if chat is None:
 		return None
-	cursor.execute('SELECT id, sender_id, content, read_at FROM messages WHERE conversation_id = %s ORDER BY created_at ASC', (id,))
+	cursor.execute('SELECT id, sender_id, content, read_at, created_at FROM messages WHERE conversation_id = %s ORDER BY created_at ASC', (id,))
 	chat['history'] = cursor.fetchall()
 
 	return chat
+
+@router.get('/conversations/by-id/{conv_id}/', response_model=UserConversation)
+def GetConversationById(conv_id: int, db=Depends(get_db_dep)):
+	_, cursor = db
+	chat = GetExistingChat(cursor, conv_id)
+	if chat is None:
+		raise HTTPException(status_code=404, detail="Conversation not found")
+
+	chat['other_id'] = chat['seller_id']
+	return UserConversation(**chat)
 
 @router.post('/conversations/', response_model=UserConversation, status_code=200)
 def PostConversation(conv_in: PostConversation, db=Depends(get_db_dep)):
@@ -51,7 +61,7 @@ def PostConversation(conv_in: PostConversation, db=Depends(get_db_dep)):
 	)
 	result = cursor.fetchone()
 	if result is not None:
-		chat = GetExistingChat(cursor, result[0])
+		chat = GetExistingChat(cursor, result['id'])
 		if chat is None:
 			raise HTTPException(status_code=404, detail="Conversation not found")
 		chat['other_id'] = conv_in.seller_id
@@ -154,7 +164,7 @@ def GetMessages(conv_id: int, db=Depends(get_db_dep)):
 
 	cursor.execute(
 		'''
-		SELECT id, sender_id, content, read_at
+		SELECT id, sender_id, content, read_at, created_at
 		FROM messages
 		WHERE conversation_id = %s
 		ORDER BY created_at ASC
@@ -188,7 +198,7 @@ def SendMessage(conv_id: int, conv_in: SendMessage, db=Depends(get_db_dep)):
 	cursor.execute('UPDATE conversations SET last_message = %s, last_message_at = CURRENT_TIMESTAMP WHERE id = %s', 
 				(conv_in.content, conv_id))
 	cursor.execute(
-		'SELECT id, sender_id, content, read_at FROM messages WHERE id = %s',
+		'SELECT id, sender_id, content, read_at, created_at FROM messages WHERE id = %s',
 		(new_id,)
 	)
 	message = cursor.fetchone()
