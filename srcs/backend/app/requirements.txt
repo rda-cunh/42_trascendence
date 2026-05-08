@@ -1,7 +1,12 @@
 requests
+httpx #async HTTP client used by the chat consumer to call data-service
 Django
 djangorestframework
 djangorestframework-simplejwt[crypto] #for JWT authentication and later upgrade on keys
 django-cors-headers #for CORS (Cross-Origin Resource Sharing) handling (browser security feature)
 gunicorn #may be useful
+channels
+channels-redis #redis-backed channel layer for multi-process WebSocket
+daphne
+pyOpenSSL<26 #for secure WebSocket connections (wss://) in production
 #psycopg #missing for postgres, or other for database integration

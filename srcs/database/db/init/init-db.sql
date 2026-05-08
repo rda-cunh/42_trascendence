@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(255) NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   phone VARCHAR(30) NULL DEFAULT NULL,
+  role ENUM('user', 'admin') NOT NULL DEFAULT 'user',
   status ENUM('Active','Suspended','Banned','Deactivated') NOT NULL DEFAULT 'Active',
   avatar_url VARCHAR(255),
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -17,10 +18,8 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS users_address (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   users_id BIGINT UNSIGNED NOT NULL,
-  label VARCHAR(50) NULL DEFAULT NULL,
   street VARCHAR(255) NOT NULL,
   number VARCHAR(255) NULL DEFAULT NULL,
-  complement VARCHAR(255) NULL DEFAULT NULL,
   city VARCHAR(255) NOT NULL,
   state VARCHAR(255) NOT NULL,
   postal_code VARCHAR(255) NOT NULL,
@@ -127,4 +126,35 @@ CREATE TABLE IF NOT EXISTS payments (
   PRIMARY KEY (id),
   KEY idx_payments_order (order_id),
   CONSTRAINT fk_payments_order FOREIGN KEY (order_id) REFERENCES orders (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS conversations (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  listing_id BIGINT UNSIGNED NOT NULL,
+  buyer_id BIGINT UNSIGNED NOT NULL,
+  seller_id BIGINT UNSIGNED NOT NULL,
+  last_message TEXT NULL DEFAULT NULL,
+  last_message_at TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_conversation_listing (listing_id),
+  KEY idx_conversation_buyer (buyer_id),
+  KEY idx_conversation_seller (seller_id),
+  CONSTRAINT fk_conversation_listing FOREIGN KEY (listing_id) REFERENCES products (id),
+  CONSTRAINT fk_conversation_buyer FOREIGN KEY (buyer_id) REFERENCES users (id),
+  CONSTRAINT fk_conversation_seller FOREIGN KEY (seller_id) REFERENCES users (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS messages (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  conversation_id BIGINT UNSIGNED NOT NULL,
+  sender_id  BIGINT UNSIGNED NOT NULL,
+  content TEXT NULL DEFAULT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  read_at TIMESTAMP NULL,
+  PRIMARY KEY (id),
+  KEY idx_messages_conversation (conversation_id),
+  KEY idx_messages_sender (sender_id),
+  CONSTRAINT fk_messages_conversation FOREIGN KEY (conversation_id) REFERENCES conversations (id),
+  CONSTRAINT fk_messages_sender FOREIGN KEY (sender_id) REFERENCES users (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

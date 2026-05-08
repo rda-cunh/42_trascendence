@@ -1,86 +1,73 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
-import { toast } from "sonner";
+import { useEffect, useRef } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
+import { User } from "../types";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
-export function OAuthSuccess() {
-  const [searchParams] = useSearchParams();
+interface OAuthCallbackProps {
+  status: "success" | "error";
+}
+
+export function OAuthCallback({ status }: OAuthCallbackProps) {
+  const [params] = useSearchParams();
   const navigate = useNavigate();
-  const { completeOAuthLogin } = useAuth();
-  const [error, setError] = useState<string | null>(null);
-  const hasCompletedRef = useRef(false);
+  const { loginWithOAuth } = useAuth();
+  const handled = useRef(false);
 
   useEffect(() => {
-    const finishLogin = async () => {
-      if (hasCompletedRef.current) return;
-      hasCompletedRef.current = true;
+    if (handled.current) return;
+    handled.current = true;
 
-      const accessToken = searchParams.get("access") || searchParams.get("access_token");
-      const rawUser = searchParams.get("user");
+    if (status === "error") {
+      const reason = params.get("error") ?? "OAuth authentication failed";
+      toast.error(`42 sign-in failed: ${reason}`);
+      navigate("/login", { replace: true });
+      return;
+    }
 
-      if (!accessToken) {
-        setError("OAuth response did not include an access token.");
-        return;
-      }
+    const access = params.get("access");
+    const userParam = params.get("user");
 
-      let userData: unknown;
-      if (rawUser) {
-        try {
-          userData = JSON.parse(rawUser);
-        } catch {
-          userData = undefined;
-        }
-      }
+    if (!access) {
+      toast.error("Missing access token from 42 callback");
+      navigate("/login", { replace: true });
+      return;
+    }
 
+    let oauthUser: User | undefined;
+    if (userParam) {
       try {
-        await completeOAuthLogin(accessToken, userData);
+        const raw = JSON.parse(userParam);
+        oauthUser = {
+          id: String(raw.id ?? raw.user_id ?? ""),
+          email: raw.email,
+          name: raw.name,
+          phone: raw.phone,
+          role: raw.role,
+          status: raw.status?.toLowerCase?.(),
+        };
+      } catch {
+        // Ignore malformed user payload — fall back to token-derived user.
+      }
+    }
+
+    loginWithOAuth(access, oauthUser)
+      .then(() => {
         toast.success("Signed in with 42");
         navigate("/", { replace: true });
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Could not complete OAuth login.");
-      }
-    };
-
-    finishLogin();
-  }, [completeOAuthLogin, navigate, searchParams]);
-
-  return <OAuthStatus state="success" message={error ?? "Completing 42 sign in..."} />;
-}
-
-export function OAuthError() {
-  const [searchParams] = useSearchParams();
-  const error = useMemo(() => {
-    const value = searchParams.get("error");
-    return value ? value.replace(/_/g, " ") : "42 sign in was cancelled or failed.";
-  }, [searchParams]);
-
-  return <OAuthStatus state="error" message={error} />;
-}
-
-function OAuthStatus({ state, message }: { state: "success" | "error"; message: string }) {
-  const isError = state === "error";
+      })
+      .catch((err) => {
+        toast.error(err instanceof Error ? err.message : "OAuth sign-in failed");
+        navigate("/login", { replace: true });
+      });
+  }, [status, params, loginWithOAuth, navigate]);
 
   return (
-    <div className="flex min-h-[70vh] items-center justify-center bg-gray-50 px-4 transition-colors dark:bg-gray-950">
-      <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-8 text-center shadow-xl dark:border-gray-800 dark:bg-gray-900">
-        {isError ? (
-          <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
-        ) : (
-          <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-purple-600" />
-        )}
-        <h1 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">
-          {isError ? "Sign In Failed" : "Signing You In"}
-        </h1>
-        <p className="mb-6 text-gray-600 capitalize dark:text-gray-400">{message}</p>
-        {isError && (
-          <Link
-            to="/login"
-            className="inline-flex rounded-lg bg-purple-600 px-5 py-3 font-medium text-white transition-colors hover:bg-purple-700"
-          >
-            Back to Login
-          </Link>
-        )}
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 dark:bg-gray-950">
+      <div className="flex flex-col items-center gap-3 text-gray-700 dark:text-gray-300">
+        <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+        <p className="text-sm">Finalizing 42 sign-in…</p>
       </div>
     </div>
   );
