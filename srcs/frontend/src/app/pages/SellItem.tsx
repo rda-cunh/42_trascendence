@@ -56,11 +56,11 @@ export function SellItem() {
       const listing = await api.createListing(
         {
           name: trimmedTitle,
+          user_id: user.id,
           slug,
           description: buildShaderDescription(formData.notes, formData.code),
           price,
-        },
-        user.id
+        }
       );
 
       const listingId = listing?.id ?? listing?.product_id;

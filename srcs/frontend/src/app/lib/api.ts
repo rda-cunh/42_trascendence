@@ -247,9 +247,8 @@ class ApiClient {
     return this.request<any>("GET", `/listings/${id}/`);
   }
 
-  createListing(data: any, sellerId?: string) {
-    const query = sellerId ? `?seller_id=${encodeURIComponent(sellerId)}` : "";
-    return this.request<any>("POST", `/listings/${query}`, data);
+  createListing(data: any) {
+    return this.request<any>("POST", `/listings/`, data);
   }
 
   updateListing(id: string, data: any) {
