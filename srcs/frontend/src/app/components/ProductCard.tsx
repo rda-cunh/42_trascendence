@@ -1,13 +1,18 @@
 import { Link } from "react-router";
 import { MapPin, Clock } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { ShaderPreview } from "./ShaderPreview";
 import { Listing } from "../types";
+import { getListingDescription, isShaderListing } from "../lib/shaders";
 
 interface ProductCardProps {
   listing: Listing;
 }
 
 export function ProductCard({ listing }: ProductCardProps) {
+  const hasShaderPreview = isShaderListing(listing);
+  const description = getListingDescription(listing);
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -26,11 +31,19 @@ export function ProductCard({ listing }: ProductCardProps) {
       className="group overflow-hidden rounded-xl border border-gray-200 bg-white transition-all duration-200 hover:border-purple-500 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900 dark:hover:border-purple-500"
     >
       <div className="aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800">
-        <ImageWithFallback
-          src={listing.image}
-          alt={listing.title}
-          className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
-        />
+        {hasShaderPreview ? (
+          <ShaderPreview
+            fragmentShader={listing.shader.code}
+            label={`${listing.title} shader preview`}
+            className="h-full w-full transition-transform duration-200 group-hover:scale-105"
+          />
+        ) : (
+          <ImageWithFallback
+            src={listing.image}
+            alt={listing.title}
+            className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+          />
+        )}
       </div>
       <div className="p-4">
         <div className="mb-2 flex items-start justify-between gap-2">
@@ -41,9 +54,7 @@ export function ProductCard({ listing }: ProductCardProps) {
             ${listing.price}
           </span>
         </div>
-        <p className="mb-3 line-clamp-2 text-sm text-gray-600 dark:text-gray-400">
-          {listing.description}
-        </p>
+        <p className="mb-3 line-clamp-2 text-sm text-gray-600 dark:text-gray-400">{description}</p>
         <div className="mb-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
           <div className="flex items-center gap-1">
             <MapPin className="h-3 w-3" />

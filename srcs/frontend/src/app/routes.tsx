@@ -4,6 +4,7 @@ import { Home } from "./pages/Home";
 import { ProductDetail } from "./pages/ProductDetail";
 import { SellItem } from "./pages/SellItem";
 import { Login } from "./pages/Login";
+import { OAuthError, OAuthSuccess } from "./pages/OAuthCallback";
 import { Register } from "./pages/Register";
 import { OAuthCallback } from "./pages/OAuthCallback";
 import { Profile } from "./pages/Profile";
