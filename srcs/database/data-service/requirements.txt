@@ -5,3 +5,4 @@ cryptography
 pydantic
 pydantic-settings
 python-dotenv
+prometheus-fastapi-instrumentator

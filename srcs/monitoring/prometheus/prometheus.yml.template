@@ -1,0 +1,79 @@
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+
+scrape_configs:
+
+  - job_name: 'prometheus'
+    scheme: https
+    tls_config:
+      ca_file:   /certs/__CA_CRT_NAME__
+      cert_file: /certs/__INT_CRT_NAME__
+      key_file:  /certs/__INT_KEY_NAME__
+    static_configs:
+      - targets: ['prometheus:9090']
+
+  - job_name: 'mysqld-exporter'
+    scheme: https
+    tls_config:
+      ca_file:   /certs/__CA_CRT_NAME__
+      cert_file: /certs/__INT_CRT_NAME__
+      key_file:  /certs/__INT_KEY_NAME__
+    static_configs:
+      - targets: ['mysqld-exporter:9104']
+
+  - job_name: cadvisor
+    scheme: https
+    tls_config:
+      ca_file:   /certs/__CA_CRT_NAME__
+      cert_file: /certs/__INT_CRT_NAME__
+      key_file:  /certs/__INT_KEY_NAME__
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  - job_name: 'node-exporter'
+    scheme: https
+    tls_config:
+      ca_file:   /certs/__CA_CRT_NAME__
+      cert_file: /certs/__INT_CRT_NAME__
+      key_file:  /certs/__INT_KEY_NAME__
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  - job_name: 'backend'
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      ca_file:   /certs/__CA_CRT_NAME__
+      cert_file: /certs/__INT_CRT_NAME__
+      key_file:  /certs/__INT_KEY_NAME__
+    static_configs:
+      - targets: ['backend:8000']
+
+  - job_name: 'data-service'
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      ca_file:   /certs/__CA_CRT_NAME__
+      cert_file: /certs/__INT_CRT_NAME__
+      key_file:  /certs/__INT_KEY_NAME__
+    static_configs:
+      - targets: ['data-service:9000']
+
+  - job_name: 'nginx-exporter-gateway'
+    scheme: https
+    tls_config:
+      ca_file:   /certs/__CA_CRT_NAME__
+      cert_file: /certs/__INT_CRT_NAME__
+      key_file:  /certs/__INT_KEY_NAME__
+    static_configs:
+      - targets: ['nginx-exporter-gateway:9113']
+
+  - job_name: 'nginx-exporter-frontend'
+    scheme: https
+    tls_config:
+      ca_file:   /certs/__CA_CRT_NAME__
+      cert_file: /certs/__INT_CRT_NAME__
+      key_file:  /certs/__INT_KEY_NAME__
+    static_configs:
+      - targets: ['nginx-exporter-frontend:9113']

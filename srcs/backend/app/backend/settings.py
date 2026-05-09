@@ -31,6 +31,8 @@ ALLOWED_HOSTS = [
     'transcendence.42.fr',
     'localhost',
     '127.0.0.1',
+    'backend',
+    'gateway',
     ]
 
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARD_PROTO', 'https')
@@ -54,6 +56,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'channels',
     'api',
+    'django_prometheus',
+    'django_prometheus.middleware',
 ]
 
 MIDDLEWARE = [
@@ -65,6 +69,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',
 ]
 
 ROOT_URLCONF = 'backend.urls'

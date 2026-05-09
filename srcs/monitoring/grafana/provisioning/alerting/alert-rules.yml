@@ -1,0 +1,252 @@
+apiVersion: 1
+
+groups:
+
+  # ── Service Health ──────────────────────────────────────────────────────────
+  - orgId: 1
+    name: service-health
+    folder: Monitoring Alerts
+    interval: 1m
+    rules:
+
+      - uid: alert-svc-down
+        title: Service Down
+        condition: B
+        data:
+          - refId: A
+            queryType: ''
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              datasource: { type: prometheus, uid: prometheus }
+              expr: up
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: '__expr__'
+            model:
+              type: threshold
+              datasource: { type: '__expr__', uid: '__expr__' }
+              expression: A
+              refId: B
+              conditions:
+                - type: query
+                  evaluator: { type: lt, params: [1] }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last, params: [] }
+        noDataState: Alerting
+        execErrState: Error
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.job }} is DOWN"
+          description: "Scrape target {{ $labels.instance }} (job: {{ $labels.job }}) has been unreachable for more than 1 minute."
+        isPaused: false
+
+  # ── Host Resources ──────────────────────────────────────────────────────────
+  - orgId: 1
+    name: host-resources
+    folder: Monitoring Alerts
+    interval: 1m
+    rules:
+
+      - uid: alert-cpu-high
+        title: High CPU Usage
+        condition: B
+        data:
+          - refId: A
+            queryType: ''
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              datasource: { type: prometheus, uid: prometheus }
+              expr: (1 - avg(rate(node_cpu_seconds_total{job="node-exporter",mode="idle"}[5m]))) * 100
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: '__expr__'
+            model:
+              type: threshold
+              datasource: { type: '__expr__', uid: '__expr__' }
+              expression: A
+              refId: B
+              conditions:
+                - type: query
+                  evaluator: { type: gt, params: [85] }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last, params: [] }
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU usage above 85%"
+          description: "Host CPU usage is {{ $values.A.Value | printf \"%.1f\" }}% — sustained above 85% for 5 minutes."
+        isPaused: false
+
+      - uid: alert-mem-high
+        title: High Memory Usage
+        condition: B
+        data:
+          - refId: A
+            queryType: ''
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              datasource: { type: prometheus, uid: prometheus }
+              expr: (1 - node_memory_MemAvailable_bytes{job="node-exporter"} / node_memory_MemTotal_bytes{job="node-exporter"}) * 100
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: '__expr__'
+            model:
+              type: threshold
+              datasource: { type: '__expr__', uid: '__expr__' }
+              expression: A
+              refId: B
+              conditions:
+                - type: query
+                  evaluator: { type: gt, params: [90] }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last, params: [] }
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Memory usage above 90%"
+          description: "Host memory usage is {{ $values.A.Value | printf \"%.1f\" }}% — sustained above 90% for 5 minutes."
+        isPaused: false
+
+      - uid: alert-disk-full
+        title: Disk Nearly Full
+        condition: B
+        data:
+          - refId: A
+            queryType: ''
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              datasource: { type: prometheus, uid: prometheus }
+              expr: (1 - node_filesystem_avail_bytes{job="node-exporter",mountpoint="/",fstype!="tmpfs"} / node_filesystem_size_bytes{job="node-exporter",mountpoint="/",fstype!="tmpfs"}) * 100
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: '__expr__'
+            model:
+              type: threshold
+              datasource: { type: '__expr__', uid: '__expr__' }
+              expression: A
+              refId: B
+              conditions:
+                - type: query
+                  evaluator: { type: gt, params: [85] }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last, params: [] }
+        noDataState: NoData
+        execErrState: Error
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk usage above 85% on /"
+          description: "Filesystem / is {{ $values.A.Value | printf \"%.1f\" }}% full — above 85% for 10 minutes."
+        isPaused: false
+
+  # ── Application Health ──────────────────────────────────────────────────────
+  - orgId: 1
+    name: application-health
+    folder: Monitoring Alerts
+    interval: 1m
+    rules:
+
+      - uid: alert-backend-latency
+        title: Backend High p99 Latency
+        condition: B
+        data:
+          - refId: A
+            queryType: ''
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              datasource: { type: prometheus, uid: prometheus }
+              expr: histogram_quantile(0.99, sum(irate(django_http_requests_latency_including_middlewares_seconds_bucket{job="backend"}[5m])) by (le))
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: '__expr__'
+            model:
+              type: threshold
+              datasource: { type: '__expr__', uid: '__expr__' }
+              expression: A
+              refId: B
+              conditions:
+                - type: query
+                  evaluator: { type: gt, params: [1] }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last, params: [] }
+        noDataState: NoData
+        execErrState: Error
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Backend p99 latency above 1s"
+          description: "Django backend p99 request latency is {{ $values.A.Value | printf \"%.2f\" }}s — above 1 second for 3 minutes."
+        isPaused: false
+
+      - uid: alert-mysql-conn
+        title: MySQL Too Many Connections
+        condition: B
+        data:
+          - refId: A
+            queryType: ''
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              datasource: { type: prometheus, uid: prometheus }
+              expr: mysql_global_status_threads_connected{job="mysqld-exporter"}
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: '__expr__'
+            model:
+              type: threshold
+              datasource: { type: '__expr__', uid: '__expr__' }
+              expression: A
+              refId: B
+              conditions:
+                - type: query
+                  evaluator: { type: gt, params: [80] }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last, params: [] }
+        noDataState: NoData
+        execErrState: Error
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MySQL connections above 80"
+          description: "MySQL has {{ $values.A.Value }} active connections — above 80 for 2 minutes."
+        isPaused: false
