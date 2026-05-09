@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { ProductCard } from "../components/ProductCard";
-import { api } from "../lib/api";
+import { api, mapListing } from "../lib/api";
 import { Search, SlidersHorizontal, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Listing } from "../types";
 
@@ -37,18 +36,7 @@ export function Home() {
         const results = Array.isArray(data) ? data : data?.results || [];
 
         if (results.length > 0) {
-          const apiListings: Listing[] = results.map((item: any) => ({
-            id: String(item.product_id || item.id),
-            title: item.name || "Untitled",
-            price: item.price || 0,
-            description: item.description || "",
-            category: item.category || "3D Models",
-            condition: item.status || "New",
-            location: "Digital Download",
-            seller: item.seller || "Creator Studio",
-            image: item.image || "https://images.unsplash.com/photo-1636189239307-9f3a701f30a8",
-            postedDate: new Date().toISOString().split("T")[0],
-          }));
+          const apiListings: Listing[] = results.map(mapListing);
           setListings(apiListings);
         }
       } catch (err) {

@@ -5,6 +5,7 @@ import { ProductDetail } from "./pages/ProductDetail";
 import { SellItem } from "./pages/SellItem";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
+import { OAuthCallback } from "./pages/OAuthCallback";
 import { Profile } from "./pages/Profile";
 import { Orders } from "./pages/Orders";
 import { OrderDetail } from "./pages/OrderDetail";
@@ -51,6 +52,8 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Home /> },
       { path: "login", element: <Login /> },
+      { path: "login/success", element: <OAuthCallback status="success" /> },
+      { path: "login/error", element: <OAuthCallback status="error" /> },
       { path: "register", element: <Register /> },
       { path: "product/:id", element: <ProductDetail /> },
       {
