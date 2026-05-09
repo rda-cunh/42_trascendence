@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 import pymysql
 from database import get_db_dep
-from models.friend import *
+from models.follow import *
 
-router = APIRouter(prefix='/api/follow', tags=['Friend'])
+router = APIRouter(prefix='/api/follow', tags=['Follows'])
 
 @router.post('/add/', status_code=200)
 def AddFriend(friend_in: FollowFriend, db=Depends(get_db_dep)):
