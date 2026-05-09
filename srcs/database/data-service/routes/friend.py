@@ -3,7 +3,7 @@ import pymysql
 from database import get_db_dep
 from models.friend import *
 
-router = APIRouter(prefix='/api/friends', tags=['Friend'])
+router = APIRouter(prefix='/api/follow', tags=['Friend'])
 
 
 # Adicionar
@@ -14,88 +14,35 @@ router = APIRouter(prefix='/api/friends', tags=['Friend'])
 # Ver lista de amigos
 
 @router.post('/add/', status_code=200)
-def AddFriend(friend_in: AddFriend, db=Depends(get_db_dep)):
+def AddFriend(friend_in: FollowFriend, db=Depends(get_db_dep)):
 	conn, cursor = db
-	if friend_in.user_id == friend_in.friend_id:
-		raise HTTPException(status_code=400, detail="Can't add yourself as friend")
+	if friend_in.user_id == friend_in.following_id:
+		raise HTTPException(status_code=400, detail="Can't follow yourself")
 	cursor.execute('''
-				INSERT INTO friendship (user_id, friend_id, status)
-				VALUES (%s, %s, %s)''',
-				(friend_in.user_id, friend_in.friend_id, 'Pending'))
-	conn.insert_id()
+				INSERT INTO follows (user_id, following_id)
+				VALUES (%s, %s)''',
+				(friend_in.user_id, friend_in.following_id))
 
-@router.patch('/accept/{invite_id}/', status_code=200)
-def AcceptFriend(invite_id: int, db=Depends(get_db_dep)):
+@router.delete('/remove/', status_code=204)
+def RemoveFriend(friend_in: FollowFriend, db=Depends(get_db_dep)):
 	conn, cursor = db
-	cursor.execute('SELECT * FROM friendship WHERE id = %s', (invite_id, ))
+	cursor.execute('SELECT * FROM follows WHERE user_id = %s AND following_id = %s', (friend_in.user_id, friend_in.following_id))
 	if not cursor.fetchone():
-		raise HTTPException(status_code=404, detail='Invite not found')
+		raise HTTPException(status_code=404, detail='Follow does\'n exist')
 	cursor.execute('''
-				UPDATE friendship 
-				SET status = 'Accepted' 
-				WHERE id = %s''', (invite_id,))
-
-@router.patch('/reject/{invite_id}/', status_code=204)
-def RejectFriend(invite_id: int, db=Depends(get_db_dep)):
-	conn, cursor = db
-	cursor.execute('SELECT * FROM friendship WHERE id = %s', (invite_id, ))
-	if not cursor.fetchone():
-		raise HTTPException(status_code=404, detail='Invite not found')
-	cursor.execute('''
-				UPDATE friendship 
-				SET status = 'Rejected' 
-				WHERE id = %s''', (invite_id,))
-
-@router.delete('/{invite_id}/', status_code=204)
-def RemoveFriend(invite_id: int, db=Depends(get_db_dep)):
-	conn, cursor = db
-	cursor.execute('SELECT * FROM friendship WHERE id = %s', (invite_id, ))
-	if not cursor.fetchone():
-		raise HTTPException(status_code=404, detail='Invite not found')
-	cursor.execute('''
-				DELETE FROM friendship 
-				WHERE id = %s''', (invite_id,))
-
-@router.get('/pending/{user_id}/', response_model=list[UserFriend])
-def ListRequestFriends(user_id: int, db=Depends(get_db_dep)):
-	conn, cursor = db
-	cursor.execute('''
-				SELECT 
-				f.id, f.user_id AS requester_id, f.created_at AS requested_at, u.id AS user_id, u.name, u.avatar_url
-				FROM friendship f JOIN users u ON u.id = f.friend_id
-				WHERE f.status = 'Pending' AND f.friend_id = %s
-				ORDER BY f.created_at DESC
-				''', (user_id,))
-	rows = cursor.fetchall()
-	if not rows:
-		return []
-	
-	FriendList = []
-	for row in rows:
-		friend = UserFriend(
-			id=row['id'],
-			requester_id=row['requester_id'],
-			requested_at=row['requested_at'],
-			user=UserInfo(
-				user_id=row['user_id'],
-				name=row['name'],
-				avatar_url=row['avatar_url']
-			)
-		)
-		FriendList.append(friend)
-	
-	return FriendList
+				DELETE FROM follows 
+				WHERE user_id = %s AND following_id = %s''', (friend_in.user_id, friend_in.following_id))
 
 # Optional: ?limit or ?offset
-@router.get('/{user_id}/', response_model=list[UserInfo])
-def ListFriends(user_id: int, limit: int | None = None, offset: int | None = None, db=Depends(get_db_dep)):
+@router.get('/following/{user_id}/', response_model=list[UserInfo])
+def FollowingList(user_id: int, limit: int | None = None, offset: int | None = None, db=Depends(get_db_dep)):
 	conn, cursor = db
-	sql = '''SELECT u.id, u.name, u.avatar_url 
-			FROM friendship f 
-			JOIN users u ON u.id = CASE WHEN f.user_id = %s THEN f.friend_id ELSE f.user_id END
-			WHERE f.status = 'Accepted' AND u.status = 'Active' AND (f.user_id = %s OR f.friend_id = %s)
+	sql = '''SELECT u.id, u.name, u.avatar_url, f.created_at AS following_since
+			FROM follows f 
+			JOIN users u ON u.id = f.following_id
+			WHERE f.user_id = %s AND u.status = 'Active'
 			ORDER BY u.name ASC'''
-	params = [user_id, user_id, user_id]
+	params = [user_id]
 	if limit is not None:
 		sql += ' LIMIT %s'
 		params.append(limit)
@@ -106,57 +53,133 @@ def ListFriends(user_id: int, limit: int | None = None, offset: int | None = Non
 	rows = cursor.fetchall()
 	if not rows:
 		return []
-	FriendList = []
+	FollowingList = []
 
 	for row in rows:
 		friend = UserInfo(
 			user_id=row['id'],
 			name=row['name'],
-			avatar_url=row['avatar_url']
+			avatar_url=row['avatar_url'],
+			following_since=row['following_since']
 		)
-		FriendList.append(friend)
-	return FriendList
+		FollowingList.append(friend)
+	return FollowingList
 
-@router.get('/feed/{user_id}/', response_model=list[FriendsFeed])
-def FriendsFeed(user_id: int, page: int = 1, search: str | None = Query(None, description='Name or description'), db=Depends(get_db_dep)):
+# Optional: ?limit or ?offset
+@router.get('/followers/{user_id}/', response_model=list[UserInfo])
+def FollowersList(user_id: int, limit: int | None = None, offset: int | None = None, db=Depends(get_db_dep)):
 	conn, cursor = db
-	limit = 10
-	skip = (page - 1) * limit
-	if page < 1:
-		raise HTTPException(status_code=400, detail="Invalid page")
-	sql = '''SELECT l.id, l.name, l.slug, l.price, l.status, l.created_at, 
-			u.id AS seller_id, u.name AS seller_name, u.avatar_url AS seller_avatar,
-			(SELECT pi.image_hash AS image_hash FROM product_images pi WHERE pi.product_id = l.id ORDER BY display_order ASC LIMIT 1)
-			FROM products l
-			JOIN users u ON u.id = l.user_id
-			JOIN friendship f ON (f.user_id = l.user_id OR f.friend_id = l.user_id)
-			WHERE f.status = 'Accepted'
-			AND (f.user_id = %s OR f.friend_id = %s) AND l.user_id != %s AND l.status = 'Active' AND u.status = 'Active'
-			ORDER BY l.created_at DESC
-			LIMIT %s OFFSET %s
-		'''
-	params = [user_id, user_id, user_id, limit, skip]
+	sql = '''SELECT u.id, u.name, u.avatar_url, f.created_at AS following_since
+			FROM follows f 
+			JOIN users u ON u.id = f.user_id
+			WHERE f.following_id = %s AND u.status = 'Active'
+			ORDER BY u.name ASC'''
+	params = [user_id]
+	if limit is not None:
+		sql += ' LIMIT %s'
+		params.append(limit)
+	if offset is not None:
+		sql += ' OFFSET %s'
+		params.append(offset)
 	cursor.execute(sql, params)
 	rows = cursor.fetchall()
 	if not rows:
 		return []
-	Feed = []
+	FollowingList = []
+
 	for row in rows:
-		listing = FriendsFeed(
-			listing=ListingInfo(
-				id=row['id'],
-				name=row['name'],
-				slug=row['slug'],
-				price=row['price'],
-				status=row['status'],
-				created_at=row['created_at'],
-				image_hash=row['image_hash']
-			),
-			user=UserInfo(
-				user_id=row['seller_id'],
-				name=row['seller_name'],
-				avatar_url=row['seller_avatar']
-			)
+		friend = UserInfo(
+			user_id=row['id'],
+			name=row['name'],
+			avatar_url=row['avatar_url'],
+			following_since=row['following_since']
 		)
-		Feed.append(listing)
-	return (Feed)
+		FollowingList.append(friend)
+	return FollowingList
+
+@router.get("/feed/{user_id}/", response_model=list[FriendsFeed])
+def get_friends_feed(
+    user_id: int,
+    page: int = Query(1, ge=1),
+    search: str | None = Query(None, description="Name or description"),
+    db=Depends(get_db_dep),
+):
+    conn, cursor = db
+    limit = 10
+    offset = (page - 1) * limit
+    sql = """
+        SELECT
+            p.id,
+            p.name,
+            p.slug,
+            p.price,
+            p.created_at,
+            u.id AS seller_id,
+            u.name AS seller_name,
+            u.avatar_url AS seller_avatar,
+            f.created_at AS following_since,
+            (
+                SELECT pi.image_hash
+                FROM product_images pi
+                WHERE pi.product_id = p.id
+                ORDER BY pi.display_order ASC, pi.id ASC
+                LIMIT 1
+            ) AS image_hash
+        FROM follows f
+        INNER JOIN users u
+            ON u.id = f.following_id
+        INNER JOIN products p
+            ON p.seller_id = f.following_id
+        WHERE
+            f.user_id = %s
+            AND u.status = 'Active'
+            AND p.status = 'Active'
+    """
+    params = [user_id]
+
+    if search:
+        sql += """AND (p.name LIKE %s OR p.description LIKE %s)"""
+        search_term = f"%{search}%"
+        params.extend([search_term, search_term])
+
+    sql += """ORDER BY p.created_at DESC LIMIT %s OFFSET %s"""
+    params.extend([limit, offset])
+
+    cursor.execute(sql, params)
+    rows = cursor.fetchall()
+    feed = []
+    for row in rows:
+        feed.append(
+            FriendsFeed(
+                listing=ListingInfo(
+                    id=row["id"],
+                    name=row["name"],
+                    slug=row["slug"],
+                    price=row["price"],
+                    created_at=row["created_at"],
+                    image_hash=row["image_hash"],
+                ),
+                user=UserInfo(
+                    user_id=row["seller_id"],
+                    name=row["seller_name"],
+                    avatar_url=row["seller_avatar"],
+                    following_since=row["following_since"],
+                ),
+            )
+        )
+
+    return feed
+
+@router.get('/followers-count/{user_id}/', response_model=FollowCount)
+def FollowersCount(user_id: int, db=Depends(get_db_dep)):
+	conn, cursor = db
+	cursor.execute('SELECT COUNT(*) AS num FROM follows WHERE following_id = %s', (user_id,))
+	result = cursor.fetchone()
+	return (FollowCount(**result))
+
+@router.get('/following-count/{user_id}/', response_model=FollowCount)
+def FollowingCount(user_id: int, db=Depends(get_db_dep)):
+	conn, cursor = db
+	cursor.execute('SELECT COUNT(*) AS num FROM follows WHERE user_id = %s', (user_id,))
+	result = cursor.fetchone()
+	return (FollowCount(**result))
