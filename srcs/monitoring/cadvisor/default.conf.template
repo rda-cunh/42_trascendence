@@ -1,0 +1,28 @@
+server {
+    listen 8080 ssl;
+    server_name _;
+
+    ssl_certificate     /certs/__INT_CRT_NAME__;
+    ssl_certificate_key /certs/__INT_KEY_NAME__;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+
+    access_log off;
+
+    location = /metrics {
+        proxy_pass http://127.0.0.1:18080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
+    location = /healthz {
+        proxy_pass http://127.0.0.1:18080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
+    location / {
+        return 404;
+    }
+}
