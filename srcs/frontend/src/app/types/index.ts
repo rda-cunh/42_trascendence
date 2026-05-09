@@ -41,10 +41,17 @@ export interface Product {
   tags?: string[];
   downloads?: number;
   rating?: number;
+  shader?: ShaderMetadata;
 }
 
 // Alias for consistency with codebase
 export type Listing = Product;
+
+export interface ShaderMetadata {
+  code: string;
+  notes: string;
+  language: "glsl";
+}
 
 export type ProductCategory =
   | "3D Models"

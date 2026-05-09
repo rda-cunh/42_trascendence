@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router";
 import { ArrowLeft, ShoppingCart, CreditCard } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { ShaderPreview } from "../components/ShaderPreview";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { ProductInfo } from "../components/ProductInfo";
 import { ReviewSection } from "../components/ReviewSection";
-import { api } from "../lib/api";
+import { api, mapListing } from "../lib/api";
+import { getListingDescription, isShaderListing } from "../lib/shaders";
 import { Listing, Review } from "../types";
 import { toast } from "sonner";
 
@@ -30,19 +32,7 @@ export function ProductDetail() {
         ]);
 
         if (listingData?.product_id || listingData?.id) {
-          setListing({
-            id: String(listingData.product_id || listingData.id),
-            title: listingData.name || "Untitled",
-            price: listingData.price || 0,
-            description: listingData.description || "",
-            category: listingData.category || "3D Models",
-            condition: listingData.status || "New",
-            location: "Digital Download",
-            seller: listingData.seller || "Creator Studio",
-            image:
-              listingData.image || "https://images.unsplash.com/photo-1636189239307-9f3a701f30a8",
-            postedDate: new Date().toISOString().split("T")[0],
-          });
+          setListing(mapListing(listingData));
         }
 
         if (Array.isArray(reviewsData)) {
@@ -116,6 +106,8 @@ export function ProductDetail() {
 
   const avgRating =
     reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0;
+  const hasShaderPreview = isShaderListing(listing);
+  const description = getListingDescription(listing);
 
   return (
     <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
@@ -128,14 +120,22 @@ export function ProductDetail() {
         </Link>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          {/* Image */}
+          {/* Preview */}
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-colors dark:border-gray-800 dark:bg-gray-900">
             <div className="aspect-square">
-              <ImageWithFallback
-                src={listing.image}
-                alt={listing.title}
-                className="h-full w-full object-cover"
-              />
+              {hasShaderPreview ? (
+                <ShaderPreview
+                  fragmentShader={listing.shader.code}
+                  label={`${listing.title} shader preview`}
+                  className="h-full w-full"
+                />
+              ) : (
+                <ImageWithFallback
+                  src={listing.image}
+                  alt={listing.title}
+                  className="h-full w-full object-cover"
+                />
+              )}
             </div>
           </div>
 
@@ -163,10 +163,19 @@ export function ProductDetail() {
             {/* Description */}
             <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-colors dark:border-gray-800 dark:bg-gray-900">
               <h2 className="mb-3 text-xl font-bold text-gray-900 dark:text-white">Description</h2>
-              <p className="leading-relaxed text-gray-700 dark:text-gray-300">
-                {listing.description}
-              </p>
+              <p className="leading-relaxed text-gray-700 dark:text-gray-300">{description}</p>
             </div>
+
+            {hasShaderPreview && (
+              <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-colors dark:border-gray-800 dark:bg-gray-900">
+                <h2 className="mb-3 text-xl font-bold text-gray-900 dark:text-white">
+                  Shader Source
+                </h2>
+                <pre className="max-h-96 overflow-auto rounded-lg bg-gray-950 p-4 text-sm leading-relaxed text-gray-100">
+                  <code>{listing.shader.code}</code>
+                </pre>
+              </div>
+            )}
 
             {/* License */}
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-6 transition-colors dark:border-blue-800 dark:bg-blue-900/20">

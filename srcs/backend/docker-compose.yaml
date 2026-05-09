@@ -1,13 +1,33 @@
 services:
+  redis:
+    image: redis:7-alpine        # alpine ~30MB
+    container_name: redis
+    restart: always
+    expose:
+      - "6379"                   # internal only
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   backend:
     container_name: backend
     build: ./app
     environment:
       - INT_CRT_NAME=${INT_CRT_NAME:-internal.crt}
       - INT_KEY_NAME=${INT_KEY_NAME:-internal.key}
-      - REQUESTS_CA_BUNDLE=/certs/${CA_CRT_NAME:-ca.crt}
+      - REQUESTS_CA_BUNDLE=/tmp/ca-bundle.crt
+      - CA_CRT_NAME=${CA_CRT_NAME:-ca.crt}
       - DJANGO_SETTINGS_MODULE=backend.settings
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - FORTYTWO_CLIENT_ID=${FORTYTWO_CLIENT_ID}
+      - FORTYTWO_CLIENT_SECRET=${FORTYTWO_CLIENT_SECRET}
+      - FORTYTWO_REDIRECT_URI=${FORTYTWO_REDIRECT_URI}
+      - OAUTH_SUCCESS_REDIRECT=${OAUTH_SUCCESS_REDIRECT}
+      - OAUTH_FAILURE_REDIRECT=${OAUTH_FAILURE_REDIRECT}
+
     volumes:
       - certs_data:/certs:ro
     restart: always
@@ -16,15 +36,13 @@ services:
         condition: service_completed_successfully
       data-service:
         condition: service_started
+      redis:
+        condition: service_healthy
     command: >
       sh -c "
+      cat /etc/ssl/certs/ca-certificates.crt /certs/$${CA_CRT_NAME} > /tmp/ca-bundle.crt &&
       python3 manage.py makemigrations &&
       python3 manage.py migrate &&
-      gunicorn backend.wsgi:application
-      --bind 0.0.0.0:8000
-      --workers 3
-      --reload
-      --log-level debug
-      --certfile=/certs/$${INT_CRT_NAME}
-      --keyfile=/certs/$${INT_KEY_NAME}
+      daphne -e ssl:8000:privateKey=/certs/$${INT_KEY_NAME}:certKey=/certs/$${INT_CRT_NAME}
+      backend.asgi:application
       "
