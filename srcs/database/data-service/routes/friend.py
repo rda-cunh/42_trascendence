@@ -5,14 +5,6 @@ from models.friend import *
 
 router = APIRouter(prefix='/api/follow', tags=['Friend'])
 
-
-# Adicionar
-# Aceitar
-# Remover
-# Enviar chat
-# Ver Feed
-# Ver lista de amigos
-
 @router.post('/add/', status_code=200)
 def AddFriend(friend_in: FollowFriend, db=Depends(get_db_dep)):
 	conn, cursor = db
