@@ -497,38 +497,44 @@ POST '/api/chat/conversations/{conversation_id}/messages/'
 
 ## Endpoints
 
-# Send Invite
+# Follow
 ```
-curl --insecure -X POST "https://localhost/api/friends/add/" \
+curl --insecure -X POST "https://localhost/api/follow/add/" \
 	-H "Content-Type: application/json" \
 	-d '{"user_id": 1, "friend_id": 2}'
 ```
 
-# Accept invite
+# Unfollow
 ```
-curl --insecure -X PATCH "https://localhost/api/friends/accept/{invite_id}/"
-```
-
-# Reject invite
-```
-curl --insecure -X DELETE "https://localhost/api/friends/reject/{invite_id}/"
+curl --insecure -X DELETE "https://localhost/api/follow/remove/" \
+	-H "Content-Type: application/json" \
+	-d '{"user_id": 1, "friend_id": 2}'
 ```
 
-# Remove Friend
-```
-curl --insecure -X DELETE "https://localhost/api/friends/{invite_id}/"
-```
 
-# Pending invites
+# Following list
 ```
-curl -X GET "https://localhost/api/friends/{user_id}/"
+curl -X GET "https://localhost/api/follow/following/{user_id}/"
 
-curl -X GET "https://localhost/api/friends/{user_id}/?limit=5"
+# limit
+curl -X GET "https://localhost/api/follow/following/{user_id}/?limit=5"
 
-curl -X GET "https://localhost/api/friends/{user_id}/?limit=5&offset=10"
+# limit and offset
+curl -X GET "https://localhost/api/follow/following/{user_id}/?limit=5&offset=10"
 ```
 
-# Friends Feed
+# Followers list
+```
+curl -X GET "https://localhost/api/follow/followers/{user_id}/"
+
+# limit
+curl -X GET "https://localhost/api/follow/followers/{user_id}/?limit=5"
+
+# limit and offset
+curl -X GET "https://localhost/api/follow/followers/{user_id}/?limit=5&offset=10"
+```
+
+# Following Feed
 ```
 curl -X GET "https://localhost/api/friends/feed/{user_id}/"
 
@@ -536,4 +542,12 @@ curl -X GET "https://localhost/api/friends/feed/{user_id}/?page=2"
 
 curl -X GET "https://localhost/api/friends/feed/{user_id}/?search=test"
 ```
+
+# Followers/Following count
+```
+curl -X GET "https://localhost/api/friends/followers-count/{user_id}/"
+
+curl -X GET "https://localhost/api/friends/following-count/{user_id}/"
+```
+
 </details>
