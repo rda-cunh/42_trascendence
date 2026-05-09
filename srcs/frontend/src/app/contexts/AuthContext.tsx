@@ -203,16 +203,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const completeOAuthLogin = async (accessToken: string, userData?: unknown) => {
-    api.setToken(accessToken);
-    const profile = await api.getProfile().catch(() => null);
-    persistAuth(accessToken, normalizeUser(profile ?? userData, accessToken));
-  };
-
-  const startOAuth42 = () => {
-    window.location.assign(api.getOAuth42Url());
-  };
-
   return (
     <AuthContext.Provider
       value={{ user, token, loading, login, register, logout, updateUser, loginWithOAuth }}
