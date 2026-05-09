@@ -6,7 +6,7 @@
 #   make dev          - Full deployment and immediately attach to logs
 #   make stop         - Stop the containers
 #   make status       - Check Docker stats on the target (Local or Remote)
-#   make logs         - Attach to logs without redeploying
+#   make logs         - Attach to logs without redeploying (Specify SERVICE=service_name to filter)
 #   make re           - Rebuild and redeploy (Same as fclean + all)
 #   make setup-docker - Install Docker on the target machine (Requires root)
 #   make ssh-setup    - Setup SSH keys for remote server access using ssh-copy-id
@@ -108,7 +108,7 @@ run: check-docker ssh-check sync-files
 	@$(EXEC) "$(PRE_CMD) set -a; . .env; set +a; docker compose --env-file .env -f $(COMPOSE_FILE) up -d"
 
 logs: check-docker
-	@$(EXEC) "$(PRE_CMD) set -a; . .env; set +a; docker compose --env-file .env -f $(COMPOSE_FILE) logs -f || true"
+	@$(EXEC) "$(PRE_CMD) set -a; . .env; set +a; docker compose --env-file .env -f $(COMPOSE_FILE) logs -f $(SERVICE) || true"
 
 status: check-docker
 	@$(EXEC) "$(PRE_CMD) \
