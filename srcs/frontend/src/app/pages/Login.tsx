@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
-import { Mail, Lock, LogIn, School } from "lucide-react";
+import { Mail, Lock, LogIn } from "lucide-react";
 import { toast } from "sonner";
 
 export function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { login, startOAuth42 } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || "/";
