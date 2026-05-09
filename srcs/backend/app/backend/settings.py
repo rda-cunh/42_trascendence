@@ -32,6 +32,7 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     'backend',
+    'gateway',
     ]
 
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARD_PROTO', 'https')

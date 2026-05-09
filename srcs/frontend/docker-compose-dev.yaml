@@ -10,10 +10,16 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
+      - certs_data:/certs:ro
     working_dir: /app
     command: npm run dev
     environment:
       - VITE_API_URL=http://localhost:3000/api
       - NODE_ENV=development
+      - INT_CRT_NAME=${INT_CRT_NAME:-internal.crt}
+      - INT_KEY_NAME=${INT_KEY_NAME:-internal.key}
     restart: unless-stopped
     tty: true
+    depends_on:
+      pki-init:
+        condition: service_completed_successfully
