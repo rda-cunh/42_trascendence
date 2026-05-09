@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import pymysql
 from routes import public, products, orders, auth, users, chat
+from prometheus_fastapi_instrumentator import Instrumentator
 
 app = FastAPI(title='Marketplace DB Gateway',
 			)
@@ -47,4 +48,6 @@ def health():
 	except Exception as e:
 		return {'status': 'error', 'database': str(e)}
 
-
+Instrumentator(
+    excluded_handlers=["/metrics", "/health"],
+).instrument(app).expose(app, include_in_schema=False)
