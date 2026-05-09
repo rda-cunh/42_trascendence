@@ -8,7 +8,9 @@ services:
       - "443:443"
     environment:
       - CA_CRT_NAME=${CA_CRT_NAME:-ca.crt}
-      - ENVSUBST_VARS=CA_CRT_NAME
+      - INT_CRT_NAME=${INT_CRT_NAME:-internal.crt}
+      - INT_KEY_NAME=${INT_KEY_NAME:-internal.key}
+      - ENVSUBST_VARS=CA_CRT_NAME,INT_CRT_NAME,INT_KEY_NAME
     volumes:
       - ./default.conf:/etc/nginx/templates/default.conf.template:ro
       - certs_data:/certs:ro

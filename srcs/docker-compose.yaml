@@ -6,7 +6,10 @@ include:
   - ./backend/docker-compose.yaml
   - ./frontend/docker-compose${FRONTEND_MODE:+-${FRONTEND_MODE}}.yaml
   - ./pki/docker-compose.yaml
+  - ./monitoring/docker-compose.yaml
 
 volumes:
   certs_data:
   db_data:
+  prometheus_data:
+  grafana_data:
