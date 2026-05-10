@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload Test</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 600px; margin: 20px auto; padding: 0 10px; }
+        #upload-form { margin-bottom: 20px; }
+        #file-input { margin-right: 10px; }
+        #images-container { display: flex; flex-direction: column-reverse; gap: 20px; }
+        .image-entry { border: 1px solid #ccc; padding: 10px; border-radius: 4px; }
+        .image-entry img { max-width: 100%; height: auto; }
+        .filename { font-family: monospace; font-size: 0.9em; margin-bottom: 5px; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+
+    <h1>Upload Image</h1>
+    <div id="upload-form">
+        <input type="file" id="file-input" accept="image/*">
+        <button id="upload-btn">Upload</button>
+        <span id="status"></span>
+    </div>
+
+    <h2>Uploaded Images</h2>
+    <div id="images-container"></div>
+
+    <script>
+        async function uploadImage(file) {
+            console.log(`📤 uploadImage called — file: ${file.name} (${file.size} bytes)`);
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            const response = await fetch('/images/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                console.error('❌ Upload failed — server response:', error);
+                throw new Error(error.error || error.detail || 'Upload failed');
+            }
+
+            const data = await response.json();
+            console.log('✅ Upload successful — received data:', data);
+            console.log(`   filename: ${data.filename}`);
+            console.log(`   url: ${data.url}`);
+
+            return data.filename;
+        }
+
+        const fileInput = document.getElementById('file-input');
+        const uploadBtn = document.getElementById('upload-btn');
+        const statusEl = document.getElementById('status');
+        const container = document.getElementById('images-container');
+
+        uploadBtn.addEventListener('click', async () => {
+            const file = fileInput.files[0];
+            if (!file) {
+                console.warn('⚠️ No file selected');
+                statusEl.textContent = 'Please select a file.';
+                return;
+            }
+
+            console.log('🚀 Upload button clicked — file selected:', file.name);
+            statusEl.textContent = 'Uploading…';
+
+            try {
+                const filename = await uploadImage(file);
+                statusEl.textContent = '';
+
+                console.log(`🖼️ Creating image element for /images/${filename}`);
+
+                const entry = document.createElement('div');
+                entry.className = 'image-entry';
+
+                const filenameDiv = document.createElement('div');
+                filenameDiv.className = 'filename';
+                filenameDiv.textContent = filename;
+
+                const img = document.createElement('img');
+                img.src = `/images/${filename}`;
+                img.alt = filename;
+                img.onerror = () => {
+                    console.error(`❌ Failed to load image: ${img.src}`);
+                    img.alt = 'Failed to load image';
+                };
+
+                entry.appendChild(filenameDiv);
+                entry.appendChild(img);
+                container.appendChild(entry);
+
+                console.log(`📌 Newest image appended. Total entries in container: ${container.childElementCount}`);
+                fileInput.value = '';
+            } catch (err) {
+                console.error('💥 Caught error in upload flow:', err.message);
+                statusEl.textContent = `Error: ${err.message}`;
+            }
+        });
+    </script>
+</body>
+</html>

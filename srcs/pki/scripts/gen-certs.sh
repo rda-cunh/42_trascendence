@@ -56,6 +56,7 @@ DNS.11 = node-exporter
 DNS.12 = cadvisor
 DNS.13 = nginx-exporter-gateway
 DNS.14 = nginx-exporter-frontend
+DNS.15 = image-service
 EOF
 
 echo "Generating Certificate Signing Request (CSR)..."
