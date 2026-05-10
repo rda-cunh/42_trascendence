@@ -158,3 +158,15 @@ CREATE TABLE IF NOT EXISTS messages (
   CONSTRAINT fk_messages_conversation FOREIGN KEY (conversation_id) REFERENCES conversations (id),
   CONSTRAINT fk_messages_sender FOREIGN KEY (sender_id) REFERENCES users (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS follows (
+	user_id BIGINT UNSIGNED NOT NULL,
+	following_id BIGINT UNSIGNED NOT NULL,
+	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY (user_id, following_id),
+	KEY idx_follows_following (following_id),
+	CONSTRAINT chk_no_self_follow CHECK (user_id != following_id),
+	CONSTRAINT fk_follows_follower FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+	CONSTRAINT fk_follows_following FOREIGN KEY (following_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
