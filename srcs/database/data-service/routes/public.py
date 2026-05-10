@@ -11,6 +11,7 @@ def hash_pw(pw: str) -> str:
 
 # Filters
 # GET /users (?search=test ?limit=5 ?skip=10)
+# Missing pagination
 @router.get('/users/', response_model=list[UserResponse])
 def	list_users(
 	skip:	int = 0,

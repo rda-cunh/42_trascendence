@@ -58,7 +58,7 @@ def	create_product(product_in: ProductCreate, db=Depends(get_db_dep)):
 	product = GetProductInfo(db, new_id)
 	return ProductResponse(**product)
 
-# Missing improve to show num of pages
+# Missing improve to show num of pages 
 # GET /listings (with filter ?search=Test or ?page=1 or ?status=Active or ?seler_id=1)
 @router.get('/', response_model=list[ProductResponse])
 def	list_products(
@@ -72,7 +72,7 @@ def	list_products(
 	limit = 10
 	skip = (page - 1) * limit
 	if page < 1:
-		raise HTTPException(400, "Invalid page")
+		raise HTTPException(status_code=400, detail="Invalid page")
 	sql = 'SELECT * FROM products WHERE 1=1'
 	params = []
 	
