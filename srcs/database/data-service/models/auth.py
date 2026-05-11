@@ -7,7 +7,7 @@ from enum import Enum
 class UserStatus(str, Enum):
 	active		= 'Active'
 	suspended	= 'Suspended'
-	baned		= 'Baned'
+	banned		= 'Banned'
 	deactivated	= 'Deactivated'
 
 class UserRole(str, Enum):
