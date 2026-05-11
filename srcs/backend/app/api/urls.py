@@ -44,7 +44,6 @@ from .views import (
     chat_messages,
     admin_bans,
     manage_admins,
-    product_admin,
     manage_bans,
 )
 
@@ -92,6 +91,5 @@ urlpatterns = [
         # admin paths
         path("admin/bans/<int:id>/", manage_bans.as_view()),
         path("admin/bans/", admin_bans.as_view()),
-        path("admin/product/<int:id>/", product_admin.as_view()),
         path("admin/manage/<int:id>/", manage_admins.as_view()),
 ]

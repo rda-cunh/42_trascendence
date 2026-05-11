@@ -14,7 +14,7 @@ run_test(){
 	local endpoint=$2
 	local output_file=$3
 	local method=${METHOD[$1]}
-	local body=$4
+	local body=$4:null
 	echo -e "\e[1;31m/api/${endpoint} - ${method}\e[0m"
 	${CURL} ${method} ${DOMAIN}${endpoint} -H "${HEADER}" -d "${body}" > "${DIR}${output_file}.json"
 	sleep .8
@@ -41,7 +41,7 @@ run_auth_test(){
 	local endpoint=$2
 	local output_file=$3
 	local access_token=$4
-	local body=$5
+	local body=$5:null
 	local cookie_file=$6
 
 	echo -e "\e[1;34m/api/${endpoint} - ${method} (auth)\e[0m"
