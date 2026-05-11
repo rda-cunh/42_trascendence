@@ -27,7 +27,7 @@ def is_admin(request):
     token = request.auth
     if token is None:
         return False
-    return token.get('role') == 'admin'
+    return token['role'] == 'admin'
 
 # data-service proxy configuration
 def proxy_request(method, endpoint, data=None, params=None):
@@ -631,6 +631,7 @@ class admin_bans(APIView):
         return proxy_request("GET", f"/admin/bans/")
 
 
+# /admin/bans/{user_id}
 class manage_bans(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
 
