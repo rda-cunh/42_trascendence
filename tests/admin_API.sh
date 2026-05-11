@@ -4,7 +4,7 @@ set -uo pipefail
 
 mkdir -p admin_tests
 
-CURL="curl --insecure -X"
+CURL="curl --show-error --silent --insecure -X"
 METHOD=("GET" "DELETE" "POST" "PATCH")
 HEADER="Content-Type: application/json"
 DOMAIN="https://127.0.0.1/api/"
@@ -14,7 +14,7 @@ run_test(){
 	local endpoint=$2
 	local output_file=$3
 	local method=${METHOD[$1]}
-	local body=$4:null
+	local body="${4:-null}"
 	echo -e "\e[1;31m/api/${endpoint} - ${method}\e[0m"
 	${CURL} ${method} ${DOMAIN}${endpoint} -H "${HEADER}" -d "${body}" > "${DIR}${output_file}.json"
 	sleep .8
@@ -41,7 +41,7 @@ run_auth_test(){
 	local endpoint=$2
 	local output_file=$3
 	local access_token=$4
-	local body=$5:null
+	local body="${5:-null}"
 	local cookie_file=$6
 
 	echo -e "\e[1;34m/api/${endpoint} - ${method} (auth)\e[0m"
@@ -73,14 +73,15 @@ run_auth_test(){
 LOGIN="{\"email\": \"adm@email.com\",\"password\":\"123456789\"}"
 USER1='{"name": "Rda-cunh", "email": "rda@email.com", "password": "securepass1", "phone": "+351123456789"}'
 USER2='{"name": "Rapcampo", "email": "rcv@email.com", "password": "securepass2", "phone": "223456789"}'
-
 # admin login -> create user 1 and 2 -> verify they exist -> admin bans user 1 -> verify
 run_login_test "admin_login" "${LOGIN}"
+ACCESS_TOKEN=$(python3 -c "import json; print(json.load(open('${DIR}admin_login.json')).get('access',''))")
 run_test 2 "auth/register/" "auth_register_1" "${USER1}"
 run_test 2 "auth/register/" "auth_register_2" "${USER2}"
 run_test 0 "users/1/" "user_id1"
 run_test 0 "users/2/" "user_id2"
-run_auth_test "POST" "admin/bans/1/" "ban_user1" "${ACCESS_TOKEN}" "{}" "${DIR}login_valid.cookies"
+run_auth_test "POST" "admin/bans/1/" "ban_user1" "${ACCESS_TOKEN}" "{}" "${DIR}admin_login.cookies"
+run_auth_test "GET" "users/1/" "admin_view" "${ACCESS_TOKEN}" "{}" "${DIR}admin_login.cookies"
 run_test 0 "users/1/" "last_user_id1"
 run_test 0 "users/2/" "last_user_id2"
 
