@@ -468,23 +468,23 @@ class chat_messages(APIView):
 # Product listings API
 
 class listing_id(APIView):
-    def get(self, request, id):
-        return proxy_request("GET", f"/listings/{id}/")
+    def get(self, request, product_id):
+        return proxy_request("GET", f"/listings/{product_id}/")
 
     def patch(self, request, id):
         serializer = serializers.listingIdPatch(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
-        product_data = proxy_request("GET", f"/listings/{id}/").data
+        product_data = proxy_request("GET", f"/listings/{product_id}/").data
         if not request.user.id == product_data.get("owner_id") or is_admin(request):
             raise PermissionDenied("You do not have permission to edit this product.")
-        return proxy_request("PATCH", f"/listings/{id}/", serializer.validated_data)
+        return proxy_request("PATCH", f"/listings/{product_id}/", serializer.validated_data)
 
     def delete(self, request, id):
-        product_data = proxy_request("GET", f"/listings/{id}/").data
+        product_data = proxy_request("GET", f"/listings/{product_id}/").data
         if not request.user.id == product_data.get("owner_id") or is_admin(request):
             raise PermissionDenied("You do not have permission to delete this product.")
-        return proxy_request("DELETE", f"/listings/{id}/")
+        return proxy_request("DELETE", f"/listings/{product_id}/")
 
 
 class listing_full(APIView):
@@ -507,8 +507,8 @@ class listings_review(APIView):
 
 
 class seller_id(APIView):
-    def get(self, request, id):
-        return proxy_request("GET", f"/listings/seller/{id}/")
+    def get(self, request, user_id):
+        return proxy_request("GET", f"/listings/seller/{user_id}/")
 
 
 class seller_product(APIView):
@@ -555,15 +555,15 @@ class order_create(APIView):
 
 class order_id(APIView):
     def get(self, request, id):
-        return proxy_request("GET", f"/orders/{id}/")
+        return proxy_request("GET", f"/orders/{order_id}/")
 
     def patch(self, request, id):
-        return proxy_request("PATCH", f"/orders/{id}", request.data)
+        return proxy_request("PATCH", f"/orders/{order_id}", request.data)
 
 
 class order_buyer_id(APIView):
     def get(self, request, id):
-        return proxy_request("GET", f"/orders/buyer/{id}/")
+        return proxy_request("GET", f"/orders/buyer/{user_id}/")
 
 
 class payment_id(APIView):
@@ -588,8 +588,10 @@ class user_list(APIView):
 
 
 class user_id(APIView):
-    def get(self, request, id):
-        return proxy_request("GET", f"/users/{id}/")
+    def get(self, request, user_id):
+        if is_admin(request):
+            return proxy_request("GET", f"/auth/profile/{user_id}/")
+        return proxy_request("GET", f"/users/{user_id}/")
 
 
 # Public API
@@ -604,15 +606,15 @@ class public_user_list(APIView):
 class public_user_id(APIView):
     permission_classes = [AllowAny]
 
-    def get(self, request, id):
-        return proxy_request("GET", f"/public/users/{id}/")
+    def get(self, request, user_id):
+        return proxy_request("GET", f"/public/users/{user_id}/")
 
 
 class public_listing_id(APIView):
     permission_classes = [AllowAny]
 
-    def get(self, request, id):
-        return proxy_request("GET", f"/public/listings/{id}/")
+    def get(self, request, user_id):
+        return proxy_request("GET", f"/public/listings/{user_id}/")
 
 
 class public_listing_full(APIView):
@@ -636,7 +638,7 @@ class manage_bans(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
 
     # to change for post later on a new api, to add to a ban list
-    def post(self, request, id):
+    def post(self, request, user_id):
         return proxy_request("DELETE", f"/auth/profile/{user_id}/")
 
     #unban funcionality
