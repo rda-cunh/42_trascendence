@@ -637,13 +637,13 @@ class admin_bans(APIView):
 class manage_bans(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
 
-    # to change for post later on a new api, to add to a ban list
+    # adding to ban list
     def post(self, request, user_id):
-        return proxy_request("DELETE", f"/auth/profile/{user_id}/")
+        return proxy_request("POST", f"/admin/bans/{user_id}/")
 
-    #unban funcionality
-    # def delete(self, request, id):
-    #    return proxy_request("POST", f"/auth/profile/{user_id}/")
+    # unban funcionality
+    def delete(self, request, id):
+        return proxy_request("DELETE", f"/admin/bans/{user_id}/")
 
 class manage_admins(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
@@ -653,5 +653,11 @@ class manage_admins(APIView):
 
     def delete(self, request, user_id):
         return proxy_request("DELETE", f"/admin/manage/{user_id}/")
+
+class list_admins(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        return proxy_request("GET", f"/admin/manage/")
 
 # graphana

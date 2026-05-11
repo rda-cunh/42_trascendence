@@ -71,17 +71,17 @@ run_auth_test(){
 }
 
 LOGIN="{\"email\": \"adm@email.com\",\"password\":\"123456789\"}"
+USER_LOGIN="{\"email\": \"rda@email.com\",\"password\":\"securepass1\"}"
 USER1='{"name": "Rda-cunh", "email": "rda@email.com", "password": "securepass1", "phone": "+351123456789"}'
-USER2='{"name": "Rapcampo", "email": "rcv@email.com", "password": "securepass2", "phone": "223456789"}'
 # admin login -> create user 1 and 2 -> verify they exist -> admin bans user 1 -> verify
 run_login_test "admin_login" "${LOGIN}"
 ACCESS_TOKEN=$(python3 -c "import json; print(json.load(open('${DIR}admin_login.json')).get('access',''))")
+USER_TOKEN=$(python3 -c "import json; print(json.load(open('${DIR}user_login.json')).get('access',''))")
 run_test 2 "auth/register/" "auth_register_1" "${USER1}"
-run_test 2 "auth/register/" "auth_register_2" "${USER2}"
+run_login_test "user_login" "${USER_LOGIN}"
 run_test 0 "users/1/" "user_id1"
-run_test 0 "users/2/" "user_id2"
 run_auth_test "POST" "admin/bans/1/" "ban_user1" "${ACCESS_TOKEN}" "{}" "${DIR}admin_login.cookies"
+run_auth_test "POST" "admin/bans/1/" "user_fail_admin" "${USER_TOKEN}" "{}" "${DIR}user_login.cookies"
 run_auth_test "GET" "users/1/" "admin_view" "${ACCESS_TOKEN}" "{}" "${DIR}admin_login.cookies"
 run_test 0 "users/1/" "last_user_id1"
-run_test 0 "users/2/" "last_user_id2"
 

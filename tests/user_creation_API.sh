@@ -10,7 +10,7 @@ mkdir -p user_tests
 # HTTP_CODE=$(curl -sS --insecure -o out.json -w "%{http_code}" ...)
 #echo "$HTTP_CODE" > out.status
 
-CURL="curl --insecure -X"
+CURL="curl --silent --show-error --insecure -X"
 METHOD=("GET" "DELETE" "POST" "PATCH")
 HEADER="Content-Type: application/json"
 DOMAIN="https://127.0.0.1/api/"
