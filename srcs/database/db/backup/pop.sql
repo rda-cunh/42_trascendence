@@ -45,8 +45,8 @@ CREATE TABLE `users` (
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
-(2,'Seller 2','seller2@email.com','15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 002','user','Active','avatar.png','2026-03-22 09:01:00','2026-03-22 09:01:00'),
 (1,'Seller 1','seller1@email.com','15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 001','user','Active','avatar.png','2026-03-22 09:00:00','2026-03-22 09:00:00'),
+(2,'Seller 2','seller2@email.com','15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 002','user','Active','avatar.png','2026-03-22 09:01:00','2026-03-22 09:01:00'),
 (3,'Buyer 1', 'buyer1@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 003','user','Active','avatar.png', '2026-03-22 09:02:00','2026-03-22 09:02:00'),
 (4,'Buyer 2', 'buyer2@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 004','user','Active','avatar.png', '2026-03-22 09:03:00','2026-03-22 09:03:00'),
 (5,'Admin', 'adm@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 004','admin','Active','avatar.png', '2026-03-22 09:03:00','2026-03-22 09:03:00');

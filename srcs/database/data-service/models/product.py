@@ -38,7 +38,7 @@ class SellerModel(BaseModel):
 	# is_owner:			bool
 	name:			str
 	email:			str
-	avatar_url:     Optional[str] = None
+	avatar_url:		Optional[str] = None
 
 class ProductResponse(BaseModel):
 	id:				int

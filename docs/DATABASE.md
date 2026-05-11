@@ -454,3 +454,100 @@ curl -X POST http://data-service:9000/api/orders/ -H "Content-Type: application/
 <summary><h1> Payments </h1></summary>
 (To be implemented)
 </details>
+
+
+<details>
+<summary><h1> Chat </h1></summary>
+
+## Endpoints
+
+# Create/Get Conversation
+```
+POST '/api/chat/conversations/'
+{
+"listing_id" : "1",
+"user_id" : "5",
+"seller_id" : "7"
+}
+```
+
+# Get all chats from a user
+```
+GET '/api/chat/conversations/'
+```
+
+# Get message history
+```
+GET '/api/chat/conversations/{conversation_id}/messages/'
+```
+
+# Send message
+```
+POST '/api/chat/conversations/{conversation_id}/messages/'
+{
+"sender_id" : "1",
+"content" : "Hello world!"
+}
+```
+
+</details>
+
+<details>
+<summary><h1> Friend </h1></summary>
+
+## Endpoints
+
+# Follow
+```
+curl --insecure -X POST "https://localhost/api/follow/add/" \
+	-H "Content-Type: application/json" \
+	-d '{"user_id": 1, "friend_id": 2}'
+```
+
+# Unfollow
+```
+curl --insecure -X DELETE "https://localhost/api/follow/remove/" \
+	-H "Content-Type: application/json" \
+	-d '{"user_id": 1, "friend_id": 2}'
+```
+
+
+# Following list
+```
+curl -X GET "https://localhost/api/follow/following/{user_id}/"
+
+# limit
+curl -X GET "https://localhost/api/follow/following/{user_id}/?limit=5"
+
+# limit and offset
+curl -X GET "https://localhost/api/follow/following/{user_id}/?limit=5&offset=10"
+```
+
+# Followers list
+```
+curl -X GET "https://localhost/api/follow/followers/{user_id}/"
+
+# limit
+curl -X GET "https://localhost/api/follow/followers/{user_id}/?limit=5"
+
+# limit and offset
+curl -X GET "https://localhost/api/follow/followers/{user_id}/?limit=5&offset=10"
+```
+
+# Following Feed
+```
+curl -X GET "https://localhost/api/friends/feed/{user_id}/"
+
+curl -X GET "https://localhost/api/friends/feed/{user_id}/?page=2"
+
+curl -X GET "https://localhost/api/friends/feed/{user_id}/?search=test"
+```
+
+# Followers/Following count
+```
+curl -X GET "https://localhost/api/friends/followers-count/{user_id}/"
+
+curl -X GET "https://localhost/api/friends/following-count/{user_id}/"
+```
+
+</details>
