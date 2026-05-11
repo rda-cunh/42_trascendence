@@ -80,6 +80,10 @@ export function mapListing(item: any): Listing {
   const rawDescription = item?.description ?? "";
   const shader = parseShaderDescription(rawDescription);
   const createdAt = item?.created_at ?? item?.postedDate ?? item?.posted_date;
+  const sellerName =
+    typeof item?.seller === "string"
+      ? item.seller
+      : item?.seller?.name ?? item?.seller_name ?? "Creator Studio";
 
   return {
     id: String(item?.product_id ?? item?.id),
@@ -89,7 +93,7 @@ export function mapListing(item: any): Listing {
     category: shader ? "Shaders" : (item?.category ?? "3D Models"),
     condition: item?.status ?? "New",
     location: "Digital Download",
-    seller: item?.seller ?? item?.seller_name ?? "Creator Studio",
+    seller: sellerName,
     seller_id: item?.seller_id ? String(item.seller_id) : undefined,
     image:
       item?.image ??
@@ -281,8 +285,13 @@ class ApiClient {
     );
   }
 
-  getReviews(listingId: string) {
-    return this.request<any>("GET", `/listings/${listingId}/review/`);
+  async getReviews(listingId: string) {
+    try {
+      const data = await this.request<any>("GET", `/listings/${listingId}/review/`);
+      return Array.isArray(data) ? data : data?.results || [];
+    } catch {
+      return [];
+    }
   }
 }
 
