@@ -471,7 +471,7 @@ class listing_id(APIView):
     def get(self, request, product_id):
         return proxy_request("GET", f"/listings/{product_id}/")
 
-    def patch(self, request, id):
+    def patch(self, request, product_id):
         serializer = serializers.listingIdPatch(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
@@ -480,7 +480,7 @@ class listing_id(APIView):
             raise PermissionDenied("You do not have permission to edit this product.")
         return proxy_request("PATCH", f"/listings/{product_id}/", serializer.validated_data)
 
-    def delete(self, request, id):
+    def delete(self, request, product_id):
         product_data = proxy_request("GET", f"/listings/{product_id}/").data
         if not request.user.id == product_data.get("owner_id") or is_admin(request):
             raise PermissionDenied("You do not have permission to delete this product.")
@@ -516,26 +516,27 @@ class seller_product(APIView):
         return proxy_request("GET", f"/listings/seller/{product_id}/")
 
 
-class listings_image(APIView):
-    def post(self, request, product_id):
-        product_data = proxy_request("GET", f"/listings/{product_id}/").data
-        if not request.user.id == product_data.get("owner_id") or is_admin(request):
-            raise PermissionDenied("You do not have permission to add this image.")
-        return proxy_request("POST", f"/listings/{product_id}/images/")
+# class listings_image(APIView):
+#    def post(self, request, product_id):
+#        product_data = proxy_request("GET", f"/listings/{product_id}/").data
+#        if not request.user.id == product_data.get("owner_id") or is_admin(request):
+#            raise PermissionDenied("You do not have permission to add this image.")
+#        return proxy_request("POST", f"/listings/{product_id}/images/")
+#
+#
+#    def get(self, request, product_id):
+#        return proxy_request("GET", f"/listings/{product_id}/images/")
 
-    def get(self, request, product_id):
-        return proxy_request("GET", f"/listings/{product_id}/images/")
 
-
-class listings_image_id(APIView):
-    def get(self, request, product_id, image_id):
-        return proxy_request("GET", f"/listings/{product_id}/images/{image_id}/")
-
-    def delete(self, request, product_id, image_id):
-        product_data = proxy_request("GET", f"/listings/{product_id}/").data
-        if not request.user.id == product_data.get("owner_id") or is_admin(request):
-            raise PermissionDenied("You do not have permission to edit this product.")
-        return proxy_request("DELETE", f"/listings/{product_id}/images/{image_id}/")
+# class listings_image_id(APIView):
+#    def get(self, request, product_id, image_id):
+#        return proxy_request("GET", f"/listings/{product_id}/images/{image_id}/")
+#
+#    def delete(self, request, product_id, image_id):
+#        product_data = proxy_request("GET", f"/listings/{product_id}/").data
+#        if not request.user.id == product_data.get("owner_id") or is_admin(request):
+#            raise PermissionDenied("You do not have permission to edit this product.")
+#        return proxy_request("DELETE", f"/listings/{product_id}/images/{image_id}/")
 
 
 # orders API
