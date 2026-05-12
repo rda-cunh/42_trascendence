@@ -8,7 +8,8 @@ services:
       - "443:443"
     environment:
       - CA_CRT_NAME=${CA_CRT_NAME:-ca.crt}
-      - ENVSUBST_VARS=CA_CRT_NAME
+      - ENVSUBST_VARS=CA_CRT_NAME,FRONTEND_TARGET
+      - FRONTEND_MODE=${FRONTEND_MODE:-production}
     volumes:
       - ./default.conf:/etc/nginx/conf.d/default.conf:ro
       - certs_data:/certs:ro
@@ -19,7 +20,12 @@ services:
     depends_on:
       pki-init:
         condition: service_completed_successfully
-
+      backend:
+        condition: service_started
+      database:
+        condition: service_healthy
+      data-service:
+        condition: service_started
 secrets:
   ssl_cert:
     file: ../../${SSL_CERT}
