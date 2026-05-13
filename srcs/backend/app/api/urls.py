@@ -23,8 +23,8 @@ from .views import (
     payment_id,
     seller_product,
     seller_id,
-    listings_image_id,
-    listings_image,
+#    listings_image_id,
+#    listings_image,
     listings_review,
     user_list,
     public_user_list,
@@ -45,6 +45,7 @@ from .views import (
     admin_bans,
     manage_admins,
     manage_bans,
+    grafana_auth,
 )
 
 urlpatterns = [
@@ -54,8 +55,8 @@ urlpatterns = [
         path("listings/", listing_full.as_view()),
         path("listings/seller/<int:product_id>/", seller_product.as_view()),
         path("listings/seller/<int:user_id>/", seller_id.as_view()),
-        path("listings/<int:product_id>/images/<int:image_id>/", listings_image_id.as_view()),
-        path("listings/<int:product_id>/images/", listings_image.as_view()),
+#        path("listings/<int:product_id>/images/<int:image_id>/", listings_image_id.as_view()),
+#        path("listings/<int:product_id>/images/", listings_image.as_view()),
         path("listings/<int:product_id>/review/", listings_review.as_view()),
         path("listings/<int:product_id>/review/<int:review_id>/", listings_review.as_view()),
         
@@ -92,4 +93,6 @@ urlpatterns = [
         path("admin/bans/<int:user_id>/", manage_bans.as_view()),
         path("admin/bans/", admin_bans.as_view()),
         path("admin/manage/<int:user_id>/", manage_admins.as_view()),
+        path("admin/grafana/", grafana_auth.as_view()),
+
 ]

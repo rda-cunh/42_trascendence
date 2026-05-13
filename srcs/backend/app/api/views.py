@@ -118,6 +118,23 @@ def get_or_create_shadow_user(user_data):
     #return the local user object for jwt generation 
     return user
 
+
+class grafana_auth(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    def initial(self, request, *args, **kwargs):
+        if 'HTTP_AUTHORIZATION' not in request.META:
+            token = request.COOKIES.get('access_token')
+            if token:
+                request.META['HTTP_AUTHORIZATION'] = f'Bearer {token}'
+        super().initial(request, *args, **kwargs)
+
+    def get(self, request):
+        reply = Response(status=200)
+        reply['X-Grafana-User'] = request.user.email
+        reply['X-Grafana-Role'] = 'Admin'
+        return reply
+
+
 # --- AUTH REGISTRATION ---
 class auth_register(APIView):
     permission_classes = [AllowAny]
