@@ -196,7 +196,18 @@ class auth_login(APIView):
             secure=True,  
             samesite="Strict",
             max_age=7*24*3600,
-            path="/api/auth/",
+            path="/",
+        )
+
+        # set httpOnly access token cookie (so the browser sends it to /metrics etc.)
+        response.set_cookie(
+            key="access_token",
+            value=str(access_token),
+            httponly=True,
+            secure=True,
+            samesite="Strict",
+            max_age=int(settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"].total_seconds()),
+            path="/",
         )
         return response
 
@@ -245,7 +256,7 @@ class auth_refresh(APIView):
                 secure=True,
                 samesite="Strict",
                 max_age=7*24*3600,
-                path="/api/auth/",
+                path="/",
             )
             
             # invalidate old refresh token after issuing a new one
@@ -443,7 +454,7 @@ class auth_42_callback(APIView):
         response.set_cookie(
             key="refresh_token", value=str(refresh),
             httponly=True, secure=True, samesite="Strict",
-            max_age=7*24*3600, path="/api/auth/",
+            max_age=7*24*3600, path="/",
         )
         response.delete_cookie("oauth42_state", path="/api/auth/42/")
         return response
