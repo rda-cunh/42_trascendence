@@ -63,6 +63,12 @@ class ChatConversationCreateSerializer(serializers.Serializer):
     """POST /api/chat/conversations/ — create a new conversation"""
     listing_id = serializers.IntegerField(min_value=1)
 
+# -- FOLLOW SERIALIZERS --
+
+class FollowActionSerializer(serializers.Serializer):
+    """POST /api/follow/  and  DELETE /api/follow/  — target user to follow or unfollow."""
+    following_id = serializers.IntegerField(min_value=1)
+
 # -- LISTINGS SERIALIZERS --
 
 # /api/listings/{id}
