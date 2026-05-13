@@ -493,6 +493,56 @@ class chat_messages(APIView):
             f"/chat/conversations/{conversation_id}/messages/"
         )
 
+# --- FOLLOW API interfaces ---
+class follow_action(APIView):
+    """POST: follow a user, DELETE: unfollow a user. The follower id comes from the JWT and not the body."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = serializers.FollowActionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        payload = {
+            "user_id": request.user.id,
+            "following_id": serializer.validated_data["following_id"],
+        }
+        return proxy_request("POST", "/follow/add/", data=payload)
+
+    def delete(self, request):
+        serializer = serializers.FollowActionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        payload = {
+            "user_id": request.user.id,
+            "following_id": serializer.validated_data["following_id"],
+        }
+        return proxy_request("DELETE", "/follow/remove/", data=payload)
+
+class follow_following(APIView):
+    """GET list of users that user_id follows. This is public."""
+    def get(self, request, user_id):
+        params = {k: request.query_params[k]
+                  for k in ("limit", "offset") if k in request.query_params}
+        return proxy_request("GET", f"/follow/following/{user_id}/", params=params)
+
+class follow_followers(APIView):
+    """GET list of users following user_id. Public."""
+    def get(self, request, user_id):
+        params = {k: request.query_params[k]
+                  for k in ("limit", "offset") if k in request.query_params}
+        return proxy_request("GET", f"/follow/followers/{user_id}/", params=params)
+
+class follow_counts(APIView):
+    """GET follower and following counts for user_id. This is public."""
+    def get(self, request, user_id):
+        # merged the two calls here. Evaluate later if this needs to be separated.
+        followers = proxy_request("GET", f"/follow/followers-count/{user_id}/")
+        following = proxy_request("GET", f"/follow/following-count/{user_id}/")
+        if followers.status_code != 200 or following.status_code != 200:
+            return Response({"detail": "Upstream error"}, status=502)
+        return Response({
+            "followers": followers.data["num"],
+            "following": following.data["num"],
+        })
+
 # Product listings API
 
 class listing_id(APIView):

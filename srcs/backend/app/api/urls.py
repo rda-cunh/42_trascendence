@@ -46,6 +46,10 @@ from .views import (
     manage_admins,
     manage_bans,
     grafana_auth,
+    follow_action,
+    follow_following,
+    follow_followers,
+    follow_counts,
 )
 
 urlpatterns = [
@@ -73,6 +77,12 @@ urlpatterns = [
         # chat paths
         path("chat/conversations/", chat_conversations.as_view()),
         path("chat/conversations/<int:conversation_id>/messages/", chat_messages.as_view()),
+
+        # follow paths
+        path("follow/",                              follow_action.as_view()),
+        path("follow/following/<int:user_id>/",      follow_following.as_view()),
+        path("follow/followers/<int:user_id>/",      follow_followers.as_view()),
+        path("follow/counts/<int:user_id>/",         follow_counts.as_view()),
 
         # orders paths
         path("orders/<int:order_id>/", order_id.as_view()),
