@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.exceptions import PermissionDenied
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
@@ -8,6 +9,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.shortcuts import redirect as django_redirect
 from urllib.parse import urlencode
+from .permissions import IsAdminRole
 
 from . import serializers
 import requests
@@ -19,6 +21,13 @@ import json
 # TODO LISTING GET
 # TODO ORDER GET, POST
 # TODO ORDER ID GET, PATCH
+
+# admin check for non-admin exclusive behaviours
+def is_admin(request):
+    token = request.auth
+    if token is None:
+        return False
+    return token['role'] == 'admin'
 
 # data-service proxy configuration
 def proxy_request(method, endpoint, data=None, params=None):
@@ -109,6 +118,23 @@ def get_or_create_shadow_user(user_data):
     #return the local user object for jwt generation 
     return user
 
+
+class grafana_auth(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    def initial(self, request, *args, **kwargs):
+        if 'HTTP_AUTHORIZATION' not in request.META:
+            token = request.COOKIES.get('access_token')
+            if token:
+                request.META['HTTP_AUTHORIZATION'] = f'Bearer {token}'
+        super().initial(request, *args, **kwargs)
+
+    def get(self, request):
+        reply = Response(status=200)
+        reply['X-Grafana-User'] = request.user.email
+        reply['X-Grafana-Role'] = 'Admin'
+        return reply
+
+
 # --- AUTH REGISTRATION ---
 class auth_register(APIView):
     permission_classes = [AllowAny]
@@ -170,7 +196,18 @@ class auth_login(APIView):
             secure=True,  
             samesite="Strict",
             max_age=7*24*3600,
-            path="/api/auth/",
+            path="/",
+        )
+
+        # set httpOnly access token cookie (so the browser sends it to /metrics etc.)
+        response.set_cookie(
+            key="access_token",
+            value=str(access_token),
+            httponly=True,
+            secure=True,
+            samesite="Strict",
+            max_age=int(settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"].total_seconds()),
+            path="/",
         )
         return response
 
@@ -219,7 +256,7 @@ class auth_refresh(APIView):
                 secure=True,
                 samesite="Strict",
                 max_age=7*24*3600,
-                path="/api/auth/",
+                path="/",
             )
             
             # invalidate old refresh token after issuing a new one
@@ -417,7 +454,7 @@ class auth_42_callback(APIView):
         response.set_cookie(
             key="refresh_token", value=str(refresh),
             httponly=True, secure=True, samesite="Strict",
-            max_age=7*24*3600, path="/api/auth/",
+            max_age=7*24*3600, path="/",
         )
         response.delete_cookie("oauth42_state", path="/api/auth/42/")
         return response
@@ -459,17 +496,23 @@ class chat_messages(APIView):
 # Product listings API
 
 class listing_id(APIView):
-    def get(self, request, id):
-        return proxy_request("GET", f"/listings/{id}/")
+    def get(self, request, product_id):
+        return proxy_request("GET", f"/listings/{product_id}/")
 
-    def patch(self, request, id):
+    def patch(self, request, product_id):
         serializer = serializers.listingIdPatch(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        return proxy_request("PATCH", f"/listings/{id}", serializer.validated_data)
 
-    def delete(self, request, id):
-        # TODO add authentication verification and provide id to data-service
-        return proxy_request("DELETE", f"/listings/{id}")
+        product_data = proxy_request("GET", f"/listings/{product_id}/").data
+        if not request.user.id == product_data.get("owner_id") or is_admin(request):
+            raise PermissionDenied("You do not have permission to edit this product.")
+        return proxy_request("PATCH", f"/listings/{product_id}/", serializer.validated_data)
+
+    def delete(self, request, product_id):
+        product_data = proxy_request("GET", f"/listings/{product_id}/").data
+        if not request.user.id == product_data.get("owner_id") or is_admin(request):
+            raise PermissionDenied("You do not have permission to delete this product.")
+        return proxy_request("DELETE", f"/listings/{product_id}/")
 
 
 class listing_full(APIView):
@@ -492,8 +535,8 @@ class listings_review(APIView):
 
 
 class seller_id(APIView):
-    def get(self, request, id):
-        return proxy_request("GET", f"/listings/seller/{id}/")
+    def get(self, request, user_id):
+        return proxy_request("GET", f"/listings/seller/{user_id}/")
 
 
 class seller_product(APIView):
@@ -501,27 +544,32 @@ class seller_product(APIView):
         return proxy_request("GET", f"/listings/seller/{product_id}/")
 
 
-class listings_image(APIView):
-    def post(self, request, product_id):
-        return proxy_request("POST", f"/listings/{product_id}/images/")
+# class listings_image(APIView):
+#    def post(self, request, product_id):
+#        product_data = proxy_request("GET", f"/listings/{product_id}/").data
+#        if not request.user.id == product_data.get("owner_id") or is_admin(request):
+#            raise PermissionDenied("You do not have permission to add this image.")
+#        return proxy_request("POST", f"/listings/{product_id}/images/")
+#
+#
+#    def get(self, request, product_id):
+#        return proxy_request("GET", f"/listings/{product_id}/images/")
 
-    def get(self, request, product_id):
-        return proxy_request("GET", f"/listings/{product_id}/images/")
 
-
-class listings_image_id(APIView):
-    def get(self, request, product_id, image_id):
-        return proxy_request("GET", f"/listings/{product_id}/images/{image_id}/")
-
-    def delete(self, request, product_id, image_id):
-        return proxy_request("DELETE", f"/listings/{product_id}/images/{image_id}/")
+# class listings_image_id(APIView):
+#    def get(self, request, product_id, image_id):
+#        return proxy_request("GET", f"/listings/{product_id}/images/{image_id}/")
+#
+#    def delete(self, request, product_id, image_id):
+#        product_data = proxy_request("GET", f"/listings/{product_id}/").data
+#        if not request.user.id == product_data.get("owner_id") or is_admin(request):
+#            raise PermissionDenied("You do not have permission to edit this product.")
+#        return proxy_request("DELETE", f"/listings/{product_id}/images/{image_id}/")
 
 
 # orders API
 
 class order_create(APIView):
-
-    # this get_permission is how i can set auth requirement for different methods.
 
     def get(self, request):
         # This API should have JWT_STRING, ?page=num&status=created
@@ -536,15 +584,15 @@ class order_create(APIView):
 
 class order_id(APIView):
     def get(self, request, id):
-        return proxy_request("GET", f"/orders/{id}/")
+        return proxy_request("GET", f"/orders/{order_id}/")
 
     def patch(self, request, id):
-        return proxy_request("PATCH", f"/orders/{id}", request.data)
+        return proxy_request("PATCH", f"/orders/{order_id}", request.data)
 
 
 class order_buyer_id(APIView):
     def get(self, request, id):
-        return proxy_request("GET", f"/orders/buyer/{id}/")
+        return proxy_request("GET", f"/orders/buyer/{user_id}/")
 
 
 class payment_id(APIView):
@@ -561,16 +609,84 @@ class payment_id(APIView):
         return proxy_request("DELETE", f"/orders/{order_id}/payment/")
 
 
-# PUBLIC APIs
+# USER API interfaces
 
 class user_list(APIView):
     def get(self, request):
         return proxy_request("GET", "/users/")
 
 
-# USER API interfaces
-
-
 class user_id(APIView):
-    def get(self, request, id):
-        return proxy_request("GET", f"/users/{id}/")
+    def get(self, request, user_id):
+        if is_admin(request):
+            return proxy_request("GET", f"/auth/profile/{user_id}/")
+        return proxy_request("GET", f"/users/{user_id}/")
+
+
+# Public API
+
+class public_user_list(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        return proxy_request("GET", "/public/users/")
+
+
+class public_user_id(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, user_id):
+        return proxy_request("GET", f"/public/users/{user_id}/")
+
+
+class public_listing_id(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, user_id):
+        return proxy_request("GET", f"/public/listings/{user_id}/")
+
+
+class public_listing_full(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        return proxy_request("GET", "/public/listings/")
+
+# ADMIN API
+
+# return list of banned users
+class admin_bans(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        return proxy_request("GET", f"/admin/bans/")
+
+
+# /admin/bans/{user_id}
+class manage_bans(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    # adding to ban list
+    def post(self, request, user_id):
+        return proxy_request("POST", f"/admin/bans/{user_id}/")
+
+    # unban funcionality
+    def delete(self, request, id):
+        return proxy_request("DELETE", f"/admin/bans/{user_id}/")
+
+class manage_admins(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def post(self, request, user_id):
+        return proxy_request("POST", f"/admin/manage/{user_id}/")
+
+    def delete(self, request, user_id):
+        return proxy_request("DELETE", f"/admin/manage/{user_id}/")
+
+class list_admins(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        return proxy_request("GET", f"/admin/manage/")
+
+# graphana
