@@ -166,29 +166,7 @@ export function ProductDetail() {
               <p className="leading-relaxed text-gray-700 dark:text-gray-300">{description}</p>
             </div>
 
-            {hasShaderPreview && (
-              <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-colors dark:border-gray-800 dark:bg-gray-900">
-                <h2 className="mb-3 text-xl font-bold text-gray-900 dark:text-white">
-                  Shader Source
-                </h2>
-                <pre className="max-h-96 overflow-auto rounded-lg bg-gray-950 p-4 text-sm leading-relaxed text-gray-100">
-                  <code>{listing.shader.code}</code>
-                </pre>
-              </div>
-            )}
 
-            {/* License */}
-            <div className="rounded-xl border border-blue-200 bg-blue-50 p-6 transition-colors dark:border-blue-800 dark:bg-blue-900/20">
-              <h3 className="mb-2 font-semibold text-blue-900 dark:text-blue-400">
-                License & Usage
-              </h3>
-              <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-300">
-                <li>• Personal and commercial use allowed</li>
-                <li>• Cannot redistribute or resell as-is</li>
-                <li>• Lifetime updates included</li>
-                <li>• Email support from creator</li>
-              </ul>
-            </div>
           </div>
         </div>
 

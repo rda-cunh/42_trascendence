@@ -108,6 +108,20 @@ export function mapListing(item: any): Listing {
   };
 }
 
+function normalizeProfileResponse<T extends { listings?: Array<Record<string, any>> }>(data: T): T {
+  if (!data || !Array.isArray(data.listings)) {
+    return data;
+  }
+
+  return {
+    ...data,
+    listings: data.listings.map((listing) => ({
+      ...listing,
+      price: Number(listing?.price ?? 0),
+    })),
+  };
+}
+
 function normalizeRole(role: unknown): User["role"] | undefined {
   const value = String(role ?? "").toLowerCase();
   if (value === "admin" || value === "seller" || value === "user") return value;
@@ -205,7 +219,14 @@ class ApiClient {
 
   // AUTH
   register(data: { name: string; email: string; password: string; phone?: string }) {
-    return this.request<any>("POST", "/auth/register/", data);
+    const payload = {
+      name: data.name,
+      email: data.email,
+      password: data.password,
+      ...(data.phone?.trim() ? { phone: data.phone.trim() } : {}),
+    };
+
+    return this.request<any>("POST", "/auth/register/", payload);
   }
 
   login(email: string, password: string) {
@@ -224,7 +245,7 @@ class ApiClient {
   }
 
   getProfile() {
-    return this.request<any>("GET", "/auth/profile/");
+    return this.request<any>("GET", "/auth/profile/").then((data) => normalizeProfileResponse(data));
   }
 
   getOAuth42Url() {
@@ -249,6 +270,10 @@ class ApiClient {
 
   getListing(id: string) {
     return this.request<any>("GET", `/listings/${id}/`);
+  }
+
+  getPublicUserProfile(userId: string | number) {
+    return this.request<any>("GET", `/users/${userId}/`).then((data) => normalizeProfileResponse(data));
   }
 
   createListing(data: any) {
@@ -293,6 +318,40 @@ class ApiClient {
       return [];
     }
   }
+
+  // FOLLOW/SOCIAL
+  // Follow endpoints are not available right now.
+  // Keep these stubs commented until backend API is exposed.
+  // followUser(userId: number, followingId: number) {
+  //   return this.request<any>("POST", "/follow/add/", {
+  //     user_id: userId,
+  //     following_id: followingId,
+  //   });
+  // }
+  //
+  // unfollowUser(userId: number, followingId: number) {
+  //   return this.request<any>("DELETE", "/follow/remove/", {
+  //     user_id: userId,
+  //     following_id: followingId,
+  //   });
+  // }
+  //
+  // getFollowerCount(userId: number) {
+  //   return this.request<{ num: number }>("GET", `/follow/followers-count/${userId}/`);
+  // }
+  //
+  // getFollowingCount(userId: number) {
+  //   return this.request<{ num: number }>("GET", `/follow/following-count/${userId}/`);
+  // }
+  //
+  // getFollowers(userId: number, limit?: number, offset?: number) {
+  //   let url = `/follow/followers/${userId}/`;
+  //   const params = new URLSearchParams();
+  //   if (limit) params.append("limit", limit.toString());
+  //   if (offset) params.append("offset", offset.toString());
+  //   if (params.toString()) url += `?${params.toString()}`;
+  //   return this.request<any>("GET", url);
+  // }
 }
 
 export const api = new ApiClient();

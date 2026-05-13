@@ -1,16 +1,48 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Link } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
-import { User, Mail, Phone, Save, Edit3, Shield } from "lucide-react";
+import { User, Mail, Phone, Save, Edit3, Shield, Plus } from "lucide-react";
+import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { api } from "../lib/api";
 import { toast } from "sonner";
+
+interface UserProduct {
+  name: string;
+  description?: string;
+  price: number;
+  images?: Array<{ image_hash: string; display_order: number }>;
+}
 
 export function Profile() {
   const { user, updateUser } = useAuth();
   const [editing, setEditing] = useState(false);
+  const [products, setProducts] = useState<UserProduct[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
     phone: user?.phone || "",
   });
+
+  // Fetch user's products on mount
+  useEffect(() => {
+    const fetchProducts = async () => {
+      if (!user?.id) return;
+
+      try {
+        const profile = await api.getProfile();
+        if (profile?.listings && Array.isArray(profile.listings)) {
+          setProducts(profile.listings);
+        }
+      } catch (err) {
+        console.error("Failed to load products:", err);
+      } finally {
+        setIsLoadingProducts(false);
+      }
+    };
+
+    fetchProducts();
+  }, [user?.id]);
 
   const handleSave = async () => {
     try {
@@ -110,6 +142,81 @@ export function Profile() {
               </button>
             )}
           </div>
+        </div>
+
+        {/* Your Products Section */}
+        <div className="mt-8">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Your Products</h2>
+            <Link
+              to="/sell"
+              className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm text-white transition-colors hover:bg-purple-700"
+            >
+              <Plus className="h-4 w-4" />
+              New Product
+            </Link>
+          </div>
+
+          {isLoadingProducts ? (
+            <div className="flex items-center justify-center rounded-xl border border-gray-200 bg-white p-12 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+              <p className="text-gray-500 dark:text-gray-400">Loading products...</p>
+            </div>
+          ) : products.length === 0 ? (
+            <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm dark:border-gray-800 dark:bg-gray-900">
+              <p className="mb-4 text-gray-600 dark:text-gray-400">
+                You haven't posted any products yet.
+              </p>
+              <Link
+                to="/sell"
+                className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-6 py-3 text-white transition-colors hover:bg-purple-700"
+              >
+                <Plus className="h-4 w-4" />
+                Create Your First Product
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {products.map((product, idx) => (
+                <div
+                  key={idx}
+                  className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-gray-800 dark:bg-gray-900"
+                >
+                  <div className="aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    {product.images && product.images.length > 0 ? (
+                      <ImageWithFallback
+                        src="https://images.unsplash.com/photo-1636189239307-9f3a701f30a8"
+                        alt={product.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-gray-400">
+                        <span>No image</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <h3 className="mb-2 line-clamp-2 font-semibold text-gray-900 dark:text-white">
+                      {product.name}
+                    </h3>
+                    <p className="mb-3 line-clamp-1 text-sm text-gray-600 dark:text-gray-400">
+                      {product.description || "No description"}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                        ${product.price.toFixed(2)}
+                      </p>
+                      <Link
+                        to={`/listing/${idx}/edit`}
+                        className="text-sm text-purple-600 transition-colors hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
+                      >
+                        Edit
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

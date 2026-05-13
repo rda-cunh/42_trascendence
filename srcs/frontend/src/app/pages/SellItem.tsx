@@ -53,10 +53,18 @@ export function SellItem() {
     setIsLoading(true);
 
     try {
+      const sellerIdRaw = user.id;
+      const sellerId = Number(sellerIdRaw);
+
+      if (!Number.isInteger(sellerId) || sellerId <= 0) {
+        toast.error("Could not resolve a valid seller account. Please log out and log in again.");
+        return;
+      }
+
       const listing = await api.createListing(
         {
           name: trimmedTitle,
-          user_id: user.id,
+          user_id: sellerId,
           slug,
           description: buildShaderDescription(formData.notes, formData.code),
           price,
@@ -78,6 +86,8 @@ export function SellItem() {
 
       if (
         lowered.includes("seller_id") ||
+        lowered.includes("invalid reference") ||
+        lowered.includes("fk") ||
         lowered.includes("query") ||
         lowered.includes("field required")
       ) {
@@ -91,6 +101,7 @@ export function SellItem() {
           message,
           slug,
           userId: user.id,
+          resolvedSellerId: user.id,
         });
       }
     } finally {
