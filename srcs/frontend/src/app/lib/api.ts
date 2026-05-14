@@ -319,6 +319,32 @@ class ApiClient {
     }
   }
 
+  uploadImage(file: File) {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const headers: HeadersInit = {};
+    if (this.token) {
+      headers.Authorization = `Bearer ${this.token}`;
+    }
+
+    return fetch("/images/upload", {
+      method: "POST",
+      headers,
+      credentials: "include",
+      body: formData,
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(this.getErrorMessage(data, response.statusText));
+        }
+
+        return data as { filename: string; url?: string };
+      });
+  }
+
   // FOLLOW/SOCIAL
   // Follow endpoints are not available right now.
   // Keep these stubs commented until backend API is exposed.

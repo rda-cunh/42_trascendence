@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { Code2, DollarSign, FileText, Save, Tag } from "lucide-react";
+import { Code2, DollarSign, FileText, ImagePlus, Save, Tag, Trash2, Upload, X } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { ShaderPreview } from "../components/ShaderPreview";
 import { api } from "../lib/api";
@@ -21,6 +21,55 @@ export function SellItem() {
     price: "",
     code: DEFAULT_FRAGMENT_SHADER,
   });
+
+  type UploadedImage = {
+    filename: string;
+    previewUrl: string;
+  };
+
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [activePreview, setActivePreview] = useState<UploadedImage | null>(null);
+
+  const handleImageUpload = async () => {
+    if (!selectedImage) {
+      toast.error("Please choose an image first");
+      return;
+    }
+
+    setIsUploadingImage(true);
+
+    try {
+      const result = await api.uploadImage(selectedImage);
+      const previewUrl = result.url ?? `/images/${result.filename}`;
+
+      setUploadedImages((prev) => [
+        ...prev,
+        {
+          filename: result.filename,
+          previewUrl,
+        },
+      ]);
+
+      setSelectedImage(null);
+      toast.success("Image uploaded");
+      setSelectedImage(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to upload image";
+      toast.error(message);
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = (filename: string) => {
+    setUploadedImages((prev) => prev.filter((image) => image.filename !== filename));
+  };
 
   const slug = useMemo(() => slugifyShaderTitle(formData.title), [formData.title]);
 
@@ -68,6 +117,7 @@ export function SellItem() {
           slug,
           description: buildShaderDescription(formData.notes, formData.code),
           price,
+          images: uploadedImages.map((image) => image.filename),
         }
       );
 
@@ -196,6 +246,85 @@ export function SellItem() {
 
             <div>
               <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+                <ImagePlus className="h-4 w-4" /> Images
+              </label>
+
+              <div className="flex flex-col gap-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setSelectedImage(e.target.files?.[0] ?? null)}
+                  className="hidden"
+                  id="sell-item-image-input"
+                />
+
+                <label
+                  htmlFor="sell-item-image-input"
+                  className="flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-4 text-center transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+                >
+                  <ImagePlus className="mb-2 h-5 w-5 text-gray-500 dark:text-gray-300" />
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {selectedImage ? selectedImage.name : "Choose an image"}
+                  </span>
+                  <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Click to open your files
+                  </span>
+                </label>
+
+                <button
+                  type="button"
+                  onClick={handleImageUpload}
+                  disabled={!selectedImage || isUploadingImage}
+                  className="inline-flex h-10 w-40 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
+                >
+                  <Upload className="h-4 w-4" />
+                  <span>{isUploadingImage ? "Uploading..." : "Upload image"}</span>
+                </button>
+              </div>
+            </div>
+
+            {uploadedImages.length > 0 && (
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+                {uploadedImages.map((image) => (
+                  <div
+                    key={image.filename}
+                    className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800"
+                  >
+                    <div className="aspect-square overflow-hidden bg-gray-100 dark:bg-gray-900">
+                      <button
+                        type="button"
+                        onClick={() => setActivePreview(image)}
+                        className="block aspect-square w-full overflow-hidden bg-gray-100 dark:bg-gray-900"
+                      >
+                        <img
+                          src={image.previewUrl}
+                          alt={image.filename}
+                          className="h-full w-full object-cover"
+                        />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 p-2">
+                      <p className="truncate text-xs text-gray-600 dark:text-gray-300">
+                        {image.filename}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(image.filename)}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
+                        aria-label={`Remove ${image.filename}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div>
+              <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
                 <Code2 className="h-4 w-4" /> Fragment Shader
               </label>
               <textarea
@@ -231,6 +360,32 @@ export function SellItem() {
             />
           </div>
         </form>
+        {activePreview && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+            <div className="relative max-h-[90vh] max-w-[90vw]">
+              <button
+                type="button"
+                onClick={() => setActivePreview(null)}
+                className="absolute top-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <img
+                src={activePreview.previewUrl}
+                alt={activePreview.filename}
+                className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setActivePreview(null)}
+              className="absolute inset-0 -z-10 cursor-default"
+              aria-label="Close image preview"
+            />
+          </div>
+        )}
       </div>
     </div>
   );
