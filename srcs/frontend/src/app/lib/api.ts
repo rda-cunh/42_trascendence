@@ -80,6 +80,7 @@ export function mapListing(item: any): Listing {
   const rawDescription = item?.description ?? "";
   const shader = parseShaderDescription(rawDescription);
   const createdAt = item?.created_at ?? item?.postedDate ?? item?.posted_date;
+  const images = Array.isArray(item?.images) ? item.images : [];
   const sellerName =
     typeof item?.seller === "string"
       ? item.seller
@@ -95,6 +96,7 @@ export function mapListing(item: any): Listing {
     location: "Digital Download",
     seller: sellerName,
     seller_id: item?.seller_id ? String(item.seller_id) : undefined,
+    images: images,
     image:
       item?.image ??
       item?.image_url ??
