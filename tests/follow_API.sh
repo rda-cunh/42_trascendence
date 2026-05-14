@@ -159,7 +159,7 @@ for (( i=1; i < 4; i++ )); do
 	run_auth_test "POST" "follow/" "follow_user${i}" "${LMA_TOKEN}" "{\"following_id\": ${i}}" "${DIR}lma_login.cookies"
 done
 
-for (( i=1; i<3; i++ )); do
+for (( i=1; i<4; i++ )); do
 	var="PRODUCT$i"
 	run_auth_test "POST" "listings/" "product${i}" "${RAP_TOKEN}" "${!var}" "${DIR}rap_login.cookies"
 done
