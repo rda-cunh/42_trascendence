@@ -142,20 +142,20 @@ LVI_TOKEN=$(python3 -c "import json; print(json.load(open('${DIR}lvi_login.json'
 LMA_TOKEN=$(python3 -c "import json; print(json.load(open('${DIR}lma_login.json')).get('access',''))")
 
 # run_auth_test "POST" "follow/" "follow_no_user" "${RDA_TOKEN}" "${PERROR}" "${DIR}rda_login.cookies"
-for (( i=5; i < $CREATED_USERS + 4; i++ )); do
+for (( i=0; i < $CREATED_USERS + 4; i++ )); do
 	run_auth_test "POST" "follow/" "follow_user${i}" "${RDA_TOKEN}" "{\"following_id\": ${i}}" "${DIR}rda_login.cookies"
 done
 
 # loops for internal follows
-for (( i=1; i < 4; i++ )); do
+for (( i=1; i < 5; i++ )); do
 	run_auth_test "POST" "follow/" "follow_user${i}" "${RAP_TOKEN}" "{\"following_id\": ${i}}" "${DIR}rap_login.cookies"
 done
 
-for (( i=1; i < 4; i++ )); do
+for (( i=1; i < 5; i++ )); do
 	run_auth_test "POST" "follow/" "follow_user${i}" "${LVI_TOKEN}" "{\"following_id\": ${i}}" "${DIR}lvi_login.cookies"
 done
 
-for (( i=1; i < 4; i++ )); do
+for (( i=1; i < 5; i++ )); do
 	run_auth_test "POST" "follow/" "follow_user${i}" "${LMA_TOKEN}" "{\"following_id\": ${i}}" "${DIR}lma_login.cookies"
 done
 
