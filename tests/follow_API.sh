@@ -117,6 +117,30 @@ PRODUCT3='{
   "price": 97.90
 }'
 
+PRODUCT4='{
+  "user_id": "3",
+  "name": "Product 4 Name",
+  "slug": "product-slug4",
+  "description": "This is a test description",
+  "price": 99.90
+}'
+
+PRODUCT5='{
+  "user_id": "3",
+  "name": "Product 5 Name",
+  "slug": "product-slug5",
+  "description": "This is a test description",
+  "price": 98.90
+}'
+
+PRODUCT6='{
+  "user_id": "4",
+  "name": "Product 6 Name",
+  "slug": "product-slug6",
+  "description": "This is a test description",
+  "price": 97.90
+}'
+
 P1='{"following_id": 1}'
 P2='{"following_id": 2}'
 P3='{"following_id": 3}'
@@ -162,6 +186,13 @@ done
 for (( i=1; i<4; i++ )); do
 	var="PRODUCT$i"
 	run_auth_test "POST" "listings/" "product${i}" "${RAP_TOKEN}" "${!var}" "${DIR}rap_login.cookies"
+done
+
+run_auth_test "POST" "listings/" "product6" "${LMA_TOKEN}" "${PRODUCT6}" "${DIR}lma_login.cookies"
+
+for (( i=4; i<6; i++ )); do
+	var="PRODUCT$i"
+	run_auth_test "POST" "listings/" "product${i}" "${LVI_TOKEN}" "${!var}" "${DIR}lvi_login.cookies"
 done
 
 # get follower count
