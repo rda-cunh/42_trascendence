@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-import pymysql, json
+import pymysql
+import hashlib
 from database import get_db_dep
 from models.user import UserResponse
 
 router = APIRouter(prefix='/api/users', tags=['Users'])
-
 
 @router.get('/{user_id}/', response_model=UserResponse)
 def	get_profile(user_id: int, page: int = 1, db=Depends(get_db_dep)):
@@ -21,37 +21,30 @@ def	get_profile(user_id: int, page: int = 1, db=Depends(get_db_dep)):
 	n_prod = cursor.fetchone()['COUNT(*)']
 	user['pages'] = (n_prod // 10) if (n_prod % 10) == 0 else (n_prod // 10 + 1)
 
-	cursor.execute('SELECT id, name, description, price, images FROM products WHERE seller_id = %s ORDER BY created_at DESC LIMIT %s OFFSET %s', (user_id, limit, skip))
+	cursor.execute('SELECT id, name, description, price FROM products WHERE seller_id = %s ORDER BY created_at DESC LIMIT %s OFFSET %s', (user_id, limit, skip))
 	products = cursor.fetchall()
 	user['owner'] = False		## Check user_id == current_user['id'] || current_user['role'] == 'Admin'
 	if not products:
 		user['listings'] = []
 		return UserResponse(**user)
 
-	def normalize_images(value):
-		if value is None:
-			return []
-		if isinstance(value, list):
-			return [str(item) for item in value]
-		if isinstance(value, str):
-			value = value.strip()
-			if not value:
-				return []
-			try:
-				parsed = json.loads(value)
-				if isinstance(parsed, list):
-					return [str(item) for item in parsed]
-			except json.JSONDecodeError:
-				pass
-		return []
+	product_ids = [p['id'] for p in products]
+	placeholders = ','.join(['%s'] * len(product_ids))
 
+	cursor.execute(
+		f'''
+		SELECT product_id, image_hash AS images FROM product_images WHERE product_id IN ({placeholders}) ORDER BY display_order''',
+		tuple(product_ids)
+	)
+	image_rows = cursor.fetchall()
+	images_map = {}
+
+	for img in image_rows:
+		pid = img['product_id']
+		images_map.setdefault(pid, []).append(img['images'])
+	
 	for p in products:
-		p['images'] = normalize_images(p.get('images'))
+		p['images'] = images_map.get(p['id'], [])
 		del p['id']
 	user['listings'] = products
 	return (UserResponse(**user))
-
-
-# Admin view
-# TO DO
-
