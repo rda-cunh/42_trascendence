@@ -551,3 +551,62 @@ curl -X GET "https://localhost/api/friends/following-count/{user_id}/"
 ```
 
 </details>
+
+
+
+<details>
+<summary><h1> Admin </h1></summary>
+
+## Endpoints
+
+# Banned Users
+```
+(Have pagination '?page=1')
+curl --insecure -X GET "https://localhost/api/admin/bans/"
+```
+
+# Ban user
+```
+curl --insecure -X POST "https://localhost/api/admin/bans/{user_id}/"
+```
+
+# Unban user
+```
+curl --insecure -X DELETE "https://localhost/api/admin/bans/{user_id}/"
+```
+
+# Admin Users
+```
+(Have pagination '?page=1')
+curl --insecure -X GET "https://localhost/api/admin/manage/"
+```
+
+# Followers list
+```
+curl -X GET "https://localhost/api/follow/followers/{user_id}/"
+
+# limit
+curl -X GET "https://localhost/api/follow/followers/{user_id}/?limit=5"
+
+# limit and offset
+curl -X GET "https://localhost/api/follow/followers/{user_id}/?limit=5&offset=10"
+```
+
+# Following Feed
+```
+curl -X GET "https://localhost/api/friends/feed/{user_id}/"
+
+curl -X GET "https://localhost/api/friends/feed/{user_id}/?page=2"
+
+curl -X GET "https://localhost/api/friends/feed/{user_id}/?search=test"
+```
+
+# Followers/Following count
+```
+curl -X GET "https://localhost/api/friends/followers-count/{user_id}/"
+
+curl -X GET "https://localhost/api/friends/following-count/{user_id}/"
+```
+
+</details>
+

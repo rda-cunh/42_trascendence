@@ -50,5 +50,5 @@ class ListingResponse(BaseModel):
 class UserResponse(BaseModel):
 	name:		str
 	email:		str
-	phone:		str
-	avatar_url:	str
+	phone:		Optional[str] = None
+	avatar_url:	Optional[str] = None
