@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-import pymysql
+import pymysql, json
 import hashlib
 from database import get_db_dep
 from models.auth import *
@@ -105,7 +105,7 @@ def	get_user(user_id: int, page: int = 1, db=Depends(get_db_dep)):
 	n_prod = cursor.fetchone()['COUNT(*)']
 	user['pages'] = (n_prod // 10) if (n_prod % 10) == 0 else (n_prod // 10 + 1)
 
-	cursor.execute('SELECT id, name, slug, description, price, status FROM products WHERE seller_id = %s ORDER BY created_at DESC LIMIT %s OFFSET %s', (user_id, limit, skip))
+	cursor.execute('SELECT id, name, slug, description, price, images, status FROM products WHERE seller_id = %s ORDER BY created_at DESC LIMIT %s OFFSET %s', (user_id, limit, skip))
 	products = cursor.fetchall()
 #	user['owner'] = True		## Check user_id and seller_id
 	if not products:
@@ -117,19 +117,26 @@ def	get_user(user_id: int, page: int = 1, db=Depends(get_db_dep)):
 
 	cursor.execute(f'''SELECT product_id, image_hash, display_order FROM product_images WHERE product_id IN ({placeholders}) ORDER BY display_order''',
 				tuple(product_ids))
-	
-	image_rows = cursor.fetchall()
-	images_map = {}
 
-	for img in image_rows:
-		pid = img['product_id']
-		images_map.setdefault(pid, []).append({
-			'image_hash': img['image_hash'],
-			'display_order': img['display_order']
-		})
+	def normalize_images(value):
+		if value is None:
+			return []
+		if isinstance(value, list):
+			return [str(item) for item in value]
+		if isinstance(value, str):
+			value = value.strip()
+			if not value:
+				return []
+			try:
+				parsed = json.loads(value)
+				if isinstance(parsed, list):
+					return [str(item) for item in parsed]
+			except json.JSONDecodeError:
+				pass
+		return []
 
 	for p in products:
-		p['images'] = images_map.get(p['id'], [])
+		p['images'] = normalize_images(p.get('images'))
 		del p['id']
 	user['listings'] = products
 	return ProfileResponse(**user)

@@ -92,7 +92,7 @@ class ProductResponse(BaseModel):
 	description:	str
 	price:			Decimal
 	status:			ProductStatus
-	images:			list[ProductImages] = []
+	images:			list[str] = []
 
 class ProfileResponse(UserBase):
 	name:			str

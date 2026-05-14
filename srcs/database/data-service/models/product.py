@@ -16,6 +16,7 @@ class ProductCreate(BaseModel):
 	slug:			str
 	description:	Optional[str] = None
 	price:			Decimal
+	images: 		list[str] = []
 
 	@field_validator('price')
 	@classmethod
@@ -28,6 +29,7 @@ class ProductUpdate(BaseModel):
 	description:	Optional[str] = None
 	price:			Optional[Decimal] = None
 	status:			Optional[ProductStatus] = None
+	images: 		Optional[list[str]] = None
 
 class ProductImages(BaseModel):
 	image_hash:		str
@@ -48,7 +50,7 @@ class ProductResponse(BaseModel):
 	description:	Optional[str]
 	price:			Decimal
 	status:			ProductStatus
-	images:			list[ProductImages] = []
+	images: 		list[str] = []
 	created_at:		datetime
 	seller:			SellerModel = []
 
