@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(255) NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   phone VARCHAR(30) NULL DEFAULT NULL,
-  role ENUM('user', 'admin') NOT NULL DEFAULT 'user',
+  role ENUM('User', 'Admin') NOT NULL DEFAULT 'User',
   status ENUM('Active','Suspended','Banned','Deactivated') NOT NULL DEFAULT 'Active',
   avatar_url VARCHAR(255),
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -170,3 +170,6 @@ CREATE TABLE IF NOT EXISTS follows (
 	CONSTRAINT fk_follows_following FOREIGN KEY (following_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+INSERT INTO users (name, email, password_hash, role, status, created_at, updated_at)
+SELECT 'System Administrator', 'admin@admin.com', SHA2('admin123', 256), 'Admin', 'Active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+WHERE NOT EXISTS ( SELECT 1 FROM users WHERE email = 'admin@transcendence.com');
