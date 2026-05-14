@@ -97,7 +97,5 @@ class ProductResponse(BaseModel):
 class ProfileResponse(UserBase):
 	name:			str
 	email:			str
-	phone:			str
-	avatar_url:		str
 	owner:			bool
 	listings:		list[ProductResponse] = []
