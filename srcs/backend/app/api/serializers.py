@@ -8,8 +8,8 @@ class RegisterSerializer(serializers.Serializer):
     name = serializers.CharField(min_length=3, max_length=150)  
     email = serializers.EmailField()
     password = serializers.CharField(min_length=8, max_length=64, write_only=True)
-    phone = serializers.CharField(max_length=13, required=False, allow_null=True)
-    avatar_url = serializers.URLField(required=False, allow_null=True)
+    phone = serializers.CharField(allow_null=True, allow_blank=True, required=False, max_length=13)
+    avatar_url = serializers.URLField(allow_null=True, allow_blank=True, required=False)
 
 class LoginSerializer(serializers.Serializer):
     """POST /api/auth/login/ — validate credentials before proxying"""
@@ -18,9 +18,9 @@ class LoginSerializer(serializers.Serializer):
 
 class ProfilePatchSerializer(serializers.Serializer):
     """PATCH /api/auth/profile/ — partial update fields"""
-    name = serializers.CharField(max_length=150, required=False, allow_null=True)
-    phone = serializers.CharField(max_length=13, required=False, allow_null=True)
-    avatar_url = serializers.URLField(required=False, allow_null=True)
+    name = serializers.CharField(allow_null=True, allow_blank=True, required=False, max_length=150) 
+    phone = serializers.CharField(allow_null=True, allow_blank=True, required=False, max_length=13)
+    avatar_url = serializers.URLField(allow_null=True, allow_blank=True, required=False)
 
 class ChangePasswordSerializer(serializers.Serializer):
     """PATCH /api/auth/password/"""
@@ -74,9 +74,9 @@ class FollowActionSerializer(serializers.Serializer):
 # /api/listings/{id}
 
 class listinsIdPatch(serializers.Serializer):
-    product_name = serializers.CharField(allow_null=True, min_length=3, max_length=255, trim_whitespace=True)
-    slug = serializers.SlugField(allow_null=True, required=False)
-    description = serializers.CharField(allow_null=True, min_length=3, required=False)
+    product_name = serializers.CharField(allow_blank=True, min_length=3, max_length=255, trim_whitespace=True)
+    slug = serializers.SlugField(allow_null=True, allow_blank=True, required=False)
+    description = serializers.CharField(allow_null=True, allow_blank=True, required=False, min_length=3)
 
 
 # /api/listings

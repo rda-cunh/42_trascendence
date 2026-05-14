@@ -18,14 +18,18 @@ from django.urls import path
 from .views import (
     listing_id,
     listing_full,
+    public_listing_id,
+    public_listing_full,
     payment_id,
     seller_product,
     seller_id,
-    listings_image_id,
-    listings_image,
+#    listings_image_id,
+#    listings_image,
     listings_review,
     user_list,
+    public_user_list,
     user_id,
+    public_user_id,
     auth_register,
     auth_login,
     auth_logout,
@@ -38,6 +42,10 @@ from .views import (
     auth_42_callback,
     chat_conversations,
     chat_messages,
+    admin_bans,
+    manage_admins,
+    manage_bans,
+    grafana_auth,
     follow_action,
     follow_following,
     follow_followers,
@@ -47,12 +55,12 @@ from .views import (
 urlpatterns = [
         
         # listing paths
-        path("listings/<int:id>/", listing_id.as_view()),
+        path("listings/<int:product_id>/", listing_id.as_view()),
         path("listings/", listing_full.as_view()),
         path("listings/seller/<int:product_id>/", seller_product.as_view()),
-        path("listings/seller/<int:id>/", seller_id.as_view()),
-        path("listings/<int:product_id>/images/<int:id>/", listings_image_id.as_view()),
-        path("listings/<int:product_id>/images/", listings_image.as_view()),
+        path("listings/seller/<int:user_id>/", seller_id.as_view()),
+#        path("listings/<int:product_id>/images/<int:image_id>/", listings_image_id.as_view()),
+#        path("listings/<int:product_id>/images/", listings_image.as_view()),
         path("listings/<int:product_id>/review/", listings_review.as_view()),
         path("listings/<int:product_id>/review/<int:review_id>/", listings_review.as_view()),
         
@@ -77,11 +85,24 @@ urlpatterns = [
         path("follow/counts/<int:user_id>/",         follow_counts.as_view()),
 
         # orders paths
-        path("orders/<int:id>/", order_id.as_view()),
+        path("orders/<int:order_id>/", order_id.as_view()),
         path("orders/", order_create.as_view()),
         path("payment/<int:order_id>/", payment_id.as_view()),
 
         # user paths
         path("users/", user_list.as_view()),
-        path("users/<int:id>/", user_id.as_view()),
+        path("users/<int:user_id>/", user_id.as_view()),
+
+        # public paths
+        path("public/listings/<int:product_id>/", public_listing_id.as_view()),
+        path("public/listings/", public_listing_full.as_view()),
+        path("public/users/", public_user_list.as_view()),
+        path("public/users/<int:user_id>/", public_user_id.as_view()),
+
+        # admin paths
+        path("admin/bans/<int:user_id>/", manage_bans.as_view()),
+        path("admin/bans/", admin_bans.as_view()),
+        path("admin/manage/<int:user_id>/", manage_admins.as_view()),
+        path("admin/grafana/", grafana_auth.as_view()),
+
 ]
