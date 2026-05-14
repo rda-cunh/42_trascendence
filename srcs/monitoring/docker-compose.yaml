@@ -45,8 +45,17 @@ services:
     image: grafana/grafana:13.0
     container_name: grafana
     environment:
-      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_SERVER_ROOT=https://127.0.0.1/metrics/
+      #- GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      #- GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_AUTH_PROXY_ENABLED=true
+      - GF_AUTH_PROXY_HEADER_NAME=X-WEBAUTH-USER
+      - GF_AUTH_PROXY_HEADER_PROPERTY=email
+      - GF_AUTH_PROXY_AUTH_SIGNUP=true
+      - GF_AUTH_PROXY_HEADERS=Role:X-WEBAUTH-ROLE
+      - GF_AUTH_PROXY_ENABLE_LOGIN_TOKEN=true
+      - GF_AUTH_PROXY_WHITELIST=172.0.0.0/8
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
       - GF_SERVER_PROTOCOL=https
       - GF_SERVER_CERT_FILE=/certs/${INT_CRT_NAME:-internal.crt}
       - GF_SERVER_CERT_KEY=/certs/${INT_KEY_NAME:-internal.key}

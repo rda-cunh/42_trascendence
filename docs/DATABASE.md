@@ -493,7 +493,7 @@ POST '/api/chat/conversations/{conversation_id}/messages/'
 </details>
 
 <details>
-<summary><h1> Friend </h1></summary>
+<summary><h1> Follow </h1></summary>
 
 ## Endpoints
 
@@ -501,14 +501,14 @@ POST '/api/chat/conversations/{conversation_id}/messages/'
 ```
 curl --insecure -X POST "https://localhost/api/follow/add/" \
 	-H "Content-Type: application/json" \
-	-d '{"user_id": 1, "friend_id": 2}'
+	-d '{"user_id": 1, "following_id": 2}'
 ```
 
 # Unfollow
 ```
 curl --insecure -X DELETE "https://localhost/api/follow/remove/" \
 	-H "Content-Type: application/json" \
-	-d '{"user_id": 1, "friend_id": 2}'
+	-d '{"user_id": 1, "following_id": 2}'
 ```
 
 
@@ -534,20 +534,20 @@ curl -X GET "https://localhost/api/follow/followers/{user_id}/?limit=5"
 curl -X GET "https://localhost/api/follow/followers/{user_id}/?limit=5&offset=10"
 ```
 
-# Following Feed
+# Following Feed (products from users you follow)
 ```
-curl -X GET "https://localhost/api/friends/feed/{user_id}/"
+curl -X GET "https://localhost/api/follow/feed/{user_id}/"
 
-curl -X GET "https://localhost/api/friends/feed/{user_id}/?page=2"
+curl -X GET "https://localhost/api/follow/feed/{user_id}/?page=2"
 
-curl -X GET "https://localhost/api/friends/feed/{user_id}/?search=test"
+curl -X GET "https://localhost/api/follow/feed/{user_id}/?search=test"
 ```
 
 # Followers/Following count
 ```
-curl -X GET "https://localhost/api/friends/followers-count/{user_id}/"
+curl -X GET "https://localhost/api/follow/followers-count/{user_id}/"
 
-curl -X GET "https://localhost/api/friends/following-count/{user_id}/"
+curl -X GET "https://localhost/api/follow/following-count/{user_id}/"
 ```
 
 </details>
