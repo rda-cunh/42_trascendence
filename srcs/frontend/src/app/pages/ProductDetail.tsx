@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router";
-import { ArrowLeft, ShoppingCart, CreditCard } from "lucide-react";
+import { ArrowLeft, ShoppingCart, CreditCard, X } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { ShaderPreview } from "../components/ShaderPreview";
 import { useCart } from "../contexts/CartContext";
@@ -20,6 +20,7 @@ export function ProductDetail() {
   const [listing, setListing] = useState<Listing | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activePreview, setActivePreview] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -108,6 +109,7 @@ export function ProductDetail() {
     reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0;
   const hasShaderPreview = isShaderListing(listing);
   const description = getListingDescription(listing);
+  const galleryImages = listing.images ?? [];
 
   return (
     <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
@@ -169,6 +171,62 @@ export function ProductDetail() {
 
           </div>
         </div>
+
+        {activePreview && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+            <div className="relative max-h-[90vh] max-w-[90vw]">
+              <button
+                type="button"
+                onClick={() => setActivePreview(null)}
+                className="absolute top-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <ImageWithFallback
+                src={`/images/${activePreview}`}
+                alt={`${listing.title} preview`}
+                className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setActivePreview(null)}
+              className="absolute inset-0 -z-10 cursor-default"
+              aria-label="Close image preview"
+            />
+          </div>
+        )}
+
+        {galleryImages.length > 0 && (
+          <div className="mt-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-colors dark:border-gray-800 dark:bg-gray-900">
+            <h2 className="mb-4 text-xl font-bold text-gray-900 dark:text-white">Images</h2>
+
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+              {galleryImages.map((image, index) => (
+                <div
+                  key={`${image}-${index}`}
+                  className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800"
+                >
+                  <div className="aspect-square overflow-hidden bg-gray-100 dark:bg-gray-900">
+                    <button
+                      type="button"
+                      onClick={() => setActivePreview(image)}
+                      className="block aspect-square w-full overflow-hidden bg-gray-100 dark:bg-gray-900"
+                    >
+                      <ImageWithFallback
+                        src={`/images/${image}`}
+                        alt={`${listing.title} preview ${index + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Reviews Section */}
         <ReviewSection
