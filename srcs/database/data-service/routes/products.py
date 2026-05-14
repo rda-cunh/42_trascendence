@@ -1,27 +1,8 @@
-import json
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from database import get_db_dep
 from models.product import ProductCreate, ProductImages, ProductUpdate, ProductResponse, ProductImagesResponse
 
 router = APIRouter(prefix='/api/listings', tags=['Products'])
-
-def normalize_images(value):
-	if value is None:
-		return []
-	if isinstance(value, list):
-		return [str(item) for item in value]
-	if isinstance(value, str):
-		value = value.strip()
-		if not value:
-			return []
-		try:
-			parsed = json.loads(value)
-			if isinstance(parsed, list):
-				return [str(item) for item in parsed]
-		except json.JSONDecodeError:
-			pass
-	return []
 
 # TO DO IMPROVE
 # Retornar aqui uma flag bool, se é owner ou não
@@ -29,14 +10,19 @@ def normalize_images(value):
 def GetProductInfo(db, product_id:	int):
 	conn, cursor = db
 	cursor.execute(
-		'SELECT id, seller_id, name, slug, description, price, images, status, created_at FROM products WHERE id = %s',
+		'SELECT id, seller_id, name, slug, description, price, status, created_at FROM products WHERE id = %s',
 		(product_id,)
 	)
 	product = cursor.fetchone()
 	if not product:
 		raise HTTPException(status_code=404, detail='Product not found')
-
-	product['images'] = normalize_images(product.get('images'))
+	
+	cursor.execute(
+		f'''SELECT image_hash FROM product_images WHERE product_id = %s ORDER BY display_order''',
+		(product['id'],)
+	)
+	image_rows = cursor.fetchall()
+	product['images'] = [img['image_hash'] for img in image_rows]
 
 	cursor.execute(
 		f'''SELECT name, email, avatar_url FROM users WHERE id = %s''',
@@ -63,12 +49,17 @@ def	create_product(product_in: ProductCreate, db=Depends(get_db_dep)):
 	
 	cursor.execute(
 		'''
-		INSERT INTO products (seller_id, name, slug, description, price, images)
-		VALUES (%s, %s, %s, %s, %s, %s)
+		INSERT INTO products (seller_id, name, slug, description, price)
+		VALUES (%s, %s, %s, %s, %s)
 		''',
-		(product_in.user_id, product_in.name, product_in.slug, product_in.description, product_in.price, json.dumps(product_in.images),)
+		(product_in.user_id, product_in.name, product_in.slug, product_in.description, product_in.price)
 	)
 	new_id = conn.insert_id()
+
+	if product_in.images:
+		values = [(new_id, img, idx) for idx, img in enumerate(product_in.images)]
+		cursor.execute('''INSERT INTO product_images (product_id, image_hash, dosplay_order) VALUES (%s, %s, %s)''', values)
+
 	product = GetProductInfo(db, new_id)
 	return ProductResponse(**product)
 
@@ -113,17 +104,14 @@ def	list_products(
 
 	cursor.execute(
 		f'''
-		SELECT product_id, image_hash, display_order FROM product_images WHERE product_id IN ({placeholders}) ORDER BY display_order''', 
+		SELECT product_id, image_hash AS images FROM product_images WHERE product_id IN ({placeholders}) ORDER BY display_order''', 
 		tuple(product_ids)
 	)
 	image_rows = cursor.fetchall()
 	images_map = {}
 	for img in image_rows:
 		pid = img['product_id']
-		images_map.setdefault(pid, []).append({
-			'image_hash': img['image_hash'],
-			'display_order': img['display_order']
-		})
+		images_map.setdefault(pid, []).append(img['images'])
 	for p in products:
 		p['images'] = images_map.get(p['id'], [])
 	return [ProductResponse(**p) for p in products]
@@ -147,10 +135,6 @@ def update_products(product_id: int, product_in: ProductUpdate, db=Depends(get_d
 		}
 	if not update_data:
 		raise HTTPException(status_code=400, detail='No fields to update')
-
-	if 'images' in update_data:
-		update_data['images'] = json.dumps(update_data['images'])
-
 	set_clause = ', '.join(f'{k} = %s' for k in update_data.keys())
 	values = list(update_data.values()) + [product_id]
 
