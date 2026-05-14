@@ -90,7 +90,7 @@ def login_user(user_in: UserLogin, db=Depends(get_db_dep)):
 
 # TO DO
 # Check token to see self profile
-@router.get('/profile/{user_id}/', response_model=UserResponse)
+@router.get('/profile/{user_id}/', response_model=ProfileResponse)
 def	get_user(user_id: int, page: int = 1, db=Depends(get_db_dep)):
 	conn, cursor = db
 	limit = 10
@@ -105,9 +105,9 @@ def	get_user(user_id: int, page: int = 1, db=Depends(get_db_dep)):
 	n_prod = cursor.fetchone()['COUNT(*)']
 	user['pages'] = (n_prod // 10) if (n_prod % 10) == 0 else (n_prod // 10 + 1)
 
-	cursor.execute('SELECT id, name, slug, description, price, status FROM products WHERE seller_id = %s ORDER BY created_at DESC LIMIT %s OFFSET %S', (user_id, limit, skip))
+	cursor.execute('SELECT id, name, slug, description, price, status FROM products WHERE seller_id = %s ORDER BY created_at DESC LIMIT %s OFFSET %s', (user_id, limit, skip))
 	products = cursor.fetchall()
-	user['owner'] = True		## Check user_id and seller_id
+#	user['owner'] = True		## Check user_id and seller_id
 	if not products:
 		user['listings'] = []
 		return ProfileResponse(**user)

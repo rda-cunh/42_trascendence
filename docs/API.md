@@ -15,6 +15,12 @@ Here is a complete list of APIs used in this project, separated by cateories in 
     - [Orders](#orders)
       - [/api/orders](#/api/orders/)
       - [/api/orders/{id}](#/api/orders/{id}/)
+    - [Follow](#follow)
+      - [/api/follow/](#/api/follow/)
+      - [/api/follow/following/{user_id}/](#/api/follow/following/{user_id}/)
+      - [/api/follow/followers/{user_id}/](#/api/follow/followers/{user_id}/)
+      - [/api/follow/counts/{user_id}/](#/api/follow/counts/{user_id}/)
+      - [/api/follow/feed/{user_id}/](#/api/follow/feed/{user_id}/)
   - [Database APIs](#database-apis)
 - [Public APIs](#public-apis)
 
@@ -150,6 +156,46 @@ These endpoints are for creating and editing orders
 - PATCH: Changes the status of an order (cancelation, info change, etc)
   - get(self, request, jwt_string, order_id, status_id)
   - **return**: on success, returns confirmation of the status update
+
+### Follow
+
+These endpoints power the social graph: following and unfollowing users, listing followers/following, counts, and a feed of listings from followed sellers. The follower id is always taken from the JWT — the client never sends it.
+
+#### POST /api/follow/
+Follow another user.
+Body: { following_id }
+Returns: 201 Created (no body)
+Auth required: Yes (Bearer header)
+
+#### DELETE /api/follow/
+Unfollow another user.
+Body: { following_id }
+Returns: 204 No Content
+Auth required: Yes (Bearer header)
+
+#### GET /api/follow/following/{user_id}/
+Lists the users that `user_id` follows. Only `Active` users returned, sorted by name ascending. Optional pagination: `?limit=N` or `?limit=N&offset=M`.
+Body: (none)
+Returns: [ { user_id, name, avatar_url, following_since } ]
+Auth required: No
+
+#### GET /api/follow/followers/{user_id}/
+Lists the users following `user_id`. Same filtering, sorting, and pagination as `/following/`.
+Body: (none)
+Returns: [ { user_id, name, avatar_url, following_since } ]
+Auth required: No
+
+#### GET /api/follow/counts/{user_id}/
+Followers and following counts in a single response. Counts only include `Active` users, so they match the lengths of the list endpoints.
+Body: (none)
+Returns: { followers, following }
+Auth required: No
+
+#### GET /api/follow/feed/{user_id}/
+Feed of active product listings posted by every user that `user_id` follows, newest first. Each item carries both the listing and the seller info so the frontend can render a card without extra requests. Optional pagination: `?limit=N` (1–100) or `?limit=N&offset=M`.
+Body: (none)
+Returns: [ { listing: { id, name, slug, price, created_at, image_hash }, user: { user_id, name, avatar_url, following_since } } ]
+Auth required: No
 
 ## Database APIs
 
