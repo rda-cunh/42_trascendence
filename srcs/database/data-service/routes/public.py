@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-import pymysql, json
+import pymysql
 import hashlib
 from database import get_db_dep
 from models.public import ProductResponse, UserProductsResponse, ListingResponse, UserResponse
@@ -47,31 +47,25 @@ def	get_user_products(user_id: int, limit: int = 20, db=Depends(get_db_dep)):
 	user = cursor.fetchone()
 	if not user:
 		raise HTTPException(status_code=404, detail='User not found')
-	cursor.execute('SELECT id, name, slug, description, price, images, status FROM products WHERE seller_id = %s ORDER BY id ASC', (user_id,))
+	cursor.execute('SELECT id, name, slug, description, price, status FROM products WHERE seller_id = %s ORDER BY id ASC', (user_id,))
 	products = cursor.fetchall()
 	if not products:
 		user['listings'] = []
 		return UserProductsResponse(**user)
+	product_ids = [p['id'] for p in products]
+	placeholders = ','.join(['%s'] * len(product_ids))
 
-	def normalize_images(value):
-		if value is None:
-			return []
-		if isinstance(value, list):
-			return [str(item) for item in value]
-		if isinstance(value, str):
-			value = value.strip()
-			if not value:
-				return []
-			try:
-				parsed = json.loads(value)
-				if isinstance(parsed, list):
-					return [str(item) for item in parsed]
-			except json.JSONDecodeError:
-				pass
-		return []
+	cursor.execute(f'''SELECT product_id, image_hash AS images FROM product_images WHERE product_id IN ({placeholders}) ORDER BY display_order''',
+				tuple(product_ids))
+	
+	image_rows = cursor.fetchall()
+	images_map = {}
+	for img in image_rows:
+		pid = img['product_id']
+		images_map.setdefault(pid, []).append(img['images'])
 
 	for p in products:
-		p['images'] = normalize_images(p.get('images'))
+		p['images'] = images_map.get(p['id'], [])
 		del p['id']
 	user['listings'] = products
 	return UserProductsResponse(**user)
@@ -93,7 +87,7 @@ def	list_products(
 ):
 	conn, cursor = db
 
-	sql = 'SELECT id, name, slug, description, price, images, status FROM products WHERE 1=1'
+	sql = 'SELECT id, name, slug, description, price, status FROM products WHERE 1=1'
 	params = []
 
 	if search:
@@ -108,26 +102,23 @@ def	list_products(
 	
 	if not products:
 		return []
+	product_ids = [p['id'] for p in products]
+	placeholders = ','.join(['%s'] * len(product_ids))
 
-	def normalize_images(value):
-		if value is None:
-			return []
-		if isinstance(value, list):
-			return [str(item) for item in value]
-		if isinstance(value, str):
-			value = value.strip()
-			if not value:
-				return []
-			try:
-				parsed = json.loads(value)
-				if isinstance(parsed, list):
-					return [str(item) for item in parsed]
-			except json.JSONDecodeError:
-				pass
-		return []
+	cursor.execute(
+		f'''
+		SELECT product_id, image_hash AS images FROM product_images WHERE product_id IN ({placeholders}) ORDER BY display_order''', 
+		tuple(product_ids)
+	)
+	image_rows = cursor.fetchall()
+	images_map = {}
+	for img in image_rows:
+		pid = img['product_id']
+		images_map.setdefault(pid, []).append(img['images'])
+
 
 	for p in products:
-		p['images'] = normalize_images(p.get('images'))
+		p['images'] = images_map.get(p['id'], [])
 		del p['id']
 	return [ProductResponse(**p) for p in products]
 
@@ -139,7 +130,7 @@ def	get_listing(product_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
 	cursor.execute("""
 				SELECT u.name AS seller, u.email, u.phone, u.avatar_url,
-				p.name, p.slug, p.description, p.price, p.images, p.status
+				p.name, p.slug, p.description, p.price, p.status
 				FROM products p
 				INNER JOIN users u ON u.id = p.seller_id
 				WHERE p.status = 'Active' AND p.id = %s
@@ -147,26 +138,13 @@ def	get_listing(product_id: int, db=Depends(get_db_dep)):
 	row = cursor.fetchone()
 	if not row:
 		raise HTTPException(status_code=404, detail='Product not found')
-
-	def normalize_images(value):
-		if value is None:
-			return []
-		if isinstance(value, list):
-			return [str(item) for item in value]
-		if isinstance(value, str):
-			value = value.strip()
-			if not value:
-				return []
-			try:
-				parsed = json.loads(value)
-				if isinstance(parsed, list):
-					return [str(item) for item in parsed]
-			except json.JSONDecodeError:
-				pass
-		return []
-	
-	row['images'] = normalize_images(row.get('images'))
-	return ListingResponse(**row)
+	cursor.execute("""
+				SELECT image_hash AS images
+				FROM product_images
+				WHERE product_id = %s
+				ORDER BY display_order ASC""", (product_id,))
+	images = cursor.fetchall()
+	return ListingResponse(**row, images=[img['images'] for img in images])
 
 # @router.get('/listings/{product_id}/', response_model=ListingResponse)
 # def	get_listing(product_id: int, db=Depends(get_db_dep)):
