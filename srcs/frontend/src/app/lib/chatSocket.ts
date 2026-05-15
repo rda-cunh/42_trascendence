@@ -10,21 +10,17 @@ type SocketHandlers = {
 export class ChatSocket {
   private socket: WebSocket | null = null;
   private readonly conversationId: number;
-  private readonly token: string;
   private readonly handlers: SocketHandlers;
 
-  constructor(conversationId: number, token: string, handlers: SocketHandlers) {
+  constructor(conversationId: number, handlers: SocketHandlers) {
     this.conversationId = conversationId;
-    this.token = token;
     this.handlers = handlers;
   }
 
   connect() {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const host = window.location.host;
-    const url = `${protocol}//${host}/ws/chat/${this.conversationId}/?token=${encodeURIComponent(
-      this.token
-    )}`;
+    const url = `${protocol}//${host}/ws/chat/${this.conversationId}/`;
 
     this.socket = new WebSocket(url);
 

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat Debug</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 860px;
+      margin: 24px auto;
+      padding: 0 16px 40px;
+      background: #111827;
+      color: #f9fafb;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+    }
+
+    p {
+      color: #9ca3af;
+    }
+
+    .panel {
+      background: #1f2937;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    input, textarea, button {
+      font: inherit;
+      border-radius: 6px;
+      border: 1px solid #4b5563;
+    }
+
+    input, textarea {
+      background: #111827;
+      color: #f9fafb;
+      padding: 10px 12px;
+    }
+
+    input {
+      min-width: 180px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    button {
+      background: #9333ea;
+      color: white;
+      padding: 10px 14px;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #374151;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #log {
+      background: #030712;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 260px;
+      max-height: 420px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 13px;
+    }
+
+    .hint {
+      font-size: 14px;
+      color: #d1d5db;
+    }
+  </style>
+</head>
+<body>
+  <h1>Chat Debug</h1>
+  <p>Use this page while logged in. Open DevTools console as well.</p>
+
+  <div class="panel">
+    <div class="row">
+      <input id="listingId" type="number" min="1" placeholder="Listing ID" />
+      <button id="openChatBtn">Create/Open Conversation</button>
+      <button id="loadMessagesBtn" class="secondary" disabled>Load Messages</button>
+      <button id="connectSocketBtn" class="secondary" disabled>Connect Socket</button>
+    </div>
+
+    <div class="hint">
+      REST uses <code>localStorage.auth_token</code>. WebSocket uses the <code>access_token</code> cookie automatically.
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="row">
+      <input id="conversationId" type="number" placeholder="Conversation ID" disabled />
+      <input id="socketState" type="text" placeholder="Socket state" disabled />
+    </div>
+
+    <textarea id="messageText" placeholder="Type a message for the current conversation"></textarea>
+
+    <div class="row">
+      <button id="sendMessageBtn" disabled>Send Message</button>
+      <button id="clearLogBtn" class="secondary">Clear Log</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div id="log"></div>
+  </div>
+
+  <script>
+    const API_BASE = "/api";
+    let currentConversation = null;
+    let socket = null;
+
+    const listingIdInput = document.getElementById("listingId");
+    const conversationIdInput = document.getElementById("conversationId");
+    const socketStateInput = document.getElementById("socketState");
+    const messageText = document.getElementById("messageText");
+
+    const openChatBtn = document.getElementById("openChatBtn");
+    const loadMessagesBtn = document.getElementById("loadMessagesBtn");
+    const connectSocketBtn = document.getElementById("connectSocketBtn");
+    const sendMessageBtn = document.getElementById("sendMessageBtn");
+    const clearLogBtn = document.getElementById("clearLogBtn");
+    const logEl = document.getElementById("log");
+
+    function log(...args) {
+      console.log("[chat-debug]", ...args);
+      const line = `[${new Date().toISOString()}] ${args
+        .map((value) => (typeof value === "string" ? value : JSON.stringify(value, null, 2)))
+        .join(" ")}`;
+      logEl.textContent += `${line}\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function getAuthHeaders() {
+      const token = localStorage.getItem("auth_token");
+      const headers = { "Content-Type": "application/json" };
+
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      return headers;
+    }
+
+    async function readJsonSafe(response) {
+      try {
+        return await response.json();
+      } catch {
+        return await response.text();
+      }
+    }
+
+    async function createOrGetConversation(listingId) {
+      log("POST /api/chat/conversations/", { listing_id: listingId });
+
+      const response = await fetch(`${API_BASE}/chat/conversations/`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify({ listing_id: listingId }),
+      });
+
+      const data = await readJsonSafe(response);
+      log("conversation response", { status: response.status, data });
+
+      if (!response.ok) {
+        throw new Error(`Conversation request failed: ${response.status}`);
+      }
+
+      return data;
+    }
+
+    async function fetchMessages(conversationId) {
+      log(`GET /api/chat/conversations/${conversationId}/messages/`);
+
+      const response = await fetch(`${API_BASE}/chat/conversations/${conversationId}/messages/`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+
+      const data = await readJsonSafe(response);
+      log("messages response", { status: response.status, data });
+
+      if (!response.ok) {
+        throw new Error(`Fetch messages failed: ${response.status}`);
+      }
+
+      return data;
+    }
+
+    function connectSocket(conversationId) {
+      if (socket) {
+        log("closing previous socket");
+        socket.close();
+        socket = null;
+      }
+
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const url = `${protocol}//${window.location.host}/ws/chat/${conversationId}/`;
+
+      log("opening websocket", { url, auth: "cookie" });
+
+      socket = new WebSocket(url);
+      socketStateInput.value = "connecting";
+
+      socket.onopen = () => {
+        socketStateInput.value = "open";
+        sendMessageBtn.disabled = false;
+        log("socket open");
+      };
+
+      socket.onmessage = (event) => {
+        log("socket message raw", event.data);
+
+        try {
+          const payload = JSON.parse(event.data);
+          log("socket message parsed", payload);
+        } catch (error) {
+          log("socket message parse error", String(error));
+        }
+      };
+
+      socket.onerror = (event) => {
+        socketStateInput.value = "error";
+        log("socket error", event.type);
+      };
+
+      socket.onclose = (event) => {
+        socketStateInput.value = `closed (${event.code})`;
+        sendMessageBtn.disabled = true;
+        log("socket close", { code: event.code, reason: event.reason });
+      };
+    }
+
+    function sendSocketMessage(text) {
+      if (!socket || socket.readyState !== WebSocket.OPEN) {
+        throw new Error("Socket is not open");
+      }
+
+      const payload = { message: text.trim() };
+      log("socket send", payload);
+      socket.send(JSON.stringify(payload));
+    }
+
+    openChatBtn.addEventListener("click", async () => {
+      const listingId = Number(listingIdInput.value);
+      if (!Number.isInteger(listingId) || listingId <= 0) {
+        log("invalid listing id");
+        return;
+      }
+
+      try {
+        const conversation = await createOrGetConversation(listingId);
+        currentConversation = conversation;
+        conversationIdInput.value = String(conversation.id ?? "");
+        loadMessagesBtn.disabled = !conversation.id;
+        connectSocketBtn.disabled = !conversation.id;
+        log("active conversation", conversation);
+      } catch (error) {
+        log("create/open failed", String(error));
+      }
+    });
+
+    loadMessagesBtn.addEventListener("click", async () => {
+      if (!currentConversation?.id) {
+        log("no conversation selected");
+        return;
+      }
+
+      try {
+        const messages = await fetchMessages(currentConversation.id);
+        log("loaded messages count", messages.length ?? 0);
+      } catch (error) {
+        log("load messages failed", String(error));
+      }
+    });
+
+    connectSocketBtn.addEventListener("click", () => {
+      if (!currentConversation?.id) {
+        log("no conversation selected");
+        return;
+      }
+
+      connectSocket(currentConversation.id);
+    });
+
+    sendMessageBtn.addEventListener("click", () => {
+      const text = messageText.value.trim();
+      if (!text) {
+        log("empty message blocked");
+        return;
+      }
+
+      try {
+        sendSocketMessage(text);
+        messageText.value = "";
+      } catch (error) {
+        log("send failed", String(error));
+      }
+    });
+
+    clearLogBtn.addEventListener("click", () => {
+      logEl.textContent = "";
+    });
+
+    log("page ready");
+    log("auth token in localStorage", !!localStorage.getItem("auth_token"));
+    log("access_token cookie is expected to be sent automatically on websocket handshake");
+  </script>
+</body>
+</html>

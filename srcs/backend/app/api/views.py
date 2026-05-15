@@ -460,6 +460,30 @@ class auth_42_callback(APIView):
         return response
 
 # --- CHAT API interfaces ---
+def ensure_chat_member(request, conversation_id):
+    """
+    Validate that the authenticated user belongs to the conversation
+    before allowing message history access through this proxy layer.
+    """
+    conversation_response = proxy_request(
+        "GET",
+        f"/chat/conversations/by-id/{conversation_id}/"
+    )
+
+    if conversation_response.status_code != 200:
+        return conversation_response
+
+    conversation = conversation_response.data or {}
+    allowed_user_ids = {
+        conversation.get("buyer_id"),
+        conversation.get("seller_id"),
+    }
+
+    if request.user.id not in allowed_user_ids:
+        raise PermissionDenied("You do not have permission to access this conversation.")
+
+    return None
+
 class chat_conversations(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -471,14 +495,30 @@ class chat_conversations(APIView):
         )
 
     def post(self, request):
-        """ creates or fetchs the conversation for a listing """
+        """ creates or fetches the conversation for a listing """
 
         serializer = serializers.ChatConversationCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        listing_id = serializer.validated_data["listing_id"]
+
+        listing_response = proxy_request("GET", f"/listings/{listing_id}/")
+        if listing_response.status_code != 200:
+            return listing_response
+
+        listing_data = listing_response.data or {}
+        seller_id = listing_data.get("seller_id") or listing_data.get("user_id") or listing_data.get("owner_id")
+
+        if not seller_id:
+            return Response(
+                {"detail": "Could not resolve seller for this listing."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
         payload = {
-            "listing_id": serializer.validated_data["listing_id"],
-            "buyer_id": request.user.id,
+            "listing_id": listing_id,
+            "user_id": request.user.id,
+            "seller_id": seller_id,
         }
 
         return proxy_request("POST", "/chat/conversations/", data=payload)
@@ -488,6 +528,10 @@ class chat_messages(APIView):
 
     def get(self, request, conversation_id):
         """ gets message history for one conversation """
+        permission_error = ensure_chat_member(request, conversation_id)
+        if permission_error is not None:
+            return permission_error
+
         return proxy_request(
             "GET",
             f"/chat/conversations/{conversation_id}/messages/"
