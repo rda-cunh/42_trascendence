@@ -171,5 +171,5 @@ CREATE TABLE IF NOT EXISTS follows (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO users (name, email, password_hash, role, status, created_at, updated_at)
-SELECT 'System Administrator', 'admin@admin.com', SHA2('admin123', 256), 'Admin', 'Active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-WHERE NOT EXISTS ( SELECT 1 FROM users WHERE email = 'admin@transcendence.com');
+SELECT 'System Administrator', 'admin@admin.com', SHA2('12345678', 256), 'Admin', 'Active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+WHERE NOT EXISTS ( SELECT 1 FROM users WHERE email = 'admin@admin.com');

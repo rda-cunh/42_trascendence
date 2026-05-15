@@ -28,7 +28,7 @@ CREATE TABLE `users` (
   `email` varchar(255) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
   `phone` varchar(30) DEFAULT NULL,
-  `role` enum('user', 'admin') NOT NULL DEFAULT 'user',
+  `role` enum('User', 'Admin') NOT NULL DEFAULT 'User',
   `status` enum('Active','Suspended','Banned','Deactivated') NOT NULL DEFAULT 'Active',
   `avatar_url` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -45,14 +45,14 @@ CREATE TABLE `users` (
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
-(1,'Seller 1','seller1@email.com','15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 001','user','Active','avatar.png','2026-03-22 09:00:00','2026-03-22 09:00:00'),
-(2,'Seller 2','seller2@email.com','15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 002','user','Active','avatar.png','2026-03-22 09:01:00','2026-03-22 09:01:00'),
-(3,'Buyer 1', 'buyer1@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 003','user','Active','avatar.png', '2026-03-22 09:02:00','2026-03-22 09:02:00'),
-(4,'Buyer 2', 'buyer2@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 004','user','Active','avatar.png', '2026-03-22 09:03:00','2026-03-22 09:03:00'),
-(5,'Admin', 'adm@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 004','admin','Active','avatar.png', '2026-03-22 09:03:00','2026-03-22 09:03:00'),
-(6,'Banned 1', 'Banned1@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 003','user','Banned','avatar.png', '2026-03-22 09:02:00','2026-03-22 09:02:00'),
-(7,'Banned 2', 'Banned2@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 003','user','Banned','avatar.png', '2026-03-22 09:02:00','2026-03-22 09:02:00'),
-(8,'Banned 3', 'Banned3@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 003','user','Banned','avatar.png', '2026-03-22 09:02:00','2026-03-22 09:02:00');
+(1,'Seller 1','seller1@email.com','15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 001','User','Active','avatar.png','2026-03-22 09:00:00','2026-03-22 09:00:00'),
+(2,'Seller 2','seller2@email.com','15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 002','User','Active','avatar.png','2026-03-22 09:01:00','2026-03-22 09:01:00'),
+(3,'Buyer 1', 'buyer1@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 003','User','Active','avatar.png', '2026-03-22 09:02:00','2026-03-22 09:02:00'),
+(4,'Buyer 2', 'buyer2@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 004','User','Active','avatar.png', '2026-03-22 09:03:00','2026-03-22 09:03:00'),
+(5,'System Administrator', 'adm@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 004','Admin','Active','avatar.png', '2026-03-22 09:03:00','2026-03-22 09:03:00'),
+(6,'Banned 1', 'Banned1@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 003','User','Banned','avatar.png', '2026-03-22 09:02:00','2026-03-22 09:02:00'),
+(7,'Banned 2', 'Banned2@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 003','User','Banned','avatar.png', '2026-03-22 09:02:00','2026-03-22 09:02:00'),
+(8,'Banned 3', 'Banned3@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 003','User','Banned','avatar.png', '2026-03-22 09:02:00','2026-03-22 09:02:00');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
