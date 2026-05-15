@@ -83,20 +83,20 @@ export function Home() {
   const isFilteredEmpty = !isInitiallyEmpty && filtered.length === 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="app-page">
+      <div className="app-container">
         {/* Hero Section */}
-        <div className="mb-8">
-          <h1 className="mb-2 text-4xl font-bold text-gray-900 dark:text-white">
+        <div className="page-header">
+          <h1 className="mb-2 text-4xl font-bold tracking-normal text-gray-900 dark:text-white">
             Game Assets Marketplace
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
+          <p className="muted-text text-lg">
             Discover premium shaders, models, textures, and more from talented creators
           </p>
         </div>
 
         {/* Search and Filters */}
-        <div className="mb-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-colors dark:border-gray-800 dark:bg-gray-900">
+        <div className="surface-padded mb-8">
           {/* Search and Sort */}
           <div className="mb-4 flex flex-col gap-4 md:flex-row">
             <div className="relative flex-1">
@@ -109,12 +109,12 @@ export function Home() {
                   setSearchQuery(e.target.value);
                   setPage(1);
                 }}
-                className="w-full rounded-lg border border-gray-300 bg-white py-3 pr-4 pl-10 text-gray-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="form-control-icon"
               />
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center justify-center gap-2 rounded-lg bg-purple-600 px-6 py-3 text-white transition-colors hover:bg-purple-700"
+              className="btn-primary px-6 py-3"
             >
               <SlidersHorizontal className="h-5 w-5" />
               <span>Filters</span>
@@ -132,7 +132,7 @@ export function Home() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  className="form-control"
                 >
                   <option value="newest">Newest First</option>
                   <option value="oldest">Oldest First</option>
@@ -154,9 +154,9 @@ export function Home() {
                         setSelectedCategory(category);
                         setPage(1);
                       }}
-                      className={`rounded-full px-4 py-2 text-sm transition-colors ${
-                        selectedCategory === category
-                          ? "bg-purple-600 text-white hover:bg-purple-700"
+                    className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                      selectedCategory === category
+                        ? "bg-purple-600 text-white hover:bg-purple-700"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                       }`}
                     >
@@ -182,7 +182,7 @@ export function Home() {
                       }}
                       placeholder="Min"
                       min="0"
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="form-control"
                     />
                   </div>
                   <div className="flex-1">
@@ -195,7 +195,7 @@ export function Home() {
                       }}
                       placeholder="Max"
                       min="0"
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="form-control"
                     />
                   </div>
                 </div>
@@ -204,7 +204,7 @@ export function Home() {
               {/* Close filters button */}
               <button
                 onClick={() => setShowFilters(false)}
-                className="flex items-center justify-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                className="btn-ghost px-0 hover:bg-transparent dark:hover:bg-transparent"
               >
                 <X className="h-4 w-4" />
                 Close Filters
@@ -216,7 +216,7 @@ export function Home() {
         {/* Results Count */}
         {!isInitiallyEmpty && (
           <div className="mb-4">
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="muted-text">
               {filtered.length} {filtered.length === 1 ? "asset" : "assets"} found
             </p>
           </div>
@@ -224,18 +224,18 @@ export function Home() {
 
         {/* Listings Grid */}
         {isLoading ? (
-          <div className="py-12 text-center">
+          <div className="empty-state">
             <p className="text-lg text-gray-500 dark:text-gray-400">Loading assets...</p>
           </div>
         ) : isInitiallyEmpty ? (
-          <div className="py-12 text-center">
+          <div className="empty-state">
             <SlidersHorizontal className="mx-auto mb-4 h-16 w-16 text-gray-300 dark:text-gray-600" />
             <p className="text-lg text-gray-500 dark:text-gray-400">
               No assets available in the marketplace yet.
             </p>
           </div>
         ) : isFilteredEmpty ? (
-          <div className="py-12 text-center">
+          <div className="empty-state">
             <SlidersHorizontal className="mx-auto mb-4 h-16 w-16 text-gray-300 dark:text-gray-600" />
             <p className="text-lg text-gray-500 dark:text-gray-400">
               No assets found matching your filters.
@@ -255,7 +255,7 @@ export function Home() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="rounded-lg border border-gray-300 p-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                  className="btn-icon border border-gray-300 dark:border-gray-700"
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
@@ -266,7 +266,7 @@ export function Home() {
                     className={`h-10 w-10 rounded-lg text-sm font-medium transition-colors ${
                       page === i + 1
                         ? "bg-purple-600 text-white"
-                        : "border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                        : "border border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                     }`}
                   >
                     {i + 1}
@@ -275,7 +275,7 @@ export function Home() {
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="rounded-lg border border-gray-300 p-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                  className="btn-icon border border-gray-300 dark:border-gray-700"
                 >
                   <ChevronRight className="h-5 w-5" />
                 </button>

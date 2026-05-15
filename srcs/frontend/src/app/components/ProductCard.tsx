@@ -28,7 +28,7 @@ export function ProductCard({ listing }: ProductCardProps) {
   return (
     <Link
       to={`/product/${listing.id}`}
-      className="group overflow-hidden rounded-xl border border-gray-200 bg-white transition-all duration-200 hover:border-purple-500 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900 dark:hover:border-purple-500"
+      className="surface-interactive group overflow-hidden"
     >
       <div className="aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800">
         {hasShaderPreview ? (
@@ -54,7 +54,7 @@ export function ProductCard({ listing }: ProductCardProps) {
             ${listing.price}
           </span>
         </div>
-        <p className="mb-3 line-clamp-2 text-sm text-gray-600 dark:text-gray-400">{description}</p>
+        <p className="muted-text mb-3 line-clamp-2 text-sm">{description}</p>
         <div className="mb-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
           <div className="flex items-center gap-1">
             <MapPin className="h-3 w-3" />
@@ -66,11 +66,11 @@ export function ProductCard({ listing }: ProductCardProps) {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-block rounded bg-purple-100 px-2 py-1 text-xs text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+          <span className="badge-primary">
             {listing.category}
           </span>
           {listing.fileFormat && (
-            <span className="inline-block rounded bg-gray-100 px-2 py-1 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+            <span className="badge-muted">
               {listing.fileFormat}
             </span>
           )}
