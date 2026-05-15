@@ -87,6 +87,7 @@ class ProductImages(BaseModel):
 	display_order:	int
 
 class ProductResponse(BaseModel):
+	id:				int
 	name:			str
 	slug:			str
 	description:	str
@@ -97,5 +98,5 @@ class ProductResponse(BaseModel):
 class ProfileResponse(UserBase):
 	name:			str
 	email:			str
-	owner:			bool
+	owner:			bool = True
 	listings:		list[ProductResponse] = []

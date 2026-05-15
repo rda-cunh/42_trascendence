@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Listing, User } from "../types";
+import { FALLBACK_LISTING_IMAGE, resolveImageUrl } from "./images";
 import { parseShaderDescription } from "./shaders";
 
 const API_URL = "/api";
@@ -45,7 +46,7 @@ export function getAccessToken(data: any): string | null {
 export function normalizeUser(data: any, fallbackToken?: string | null): User | null {
   const source = data?.user ?? data;
   const tokenUser = fallbackToken ? parseUserFromToken(fallbackToken) : null;
-  const id = source?.id ?? source?.user_id ?? tokenUser?.id;
+  const id = source?.id ?? source?.user_id ?? source?.external_user_id ?? tokenUser?.id;
 
   if (!id) return tokenUser;
 
@@ -54,6 +55,7 @@ export function normalizeUser(data: any, fallbackToken?: string | null): User | 
     email: source?.email ?? tokenUser?.email ?? "",
     name: source?.name ?? source?.display_name ?? tokenUser?.name,
     phone: source?.phone ?? undefined,
+    avatar_url: source?.avatar_url ?? source?.avatarUrl ?? tokenUser?.avatar_url,
     role: normalizeRole(source?.role ?? tokenUser?.role),
     status: normalizeStatus(source?.status),
   };
@@ -64,7 +66,7 @@ export function parseUserFromToken(jwt: string): User | null {
     const payload = JSON.parse(window.atob(jwt.split(".")[1]));
     return normalizeUser(
       {
-        id: payload.user_id ?? payload.sub,
+        id: payload.external_user_id ?? payload.user_id ?? payload.sub,
         email: payload.email,
         name: payload.name,
         role: payload.role,
@@ -81,6 +83,10 @@ export function mapListing(item: any): Listing {
   const shader = parseShaderDescription(rawDescription);
   const createdAt = item?.created_at ?? item?.postedDate ?? item?.posted_date;
   const images = Array.isArray(item?.images) ? item.images : [];
+  const normalizedImages = images
+    .map((image: any) => (typeof image === "string" ? image : image?.image_hash ?? image?.images))
+    .filter((image: unknown): image is string => typeof image === "string" && image.length > 0);
+  const firstImage = normalizedImages[0];
   const sellerName =
     typeof item?.seller === "string"
       ? item.seller
@@ -96,11 +102,8 @@ export function mapListing(item: any): Listing {
     location: "Digital Download",
     seller: sellerName,
     seller_id: item?.seller_id ? String(item.seller_id) : undefined,
-    images: images,
-    image:
-      item?.image ??
-      item?.image_url ??
-      "https://images.unsplash.com/photo-1636189239307-9f3a701f30a8",
+    images: normalizedImages,
+    image: resolveImageUrl(item?.image ?? item?.image_url ?? firstImage, FALLBACK_LISTING_IMAGE),
     postedDate: createdAt
       ? new Date(createdAt).toISOString().split("T")[0]
       : new Date().toISOString().split("T")[0],
