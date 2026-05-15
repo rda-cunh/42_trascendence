@@ -159,7 +159,7 @@
       const token = localStorage.getItem("auth_token");
       const headers = { "Content-Type": "application/json" };
 
-      if (token) {
+      if (token && token !== "undefined" && token !== "null" && token.trim() !== "") {
         headers.Authorization = `Bearer ${token}`;
       }
 
