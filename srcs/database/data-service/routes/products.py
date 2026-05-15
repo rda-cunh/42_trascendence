@@ -58,8 +58,13 @@ def	create_product(product_in: ProductCreate, db=Depends(get_db_dep)):
 
 	if product_in.images:
 		values = [(new_id, img, idx) for idx, img in enumerate(product_in.images)]
-		cursor.execute('''INSERT INTO product_images (product_id, image_hash, dosplay_order) VALUES (%s, %s, %s)''', values)
-
+		cursor.executemany(
+			'''
+			INSERT INTO product_images (product_id, image_hash, display_order)
+			VALUES (%s, %s, %s)
+			''',
+			values
+		)
 	product = GetProductInfo(db, new_id)
 	return ProductResponse(**product)
 
