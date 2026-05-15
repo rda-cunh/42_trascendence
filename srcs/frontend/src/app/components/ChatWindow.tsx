@@ -11,6 +11,25 @@ type Props = {
   onSend: (text: string) => void;
 };
 
+function formatPrice(value: string | null | undefined) {
+  if (!value) return null;
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return value;
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: "EUR",
+  }).format(amount);
+}
+
+function getInitials(value: string) {
+  return value
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
 export default function ChatWindow({
   conversation,
   messages,
@@ -27,14 +46,28 @@ export default function ChatWindow({
     );
   }
 
+  const listingTitle = conversation.listing_name || `Listing #${conversation.listing_id}`;
+  const otherName = conversation.other_user?.name || `User #${conversation.other_id ?? "?"}`;
+  const listingPrice = formatPrice(conversation.listing_price);
+  const initials = getInitials(otherName || "U");
+
   return (
     <section className="chat-panel chat-window">
       <header className="chat-window-header">
-        <div>
-          <h2>Listing #{conversation.listing_id}</h2>
-          <p className={`chat-status ${socketConnected ? "is-online" : "is-offline"}`}>
-            {socketConnected ? "Connected" : "Connecting..."}
-          </p>
+        <div className="chat-window-heading">
+          <div className="chat-window-avatar">{initials}</div>
+
+          <div className="chat-window-heading-copy">
+            <h2>{listingTitle}</h2>
+            <p className="chat-window-subtitle">{otherName}</p>
+
+            <div className="chat-window-meta">
+              {listingPrice && <span>{listingPrice}</span>}
+              <span className={`chat-status ${socketConnected ? "is-online" : "is-offline"}`}>
+                {socketConnected ? "Connected" : "Connecting..."}
+              </span>
+            </div>
+          </div>
         </div>
       </header>
 

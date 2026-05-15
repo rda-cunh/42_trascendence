@@ -484,14 +484,58 @@ def ensure_chat_member(request, conversation_id):
 
     return None
 
+def normalize_chat_conversation_for_user(user_id, conversation):
+    """
+    Normalize a raw conversation object from data-service into a shape that is
+    stable for frontend use, including the correct 'other' participant.
+    """
+    if not isinstance(conversation, dict):
+        return conversation
+
+    buyer_id = conversation.get("buyer_id")
+    seller_id = conversation.get("seller_id")
+    buyer = conversation.get("buyer") or {}
+    seller = conversation.get("seller") or {}
+    listing = conversation.get("listing") or {}
+
+    is_buyer = user_id == buyer_id
+    other_id = seller_id if is_buyer else buyer_id
+    other_user = seller if is_buyer else buyer
+
+    normalized = dict(conversation)
+    normalized["other_id"] = other_id
+    normalized["other_user"] = other_user
+    normalized["listing_name"] = listing.get("name")
+    normalized["listing_image_hash"] = listing.get("image_hash")
+    normalized["listing_price"] = listing.get("price")
+
+    return normalized
+
+
+def normalize_chat_conversation_response(user_id, payload):
+    if isinstance(payload, list):
+        return [normalize_chat_conversation_for_user(user_id, item) for item in payload]
+    if isinstance(payload, dict):
+        return normalize_chat_conversation_for_user(user_id, payload)
+    return payload
+
+
 class chat_conversations(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         """ lists all conversations for the user (retrieved from JWT) """
-        return proxy_request(
+        upstream_response = proxy_request(
             "GET",
             f"/chat/conversations/{request.user.id}/"
+        )
+
+        if upstream_response.status_code != 200:
+            return upstream_response
+
+        return Response(
+            normalize_chat_conversation_response(request.user.id, upstream_response.data),
+            status=upstream_response.status_code,
         )
 
     def post(self, request):
@@ -507,7 +551,11 @@ class chat_conversations(APIView):
             return listing_response
 
         listing_data = listing_response.data or {}
-        seller_id = listing_data.get("seller_id") or listing_data.get("user_id") or listing_data.get("owner_id")
+        seller_id = (
+            listing_data.get("seller_id")
+            or listing_data.get("user_id")
+            or listing_data.get("owner_id")
+        )
 
         if not seller_id:
             return Response(
@@ -521,7 +569,16 @@ class chat_conversations(APIView):
             "seller_id": seller_id,
         }
 
-        return proxy_request("POST", "/chat/conversations/", data=payload)
+        upstream_response = proxy_request("POST", "/chat/conversations/", data=payload)
+
+        if upstream_response.status_code not in (200, 201):
+            return upstream_response
+
+        return Response(
+            normalize_chat_conversation_response(request.user.id, upstream_response.data),
+            status=upstream_response.status_code,
+        )
+
 
 class chat_messages(APIView):
     permission_classes = [IsAuthenticated]
