@@ -32,6 +32,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     api.setToken(null);
   };
 
+  const isUsableToken = (value: unknown): value is string => {
+    return typeof value === "string" && value.trim().length > 0 && value !== "undefined" && value !== "null";
+  };
+
   const persistAuth = (newToken: string, nextUser: User | null) => {
     setToken(newToken);
     setUser(nextUser);
@@ -41,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     api.setTokenChangeHandler((newToken) => {
-      if (newToken) {
+      if (isUsableToken(newToken)) {
         setToken(newToken);
         localStorage.setItem("auth_token", newToken);
       } else {
@@ -51,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const initAuth = async () => {
       const savedToken = localStorage.getItem("auth_token");
-      if (savedToken) {
+      if (isUsableToken(savedToken)) {
         setToken(savedToken);
         api.setToken(savedToken);
 
@@ -74,6 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch {
           if (!fallbackUser) clearAuthState();
         }
+      } else {
+        localStorage.removeItem("auth_token");
       }
       setLoading(false);
     };
@@ -98,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .refresh()
             .then((res) => {
               const newToken = getAccessToken(res);
-              if (!newToken) throw new Error("Missing refreshed token");
+              if (!isUsableToken(newToken)) throw new Error("Missing refreshed token");
               setToken(newToken);
               setUser((prev) => normalizeUser(res, newToken) ?? prev);
               localStorage.setItem("auth_token", newToken);
@@ -132,11 +138,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     phone?: string;
   }) => {
     const res = await api.register(data);
-    const newToken = res.access;
-    setToken(newToken);
-    setUser(normalizeUser(res.user ?? res, newToken));
-    localStorage.setItem("auth_token", newToken);
+    const newToken = getAccessToken(res);
+
+    if (!isUsableToken(newToken)) {
+      clearAuthState();
+      throw new Error("Register response did not include a valid access token");
+    }
+
     api.setToken(newToken);
+    const profile = await api.getProfile().catch(() => null);
+    persistAuth(newToken, normalizeUser(profile ?? res, newToken));
   };
 
   const loginWithOAuth = async (accessToken: string, oauthUser?: User) => {
