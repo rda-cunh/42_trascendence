@@ -161,7 +161,7 @@ export function SellItem() {
 
   if (!user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <div className="app-page flex items-center justify-center">
         <div className="text-center">
           <h2 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
             Sign in required
@@ -173,11 +173,11 @@ export function SellItem() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Publish Shader</h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
+    <div className="app-page">
+      <div className="app-container">
+        <div className="page-header">
+          <h1 className="page-title">Publish Shader</h1>
+          <p className="page-description">
             Create a pure-code shader listing with a live browser preview.
           </p>
         </div>
@@ -186,9 +186,9 @@ export function SellItem() {
           onSubmit={handleSubmit}
           className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_420px]"
         >
-          <div className="space-y-6 rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="surface-padded space-y-6">
             <div>
-              <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+              <label className="form-label">
                 <Tag className="h-4 w-4" /> Shader Title
               </label>
               <input
@@ -197,14 +197,14 @@ export function SellItem() {
                 minLength={3}
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="form-control"
               />
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Slug: {slug}</p>
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+                <label className="form-label">
                   <DollarSign className="h-4 w-4" /> Price
                 </label>
                 <input
@@ -214,38 +214,38 @@ export function SellItem() {
                   step="0.01"
                   value={formData.price}
                   onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  className="form-control"
                 />
               </div>
 
               <div>
-                <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+                <label className="form-label">
                   <Code2 className="h-4 w-4" /> Category
                 </label>
                 <input
                   type="text"
                   value="Shaders"
                   disabled
-                  className="w-full rounded-lg border border-gray-300 bg-gray-100 px-4 py-2 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                  className="form-control"
                 />
               </div>
             </div>
 
             <div>
-              <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+              <label className="form-label">
                 <FileText className="h-4 w-4" /> Notes
               </label>
               <textarea
                 required
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="form-control"
                 rows={4}
               />
             </div>
 
             <div>
-              <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+              <label className="form-label">
                 <ImagePlus className="h-4 w-4" /> Images
               </label>
 
@@ -276,7 +276,7 @@ export function SellItem() {
                   type="button"
                   onClick={handleImageUpload}
                   disabled={!selectedImage || isUploadingImage}
-                  className="inline-flex h-10 w-40 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
+                  className="btn-secondary h-10 w-40"
                 >
                   <Upload className="h-4 w-4" />
                   <span>{isUploadingImage ? "Uploading..." : "Upload image"}</span>
@@ -324,7 +324,7 @@ export function SellItem() {
             )}
 
             <div>
-              <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+              <label className="form-label">
                 <Code2 className="h-4 w-4" /> Fragment Shader
               </label>
               <textarea
@@ -339,17 +339,17 @@ export function SellItem() {
             <button
               type="submit"
               disabled={isLoading}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-purple-600 py-3 font-medium text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
+              className="btn-primary w-full py-3"
             >
               <Save className="h-5 w-5" />
               <span>{isLoading ? "Publishing..." : "Publish Shader"}</span>
             </button>
           </div>
 
-          <div className="h-fit rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+          <div className="surface h-fit p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className="font-semibold text-gray-900 dark:text-white">Live Preview</h2>
-              <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+              <span className="badge-muted">
                 Three.js
               </span>
             </div>
