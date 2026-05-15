@@ -1,39 +1,35 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import { Camera, Edit3, Mail, Phone, Plus, Save, Shield, Upload, User } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
-import { User, Mail, Phone, Save, Edit3, Shield, Plus } from "lucide-react";
+import { ProductCard } from "../components/ProductCard";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
-import { api } from "../lib/api";
+import { api, mapListing } from "../lib/api";
+import { resolveImageUrl } from "../lib/images";
+import { Listing } from "../types";
 import { toast } from "sonner";
-
-interface UserProduct {
-  name: string;
-  description?: string;
-  price: number;
-  images?: Array<{ image_hash: string; display_order: number }>;
-}
 
 export function Profile() {
   const { user, updateUser } = useAuth();
   const [editing, setEditing] = useState(false);
-  const [products, setProducts] = useState<UserProduct[]>([]);
+  const [products, setProducts] = useState<Listing[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
     phone: user?.phone || "",
   });
 
-  // Fetch user's products on mount
   useEffect(() => {
     const fetchProducts = async () => {
       if (!user?.id) return;
 
       try {
         const profile = await api.getProfile();
-        if (profile?.listings && Array.isArray(profile.listings)) {
-          setProducts(profile.listings);
-        }
+        const listings = Array.isArray(profile?.listings) ? profile.listings : [];
+        setProducts(listings.map(mapListing));
       } catch (err) {
         console.error("Failed to load products:", err);
       } finally {
@@ -54,20 +50,58 @@ export function Profile() {
     }
   };
 
+  const toggleEditing = () => {
+    setFormData({
+      name: user?.name || "",
+      email: user?.email || "",
+      phone: user?.phone || "",
+    });
+    setEditing((current) => !current);
+  };
+
+  const handleAvatarUpload = async () => {
+    if (!selectedAvatar) {
+      toast.error("Please choose an image first");
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+
+    try {
+      const result = await api.uploadImage(selectedAvatar);
+      await updateUser({ avatar_url: result.filename });
+      setSelectedAvatar(null);
+      toast.success("Profile photo updated");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to upload profile photo");
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const initials = user?.name?.charAt(0).toUpperCase() || "U";
+
   return (
     <div className="app-page">
       <div className="app-container-form">
         <h1 className="page-title mb-8">My Profile</h1>
 
         <div className="surface overflow-hidden">
-          {/* Avatar section */}
-          <div className="flex items-center gap-6 bg-gradient-to-r from-purple-600 to-purple-800 p-8">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/20 text-3xl font-bold text-white backdrop-blur-sm">
-              {user?.name?.charAt(0).toUpperCase() || "U"}
+          <div className="flex flex-col gap-6 bg-gradient-to-r from-purple-600 to-purple-800 p-8 sm:flex-row sm:items-center">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/20 text-3xl font-bold text-white backdrop-blur-sm">
+              {user?.avatar_url ? (
+                <ImageWithFallback
+                  src={resolveImageUrl(user.avatar_url)}
+                  alt={user?.name || "Profile photo"}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                initials
+              )}
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <h2 className="text-2xl font-bold text-white">{user?.name}</h2>
-              <p className="text-purple-200">{user?.email}</p>
+              <p className="break-words text-purple-200">{user?.email}</p>
               {user?.role && (
                 <span className="mt-2 inline-flex items-center gap-1 rounded bg-white/20 px-2 py-1 text-xs text-white backdrop-blur-sm">
                   <Shield className="h-3 w-3" />
@@ -77,19 +111,41 @@ export function Profile() {
             </div>
           </div>
 
-          {/* Profile form */}
           <div className="space-y-5 p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Account Details
               </h3>
               <button
-                onClick={() => setEditing(!editing)}
+                onClick={toggleEditing}
                 className="btn-ghost text-purple-600 dark:text-purple-400"
               >
                 <Edit3 className="h-4 w-4" />
                 {editing ? "Cancel" : "Edit"}
               </button>
+            </div>
+
+            <div>
+              <label className="form-label">
+                <Camera className="h-4 w-4" /> Profile Photo
+              </label>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setSelectedAvatar(e.target.files?.[0] ?? null)}
+                  className="form-control"
+                />
+                <button
+                  type="button"
+                  onClick={handleAvatarUpload}
+                  disabled={!selectedAvatar || isUploadingAvatar}
+                  className="btn-secondary h-10 shrink-0"
+                >
+                  <Upload className="h-4 w-4" />
+                  <span>{isUploadingAvatar ? "Uploading..." : "Upload photo"}</span>
+                </button>
+              </div>
             </div>
 
             <div>
@@ -113,7 +169,7 @@ export function Profile() {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                disabled={!editing}
+                disabled
                 className="form-control"
               />
             </div>
@@ -133,10 +189,7 @@ export function Profile() {
             </div>
 
             {editing && (
-              <button
-                onClick={handleSave}
-                className="btn-primary px-6 py-3"
-              >
+              <button onClick={handleSave} className="btn-primary px-6 py-3">
                 <Save className="h-4 w-4" />
                 Save Changes
               </button>
@@ -144,14 +197,10 @@ export function Profile() {
           </div>
         </div>
 
-        {/* Your Products Section */}
         <div className="mt-8">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Your Products</h2>
-            <Link
-              to="/sell"
-              className="btn-primary"
-            >
+            <Link to="/sell" className="btn-primary">
               <Plus className="h-4 w-4" />
               New Product
             </Link>
@@ -166,54 +215,26 @@ export function Profile() {
               <p className="mb-4 text-gray-600 dark:text-gray-400">
                 You haven't posted any products yet.
               </p>
-              <Link
-                to="/sell"
-                className="btn-primary px-6 py-3"
-              >
+              <Link to="/sell" className="btn-primary px-6 py-3">
                 <Plus className="h-4 w-4" />
                 Create Your First Product
               </Link>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {products.map((product, idx) => (
-                <div
-                  key={idx}
-                  className="surface-interactive overflow-hidden"
-                >
-                  <div className="aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800">
-                    {product.images && product.images.length > 0 ? (
-                      <ImageWithFallback
-                        src="https://images.unsplash.com/photo-1636189239307-9f3a701f30a8"
-                        alt={product.name}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-gray-400">
-                        <span>No image</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <h3 className="mb-2 line-clamp-2 font-semibold text-gray-900 dark:text-white">
-                      {product.name}
-                    </h3>
-                    <p className="mb-3 line-clamp-1 text-sm text-gray-600 dark:text-gray-400">
-                      {product.description || "No description"}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
-                        ${product.price.toFixed(2)}
-                      </p>
-                      <Link
-                        to={`/listing/${idx}/edit`}
-                        className="text-sm text-purple-600 transition-colors hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
-                      >
-                        Edit
-                      </Link>
-                    </div>
-                  </div>
-                </div>
+              {products.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  listing={product}
+                  footerAction={
+                    <Link
+                      to={`/listing/${product.id}/edit`}
+                      className="text-sm font-medium text-purple-600 transition-colors hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
+                    >
+                      Edit
+                    </Link>
+                  }
+                />
               ))}
             </div>
           )}

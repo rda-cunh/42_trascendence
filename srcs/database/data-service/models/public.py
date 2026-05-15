@@ -21,6 +21,7 @@ class ProductImages(BaseModel):
 	display_order:	int
 
 class ProductResponse(BaseModel):
+	id:				int
 	name:			str
 	slug:			str
 	description:	str

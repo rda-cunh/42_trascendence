@@ -95,6 +95,7 @@ def	get_user(user_id: int, page: int = 1, db=Depends(get_db_dep)):
 	user = cursor.fetchone()
 	if not user:
 		raise HTTPException(status_code=404, detail='User not found')
+	user['owner'] = True
 	
 	cursor.execute('SELECT COUNT(*) FROM products WHERE seller_id = %s AND status = %s', (user_id, 'Active'))
 	n_prod = cursor.fetchone()['COUNT(*)']
@@ -121,7 +122,6 @@ def	get_user(user_id: int, page: int = 1, db=Depends(get_db_dep)):
 
 	for p in products:
 		p['images'] = images_map.get(p['id'], [])
-		del p['id']
 	user['listings'] = products
 	return ProfileResponse(**user)
 

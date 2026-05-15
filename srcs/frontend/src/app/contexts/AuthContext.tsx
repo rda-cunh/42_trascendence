@@ -66,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               email: profile.email,
               name: profile.name,
               phone: profile.phone,
+              avatar_url: profile.avatar_url,
               role: profile.role,
               status: profile.status?.toLowerCase(),
             });
@@ -133,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const res = await api.register(data);
     const newToken = res.access;
     setToken(newToken);
-    setUser(res.user);
+    setUser(normalizeUser(res.user ?? res, newToken));
     localStorage.setItem("auth_token", newToken);
     api.setToken(newToken);
   };
@@ -156,11 +157,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser({
           id: String(profile.id),
           email: profile.email,
-          name: profile.name,
-          phone: profile.phone,
-          role: profile.role,
-          status: profile.status?.toLowerCase(),
-        });
+            name: profile.name,
+            phone: profile.phone,
+            avatar_url: profile.avatar_url,
+            role: profile.role,
+            status: profile.status?.toLowerCase(),
+          });
       }
     } catch {
       // Keep token-derived or backend-provided user if profile fetch fails.
@@ -184,6 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const payload = {
       name: data.name,
       phone: data.phone,
+      avatar_url: data.avatar_url,
     };
 
     const updated = await api.updateProfile(payload);
@@ -196,6 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email: updated?.email ?? prev.email,
             name: updated?.name ?? data.name ?? prev.name,
             phone: updated?.phone ?? data.phone ?? prev.phone,
+            avatar_url: updated?.avatar_url ?? data.avatar_url ?? prev.avatar_url,
             role: updated?.role ?? prev.role,
             status: updated?.status?.toLowerCase() ?? prev.status,
           }

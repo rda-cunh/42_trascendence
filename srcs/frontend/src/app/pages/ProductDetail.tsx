@@ -8,6 +8,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { ProductInfo } from "../components/ProductInfo";
 import { ReviewSection } from "../components/ReviewSection";
 import { api, mapListing } from "../lib/api";
+import { resolveImageUrl } from "../lib/images";
 import { getListingDescription, isShaderListing } from "../lib/shaders";
 import { Listing, Review } from "../types";
 import { toast } from "sonner";
@@ -181,7 +182,7 @@ export function ProductDetail() {
               </button>
 
               <ImageWithFallback
-                src={`/images/${activePreview}`}
+                src={resolveImageUrl(activePreview)}
                 alt={`${listing.title} preview`}
                 className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain"
               />
@@ -213,7 +214,7 @@ export function ProductDetail() {
                       className="block aspect-square w-full overflow-hidden bg-gray-100 dark:bg-gray-900"
                     >
                       <ImageWithFallback
-                        src={`/images/${image}`}
+                        src={resolveImageUrl(image)}
                         alt={`${listing.title} preview ${index + 1}`}
                         className="h-full w-full object-cover"
                       />

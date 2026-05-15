@@ -45,6 +45,5 @@ def	get_profile(user_id: int, page: int = 1, db=Depends(get_db_dep)):
 	
 	for p in products:
 		p['images'] = images_map.get(p['id'], [])
-		del p['id']
 	user['listings'] = products
 	return (UserResponse(**user))
