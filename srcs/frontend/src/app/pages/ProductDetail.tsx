@@ -80,7 +80,7 @@ export function ProductDetail() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 transition-colors dark:bg-gray-950">
+      <div className="app-page flex items-center justify-center">
         <p className="text-lg text-gray-500 dark:text-gray-400">Loading asset...</p>
       </div>
     );
@@ -88,16 +88,13 @@ export function ProductDetail() {
 
   if (!listing) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 transition-colors dark:bg-gray-950">
+      <div className="app-page flex items-center justify-center">
         <div className="text-center">
           <h2 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">Asset not found</h2>
           <p className="mb-4 text-gray-600 dark:text-gray-400">
             The asset you're looking for doesn't exist.
           </p>
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-white transition-colors hover:bg-purple-700"
-          >
+          <Link to="/" className="btn-primary">
             <ArrowLeft className="h-4 w-4" /> Back to Browse
           </Link>
         </div>
@@ -112,8 +109,8 @@ export function ProductDetail() {
   const galleryImages = listing.images ?? [];
 
   return (
-    <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="app-page">
+      <div className="app-container">
         <Link
           to="/"
           className="mb-6 inline-flex items-center gap-2 text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
@@ -123,7 +120,7 @@ export function ProductDetail() {
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           {/* Preview */}
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-colors dark:border-gray-800 dark:bg-gray-900">
+          <div className="surface overflow-hidden">
             <div className="aspect-square">
               {hasShaderPreview ? (
                 <ShaderPreview
@@ -148,14 +145,14 @@ export function ProductDetail() {
             <div className="flex gap-3">
               <button
                 onClick={handleBuyNow}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-purple-600 px-6 py-3 text-white transition-colors hover:bg-purple-700"
+                className="btn-primary flex-1 px-6 py-3"
               >
                 <CreditCard className="h-5 w-5" />
                 <span>Buy Now</span>
               </button>
               <button
                 onClick={handleAddToCart}
-                className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-6 py-3 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                className="btn-secondary px-6 py-3"
               >
                 <ShoppingCart className="h-5 w-5" />
                 <span className="hidden sm:inline">Add to Cart</span>
@@ -163,7 +160,7 @@ export function ProductDetail() {
             </div>
 
             {/* Description */}
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-colors dark:border-gray-800 dark:bg-gray-900">
+            <div className="surface-padded">
               <h2 className="mb-3 text-xl font-bold text-gray-900 dark:text-white">Description</h2>
               <p className="leading-relaxed text-gray-700 dark:text-gray-300">{description}</p>
             </div>
@@ -200,7 +197,7 @@ export function ProductDetail() {
         )}
 
         {galleryImages.length > 0 && (
-          <div className="mt-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-colors dark:border-gray-800 dark:bg-gray-900">
+          <div className="surface-padded mt-8">
             <h2 className="mb-4 text-xl font-bold text-gray-900 dark:text-white">Images</h2>
 
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">

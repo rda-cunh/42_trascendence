@@ -55,11 +55,11 @@ export function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
-      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-        <h1 className="mb-8 text-3xl font-bold text-gray-900 dark:text-white">My Profile</h1>
+    <div className="app-page">
+      <div className="app-container-form">
+        <h1 className="page-title mb-8">My Profile</h1>
 
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="surface overflow-hidden">
           {/* Avatar section */}
           <div className="flex items-center gap-6 bg-gradient-to-r from-purple-600 to-purple-800 p-8">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/20 text-3xl font-bold text-white backdrop-blur-sm">
@@ -85,7 +85,7 @@ export function Profile() {
               </h3>
               <button
                 onClick={() => setEditing(!editing)}
-                className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm text-purple-600 transition-colors hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20"
+                className="btn-ghost text-purple-600 dark:text-purple-400"
               >
                 <Edit3 className="h-4 w-4" />
                 {editing ? "Cancel" : "Edit"}
@@ -93,7 +93,7 @@ export function Profile() {
             </div>
 
             <div>
-              <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="form-label">
                 <User className="h-4 w-4" /> Name
               </label>
               <input
@@ -101,12 +101,12 @@ export function Profile() {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 disabled={!editing}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="form-control"
               />
             </div>
 
             <div>
-              <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="form-label">
                 <Mail className="h-4 w-4" /> Email
               </label>
               <input
@@ -114,12 +114,12 @@ export function Profile() {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 disabled={!editing}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="form-control"
               />
             </div>
 
             <div>
-              <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="form-label">
                 <Phone className="h-4 w-4" /> Phone
               </label>
               <input
@@ -128,14 +128,14 @@ export function Profile() {
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 disabled={!editing}
                 placeholder="Not set"
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="form-control"
               />
             </div>
 
             {editing && (
               <button
                 onClick={handleSave}
-                className="flex items-center gap-2 rounded-lg bg-purple-600 px-6 py-3 font-medium text-white transition-colors hover:bg-purple-700"
+                className="btn-primary px-6 py-3"
               >
                 <Save className="h-4 w-4" />
                 Save Changes
@@ -150,7 +150,7 @@ export function Profile() {
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Your Products</h2>
             <Link
               to="/sell"
-              className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm text-white transition-colors hover:bg-purple-700"
+              className="btn-primary"
             >
               <Plus className="h-4 w-4" />
               New Product
@@ -158,17 +158,17 @@ export function Profile() {
           </div>
 
           {isLoadingProducts ? (
-            <div className="flex items-center justify-center rounded-xl border border-gray-200 bg-white p-12 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <div className="empty-state">
               <p className="text-gray-500 dark:text-gray-400">Loading products...</p>
             </div>
           ) : products.length === 0 ? (
-            <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <div className="empty-state">
               <p className="mb-4 text-gray-600 dark:text-gray-400">
                 You haven't posted any products yet.
               </p>
               <Link
                 to="/sell"
-                className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-6 py-3 text-white transition-colors hover:bg-purple-700"
+                className="btn-primary px-6 py-3"
               >
                 <Plus className="h-4 w-4" />
                 Create Your First Product
@@ -179,7 +179,7 @@ export function Profile() {
               {products.map((product, idx) => (
                 <div
                   key={idx}
-                  className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-gray-800 dark:bg-gray-900"
+                  className="surface-interactive overflow-hidden"
                 >
                   <div className="aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800">
                     {product.images && product.images.length > 0 ? (
