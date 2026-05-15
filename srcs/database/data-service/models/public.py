@@ -26,7 +26,7 @@ class ProductResponse(BaseModel):
 	description:	str
 	price:			Decimal
 	status:			ProductStatus
-	images:			list[ProductImages] = []
+	images:			list[str] = []
 
 # GET /users/
 class UserProductsResponse(BaseModel):
@@ -46,6 +46,7 @@ class ListingResponse(BaseModel):
 	description:	str
 	price:		Decimal
 	status:		ProductStatus
+	images:		list[str] = []
 
 class UserResponse(BaseModel):
 	name:		str

@@ -12,7 +12,7 @@ class UserProducts(BaseModel):
 	name:			str
 	description:	str
 	price:			Decimal
-	images:			list[ProductImages] = []
+	images:			list[str] = []
 
 class UserResponse(BaseModel):
 	name:			str
