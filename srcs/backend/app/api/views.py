@@ -543,6 +543,12 @@ class follow_counts(APIView):
             "following": following.data["num"],
         })
 
+
+class follow_feed(APIView):
+    def get(self, request):
+        return proxy_request("GET", f"/follow/feed/{request.user.id}/")
+
+
 # Product listings API
 
 class listing_id(APIView):
