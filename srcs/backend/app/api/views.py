@@ -533,6 +533,7 @@ class follow_followers(APIView):
 class follow_counts(APIView):
     """GET follower and following counts for user_id. This is public."""
     def get(self, request, user_id):
+        permission_classes = [AllowAny]
         # merged the two calls here. Evaluate later if this needs to be separated.
         followers = proxy_request("GET", f"/follow/followers-count/{user_id}/")
         following = proxy_request("GET", f"/follow/following-count/{user_id}/")
@@ -584,6 +585,7 @@ class listings_review(APIView):
         return proxy_request("POST", f"/listings/{product_id}/review/")
 
     def get(self, request, product_id):
+        permission_classes = [AllowAny]
         return proxy_request("GET", f"/listings/{product_id}/review/")
 
     def patch(self, request, product_id, review_id):
