@@ -50,6 +50,7 @@ from .views import (
     follow_following,
     follow_followers,
     follow_counts,
+    follow_feed,
 )
 
 urlpatterns = [
@@ -83,6 +84,7 @@ urlpatterns = [
         path("follow/following/<int:user_id>/",      follow_following.as_view()),
         path("follow/followers/<int:user_id>/",      follow_followers.as_view()),
         path("follow/counts/<int:user_id>/",         follow_counts.as_view()),
+        path("follow/feed/",                         follow_feed.as_view()),
 
         # orders paths
         path("orders/<int:order_id>/", order_id.as_view()),
