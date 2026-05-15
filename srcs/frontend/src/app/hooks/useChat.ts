@@ -88,14 +88,9 @@ export function useChat(accessToken: string | null): UseChatResult {
           setMessages(history);
         }
 
-        // Read the latest token at connect time — a silent refresh between
-        // render and here should use the new value, not a stale closure.
-        const tokenForSocket = tokenRef.current;
-        if (!tokenForSocket) return;
-
         socketRef.current?.disconnect();
 
-        const socket = new ChatSocket(selectedConversationId, tokenForSocket, {
+        const socket = new ChatSocket(selectedConversationId, {
           onOpen: () => {
             if (!cancelled) setSocketConnected(true);
           },
