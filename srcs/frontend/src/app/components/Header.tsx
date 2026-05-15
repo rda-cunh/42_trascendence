@@ -13,8 +13,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 import { Cart } from "./Cart";
 import { NotificationBell } from "./NotificationBell";
-import { ImageWithFallback } from "./figma/ImageWithFallback";
-import { resolveImageUrl } from "../lib/images";
+import { UserAvatar } from "./UserAvatar";
 
 export function Header() {
   const location = useLocation();
@@ -75,19 +74,13 @@ export function Header() {
               <div className="flex items-center gap-2">
                 <Link
                   to="/profile"
-                  className="btn-ghost h-10 px-3"
+                  className="btn-ghost h-10 gap-3 px-2.5 pr-4"
                 >
-                  {user.avatar_url ? (
-                    <ImageWithFallback
-                      src={resolveImageUrl(user.avatar_url)}
-                      alt={user.name || user.email}
-                      className="h-7 w-7 rounded-full object-cover"
+                    <UserAvatar
+                      src={user.avatar_url}
+                      name={user.name || user.email}
+                      sizeClassName="h-7 w-7"
                     />
-                  ) : (
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-100 text-sm font-semibold text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
-                      {(user.name || user.email).charAt(0).toUpperCase()}
-                    </div>
-                  )}
                   <span className="hidden text-sm font-medium md:inline">
                     {user.name || user.email}
                   </span>

@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useCart } from "../contexts/CartContext";
 import { api } from "../lib/api";
-import { Trash2, CreditCard, ArrowLeft, MapPin } from "lucide-react";
+import { Trash2, CreditCard, ArrowLeft } from "lucide-react";
+import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { resolveImageUrl } from "../lib/images";
 import { toast } from "sonner";
 import { Link } from "react-router";
 
@@ -10,7 +12,6 @@ export function Checkout() {
   const { items, removeItem, total, clear } = useCart();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [address, setAddress] = useState({ line1: "", city: "", country: "" });
 
   const handlePlaceOrder = async () => {
     if (items.length === 0) {
@@ -23,7 +24,6 @@ export function Checkout() {
       await api.createOrder({
         items: items.map((i: typeof items[number]) => ({ listing_id: i.listing.id, quantity: i.quantity })),
         total,
-        address: address.line1 ? address : undefined,
       });
 
       clear();
@@ -77,8 +77,8 @@ export function Checkout() {
                     key={item.listing.id}
                     className="flex items-center gap-4 border-b border-gray-100 pb-4 last:border-0 dark:border-gray-800"
                   >
-                    <img
-                      src={item.listing.image}
+                    <ImageWithFallback
+                      src={resolveImageUrl(item.listing.image)}
                       alt={item.listing.title}
                       className="h-16 w-16 rounded-lg object-cover"
                     />
@@ -106,34 +106,6 @@ export function Checkout() {
               </div>
             </div>
 
-            <div className="surface-padded">
-              <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
-                <MapPin className="h-5 w-5" /> Delivery Information
-              </h2>
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  value={address.line1}
-                  onChange={(e) => setAddress({ ...address, line1: e.target.value })}
-                  placeholder="Address"
-                  className="form-control"
-                />
-                <input
-                  type="text"
-                  value={address.city}
-                  onChange={(e) => setAddress({ ...address, city: e.target.value })}
-                  placeholder="City"
-                  className="form-control"
-                />
-                <input
-                  type="text"
-                  value={address.country}
-                  onChange={(e) => setAddress({ ...address, country: e.target.value })}
-                  placeholder="Country"
-                  className="form-control"
-                />
-              </div>
-            </div>
           </div>
 
           <div>

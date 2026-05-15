@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { Code2, DollarSign, FileText, ImagePlus, Save, Tag, Trash2, Upload, X } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
@@ -10,6 +10,7 @@ import {
   slugifyShaderTitle,
 } from "../lib/shaders";
 import { toast } from "sonner";
+import { useImageUpload, ImageUploadResult } from "../hooks/useImageUpload";
 
 export function SellItem() {
   const { user } = useAuth();
@@ -27,44 +28,25 @@ export function SellItem() {
     previewUrl: string;
   };
 
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [activePreview, setActivePreview] = useState<UploadedImage | null>(null);
 
-  const handleImageUpload = async () => {
-    if (!selectedImage) {
-      toast.error("Please choose an image first");
-      return;
-    }
-
-    setIsUploadingImage(true);
-
-    try {
-      const result = await api.uploadImage(selectedImage);
-      const previewUrl = result.url ?? `/images/${result.filename}`;
-
+  const imageUpload = useImageUpload({
+    onSuccess: async (result: ImageUploadResult) => {
       setUploadedImages((prev) => [
         ...prev,
         {
           filename: result.filename,
-          previewUrl,
+          previewUrl: result.url,
         },
       ]);
+    },
+    successMessage: "Image uploaded",
+    errorContext: "image",
+  });
 
-      setSelectedImage(null);
-      toast.success("Image uploaded");
-      setSelectedImage(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to upload image";
-      toast.error(message);
-    } finally {
-      setIsUploadingImage(false);
-    }
+  const handleImageUpload = () => {
+    imageUpload.handleUpload();
   };
 
   const handleRemoveImage = (filename: string) => {
@@ -251,10 +233,9 @@ export function SellItem() {
 
               <div className="flex flex-col gap-3">
                 <input
-                  ref={fileInputRef}
                   type="file"
                   accept="image/*"
-                  onChange={(e) => setSelectedImage(e.target.files?.[0] ?? null)}
+                  onChange={(e) => imageUpload.setSelectedFile(e.target.files?.[0] ?? null)}
                   className="hidden"
                   id="sell-item-image-input"
                 />
@@ -265,7 +246,7 @@ export function SellItem() {
                 >
                   <ImagePlus className="mb-2 h-5 w-5 text-gray-500 dark:text-gray-300" />
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {selectedImage ? selectedImage.name : "Choose an image"}
+                    {imageUpload.selectedFile ? imageUpload.selectedFile.name : "Choose an image"}
                   </span>
                   <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     Click to open your files
@@ -275,11 +256,11 @@ export function SellItem() {
                 <button
                   type="button"
                   onClick={handleImageUpload}
-                  disabled={!selectedImage || isUploadingImage}
+                  disabled={!imageUpload.selectedFile || imageUpload.isUploading}
                   className="btn-secondary h-10 w-40"
                 >
                   <Upload className="h-4 w-4" />
-                  <span>{isUploadingImage ? "Uploading..." : "Upload image"}</span>
+                  <span>{imageUpload.isUploading ? "Uploading..." : "Upload image"}</span>
                 </button>
               </div>
             </div>

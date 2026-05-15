@@ -3,23 +3,29 @@ import { Link } from "react-router";
 import { Camera, Edit3, Mail, Phone, Plus, Save, Shield, Upload, User } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { ProductCard } from "../components/ProductCard";
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { api, mapListing } from "../lib/api";
-import { resolveImageUrl } from "../lib/images";
 import { Listing } from "../types";
 import { toast } from "sonner";
+import { UserAvatar } from "../components/UserAvatar";
+import { useImageUpload } from "../hooks/useImageUpload";
 
 export function Profile() {
   const { user, updateUser } = useAuth();
   const [editing, setEditing] = useState(false);
   const [products, setProducts] = useState<Listing[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
-  const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null);
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
     phone: user?.phone || "",
+  });
+
+  const avatarUpload = useImageUpload({
+    onSuccess: async (result) => {
+      await updateUser({ avatar_url: result.url });
+    },
+    successMessage: "Profile photo updated",
+    errorContext: "profile photo",
   });
 
   useEffect(() => {
@@ -59,24 +65,8 @@ export function Profile() {
     setEditing((current) => !current);
   };
 
-  const handleAvatarUpload = async () => {
-    if (!selectedAvatar) {
-      toast.error("Please choose an image first");
-      return;
-    }
-
-    setIsUploadingAvatar(true);
-
-    try {
-      const result = await api.uploadImage(selectedAvatar);
-      await updateUser({ avatar_url: result.filename });
-      setSelectedAvatar(null);
-      toast.success("Profile photo updated");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to upload profile photo");
-    } finally {
-      setIsUploadingAvatar(false);
-    }
+  const handleAvatarUpload = () => {
+    avatarUpload.handleUpload();
   };
 
   const initials = user?.name?.charAt(0).toUpperCase() || "U";
@@ -88,17 +78,7 @@ export function Profile() {
 
         <div className="surface overflow-hidden">
           <div className="flex flex-col gap-6 bg-gradient-to-r from-purple-600 to-purple-800 p-8 sm:flex-row sm:items-center">
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/20 text-3xl font-bold text-white backdrop-blur-sm">
-              {user?.avatar_url ? (
-                <ImageWithFallback
-                  src={resolveImageUrl(user.avatar_url)}
-                  alt={user?.name || "Profile photo"}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                initials
-              )}
-            </div>
+            <UserAvatar src={user?.avatar_url} name={user?.name || user?.email || initials} sizeClassName="h-20 w-20 text-xl" />
             <div className="min-w-0 flex-1">
               <h2 className="text-2xl font-bold text-white">{user?.name}</h2>
               <p className="break-words text-purple-200">{user?.email}</p>
@@ -133,17 +113,17 @@ export function Profile() {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => setSelectedAvatar(e.target.files?.[0] ?? null)}
+                  onChange={(e) => avatarUpload.setSelectedFile(e.target.files?.[0] ?? null)}
                   className="form-control"
                 />
                 <button
                   type="button"
                   onClick={handleAvatarUpload}
-                  disabled={!selectedAvatar || isUploadingAvatar}
+                  disabled={!avatarUpload.selectedFile || avatarUpload.isUploading}
                   className="btn-secondary h-10 shrink-0"
                 >
                   <Upload className="h-4 w-4" />
-                  <span>{isUploadingAvatar ? "Uploading..." : "Upload photo"}</span>
+                  <span>{avatarUpload.isUploading ? "Uploading..." : "Upload photo"}</span>
                 </button>
               </div>
             </div>

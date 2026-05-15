@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, UserPlus, UserCheck } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { ProductCard } from "../components/ProductCard";
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { api, mapListing } from "../lib/api";
-import { resolveImageUrl } from "../lib/images";
 import { Listing } from "../types";
 import { toast } from "sonner";
+import { UserAvatar } from "../components/UserAvatar";
 
 interface SellerData {
+  id: string;
   name: string;
   email: string;
   phone?: string;
@@ -23,6 +23,10 @@ export function SellerProfile() {
   const [seller, setSeller] = useState<SellerData | null>(null);
   const [products, setProducts] = useState<Listing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFollowPending, setIsFollowPending] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
 
   useEffect(() => {
     const fetchSellerData = async () => {
@@ -31,8 +35,35 @@ export function SellerProfile() {
       try {
         const sellerData = await api.getPublicUserProfile(sellerId);
         const listings = Array.isArray(sellerData?.listings) ? sellerData.listings : [];
-        setSeller(sellerData);
+        setSeller({
+          id: String(sellerData?.id ?? sellerId),
+          name: sellerData?.name ?? "Unknown seller",
+          email: sellerData?.email ?? "",
+          phone: sellerData?.phone,
+          avatar_url: sellerData?.avatar_url,
+          listings,
+        });
         setProducts(listings.map(mapListing));
+
+        const sellerNumericId = Number(sellerId);
+        if (!Number.isNaN(sellerNumericId)) {
+          const counts = await api.getFollowerCount(sellerNumericId).catch(() => null);
+          if (counts) {
+            setFollowersCount(counts.followers ?? 0);
+            setFollowingCount(counts.following ?? 0);
+          }
+
+          if (user?.id && user.id !== sellerId) {
+            const following = await api.getFollowing(Number(user.id)).catch(() => null);
+            const followedUsers = Array.isArray(following) ? following : following?.results ?? [];
+            setIsFollowing(
+              followedUsers.some((entry: { user_id?: number | string; id?: number | string }) => {
+                const entryId = String(entry.user_id ?? entry.id ?? "");
+                return entryId === String(sellerId);
+              })
+            );
+          }
+        }
       } catch (err) {
         console.error("Failed to load seller profile:", err);
         toast.error("Failed to load seller profile");
@@ -42,7 +73,7 @@ export function SellerProfile() {
     };
 
     fetchSellerData();
-  }, [sellerId]);
+  }, [sellerId, user?.id]);
 
   if (isLoading) {
     return (
@@ -71,7 +102,32 @@ export function SellerProfile() {
   }
 
   const isOwnProfile = user?.id === sellerId;
-  const initials = seller.name?.charAt(0).toUpperCase() || "S";
+
+  const handleToggleFollow = async () => {
+    if (!seller || !user || isOwnProfile) return;
+
+    setIsFollowPending(true);
+    try {
+      const sellerNumericId = Number(seller.id);
+      if (Number.isNaN(sellerNumericId)) return;
+
+      if (isFollowing) {
+        await api.unfollowUser(sellerNumericId);
+        setIsFollowing(false);
+        setFollowersCount((count) => Math.max(0, count - 1));
+        toast.success(`Unfollowed ${seller.name}`);
+      } else {
+        await api.followUser(sellerNumericId);
+        setIsFollowing(true);
+        setFollowersCount((count) => count + 1);
+        toast.success(`Following ${seller.name}`);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update follow state");
+    } finally {
+      setIsFollowPending(false);
+    }
+  };
 
   return (
     <div className="app-page">
@@ -86,17 +142,7 @@ export function SellerProfile() {
         <div className="surface mb-8 overflow-hidden">
           <div className="flex flex-col gap-6 bg-gradient-to-r from-purple-600 to-purple-800 p-8 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex items-end gap-6">
-              <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/20 text-4xl font-bold text-white backdrop-blur-sm">
-                {seller.avatar_url ? (
-                  <ImageWithFallback
-                    src={resolveImageUrl(seller.avatar_url)}
-                    alt={seller.name}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  initials
-                )}
-              </div>
+              <UserAvatar src={seller.avatar_url} name={seller.name} sizeClassName="h-24 w-24 text-2xl" />
               <div className="min-w-0">
                 <h1 className="break-words text-3xl font-bold text-white">{seller.name}</h1>
                 {seller.email && <p className="break-words text-purple-200">{seller.email}</p>}
@@ -105,11 +151,16 @@ export function SellerProfile() {
 
             {!isOwnProfile && user && (
               <button
-                disabled
-                title="Follow is coming soon"
-                className="rounded-lg border border-purple-200 bg-white px-6 py-3 font-medium text-purple-600 opacity-60 dark:border-purple-700 dark:bg-gray-800 dark:text-purple-400"
+                onClick={() => void handleToggleFollow()}
+                disabled={isFollowPending}
+                className={`inline-flex items-center gap-2 rounded-lg px-6 py-3 font-medium transition-colors ${
+                  isFollowing
+                    ? "border border-white/20 bg-white/10 text-white hover:bg-white/15"
+                    : "border border-white bg-white text-purple-700 hover:bg-purple-50"
+                } disabled:cursor-not-allowed disabled:opacity-60`}
               >
-                Follow (soon)
+                {isFollowing ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+                {isFollowPending ? "Updating..." : isFollowing ? "Following" : "Follow"}
               </button>
             )}
           </div>
@@ -120,8 +171,12 @@ export function SellerProfile() {
               <p className="text-sm text-gray-600 dark:text-gray-400">Products</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">-</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{followersCount}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400">Followers</p>
+            </div>
+            <div className="col-span-2 text-center sm:col-span-1">
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{followingCount}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Following</p>
             </div>
             {seller.phone && (
               <div className="col-span-2 text-center sm:col-span-1">
