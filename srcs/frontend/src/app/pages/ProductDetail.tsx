@@ -7,6 +7,7 @@ import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { ProductInfo } from "../components/ProductInfo";
 import { ReviewSection } from "../components/ReviewSection";
+import { ProductChatWidget } from "../components/ProductChatWidget";
 import { api, mapListing } from "../lib/api";
 import { resolveImageUrl } from "../lib/images";
 import { getListingDescription, isShaderListing } from "../lib/shaders";
@@ -232,6 +233,13 @@ export function ProductDetail() {
           reviews={reviews}
           isLoggedIn={!!user}
           onReviewSubmitted={handleReviewSubmitted}
+        />
+
+        <ProductChatWidget
+          listingId={listing?.id ? Number(listing.id) : null}
+          sellerId={listing?.seller_id ? Number(listing.seller_id) : null}
+          sellerName={listing?.seller}
+          productTitle={listing?.title}
         />
       </div>
     </div>
