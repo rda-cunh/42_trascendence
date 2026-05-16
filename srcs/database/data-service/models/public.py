@@ -26,6 +26,8 @@ class ProductResponse(BaseModel):
 	description:	str
 	price:			Decimal
 	status:			ProductStatus
+	avg_rating:		Optional[Decimal]
+	review_count:	Optional[int]
 	images:			list[str] = []
 
 # GET /users/
@@ -46,6 +48,8 @@ class ListingResponse(BaseModel):
 	description:	str
 	price:		Decimal
 	status:		ProductStatus
+	avg_rating:		Optional[Decimal]
+	review_count:	Optional[int]
 	images:		list[str] = []
 
 class UserResponse(BaseModel):

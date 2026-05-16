@@ -19,7 +19,7 @@ def get_bans(page: int = 1, db = Depends(get_db_dep)):
 	users = cursor.fetchall()
 	return [UserInfo(**row) for row in users]
 
-@router.post('/bans/{user_id}/', response_model=UserInfo, status_code=200)
+@router.post('/bans/{user_id}/', response_model=UserInfo, status_code=201)
 def ban_user(user_id: int, db = Depends(get_db_dep)):
 	conn, cursor = db
 
@@ -63,7 +63,7 @@ def get_admins(page: int = 1, db = Depends(get_db_dep)):
 	users = cursor.fetchall()
 	return [UserInfo(**row) for row in users]
 
-@router.post('/manage/{user_id}/', response_model=UserInfo, status_code=200)
+@router.post('/manage/{user_id}/', response_model=UserInfo, status_code=201)
 def admin_user(user_id: int, db = Depends(get_db_dep)):
 	conn, cursor = db
 

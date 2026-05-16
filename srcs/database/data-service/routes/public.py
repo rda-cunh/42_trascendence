@@ -47,7 +47,7 @@ def	get_user_products(user_id: int, limit: int = 20, db=Depends(get_db_dep)):
 	user = cursor.fetchone()
 	if not user:
 		raise HTTPException(status_code=404, detail='User not found')
-	cursor.execute('SELECT id, name, slug, description, price, status FROM products WHERE seller_id = %s ORDER BY id ASC', (user_id,))
+	cursor.execute('SELECT id, name, slug, description, price, status, avg_rating, review_count FROM products WHERE seller_id = %s ORDER BY id ASC', (user_id,))
 	products = cursor.fetchall()
 	if not products:
 		user['listings'] = []
@@ -87,7 +87,7 @@ def	list_products(
 ):
 	conn, cursor = db
 
-	sql = 'SELECT id, name, slug, description, price, status FROM products WHERE 1=1'
+	sql = 'SELECT id, name, slug, description, price, status, avg_rating, review_count FROM products WHERE 1=1'
 	params = []
 
 	if search:
@@ -130,7 +130,7 @@ def	get_listing(product_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
 	cursor.execute("""
 				SELECT u.name AS seller, u.email, u.phone, u.avatar_url,
-				p.name, p.slug, p.description, p.price, p.status
+				p.name, p.slug, p.description, p.price, p.status, p.avg_rating, p.review_count
 				FROM products p
 				INNER JOIN users u ON u.id = p.seller_id
 				WHERE p.status = 'Active' AND p.id = %s

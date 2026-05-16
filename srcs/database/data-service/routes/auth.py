@@ -90,10 +90,12 @@ def login_user(user_in: UserLogin, db=Depends(get_db_dep)):
 
 # TO DO
 # Check token to see self profile
-@router.get('/profile/{user_id}/', response_model=ProfileResponse)
+@router.get('/profile/{user_id}/', response_model=ProfileResponse, status_code=200)
 def	get_user(user_id: int, page: int = 1, db=Depends(get_db_dep)):
 	conn, cursor = db
 	limit = 10
+	if page < 1:
+		raise HTTPException(status_code=400, detail='Invalid page')
 	skip = (page - 1) * limit
 
 	cursor.execute('SELECT name, email, phone, avatar_url FROM users WHERE id = %s', (user_id,))
@@ -101,11 +103,11 @@ def	get_user(user_id: int, page: int = 1, db=Depends(get_db_dep)):
 	if not user:
 		raise HTTPException(status_code=404, detail='User not found')
 	
-	cursor.execute('SELECT COUNT(*) FROM products WHERE seller_id = %s AND status = %s', (user_id, 'Active'))
-	n_prod = cursor.fetchone()['COUNT(*)']
+	cursor.execute('SELECT COUNT(*) AS total FROM products WHERE seller_id = %s AND status = %s', (user_id, 'Active'))
+	n_prod = cursor.fetchone()['total']
 	user['pages'] = (n_prod // 10) if (n_prod % 10) == 0 else (n_prod // 10 + 1)
 
-	cursor.execute('SELECT id, name, slug, description, price, status FROM products WHERE seller_id = %s ORDER BY created_at DESC LIMIT %s OFFSET %s', (user_id, limit, skip))
+	cursor.execute('SELECT id, name, slug, description, price, status, avg_rating, review_count FROM products WHERE seller_id = %s AND status = %s ORDER BY created_at DESC LIMIT %s OFFSET %s', (user_id, 'Active', limit, skip))
 	products = cursor.fetchall()
 	if not products:
 		user['listings'] = []
