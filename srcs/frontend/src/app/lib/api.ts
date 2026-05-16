@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Listing, User } from "../types";
+import { FALLBACK_LISTING_IMAGE, resolveImageUrl } from "./images";
 import { parseShaderDescription } from "./shaders";
 
 const API_URL = "/api";
@@ -54,6 +55,7 @@ export function normalizeUser(data: any, fallbackToken?: string | null): User | 
     email: source?.email ?? tokenUser?.email ?? "",
     name: source?.name ?? source?.display_name ?? tokenUser?.name,
     phone: source?.phone ?? undefined,
+    avatar_url: source?.avatar_url ?? source?.avatarUrl ?? tokenUser?.avatar_url,
     role: normalizeRole(source?.role ?? tokenUser?.role),
     status: normalizeStatus(source?.status),
   };
@@ -80,6 +82,15 @@ export function mapListing(item: any): Listing {
   const rawDescription = item?.description ?? "";
   const shader = parseShaderDescription(rawDescription);
   const createdAt = item?.created_at ?? item?.postedDate ?? item?.posted_date;
+  const images = Array.isArray(item?.images) ? item.images : [];
+  const normalizedImages = images
+    .map((image: any) => (typeof image === "string" ? image : image?.image_hash ?? image?.images))
+    .filter((image: unknown): image is string => typeof image === "string" && image.length > 0);
+  const firstImage = normalizedImages[0];
+  const sellerName =
+    typeof item?.seller === "string"
+      ? item.seller
+      : item?.seller?.name ?? item?.seller_name ?? "Creator Studio";
 
   return {
     id: String(item?.product_id ?? item?.id),
@@ -89,18 +100,30 @@ export function mapListing(item: any): Listing {
     category: shader ? "Shaders" : (item?.category ?? "3D Models"),
     condition: item?.status ?? "New",
     location: "Digital Download",
-    seller: item?.seller ?? item?.seller_name ?? "Creator Studio",
+    seller: sellerName,
     seller_id: item?.seller_id ? String(item.seller_id) : undefined,
-    image:
-      item?.image ??
-      item?.image_url ??
-      "https://images.unsplash.com/photo-1636189239307-9f3a701f30a8",
+    images: normalizedImages,
+    image: resolveImageUrl(item?.image ?? item?.image_url ?? firstImage, FALLBACK_LISTING_IMAGE),
     postedDate: createdAt
       ? new Date(createdAt).toISOString().split("T")[0]
       : new Date().toISOString().split("T")[0],
     fileFormat: shader ? "GLSL" : (item?.fileFormat ?? item?.file_format),
     engine: shader ? "Three.js" : item?.engine,
     shader: shader ?? undefined,
+  };
+}
+
+function normalizeProfileResponse<T extends { listings?: Array<Record<string, any>> }>(data: T): T {
+  if (!data || !Array.isArray(data.listings)) {
+    return data;
+  }
+
+  return {
+    ...data,
+    listings: data.listings.map((listing) => ({
+      ...listing,
+      price: Number(listing?.price ?? 0),
+    })),
   };
 }
 
@@ -201,7 +224,14 @@ class ApiClient {
 
   // AUTH
   register(data: { name: string; email: string; password: string; phone?: string }) {
-    return this.request<any>("POST", "/auth/register/", data);
+    const payload = {
+      name: data.name,
+      email: data.email,
+      password: data.password,
+      ...(data.phone?.trim() ? { phone: data.phone.trim() } : {}),
+    };
+
+    return this.request<any>("POST", "/auth/register/", payload);
   }
 
   login(email: string, password: string) {
@@ -220,7 +250,7 @@ class ApiClient {
   }
 
   getProfile() {
-    return this.request<any>("GET", "/auth/profile/");
+    return this.request<any>("GET", "/auth/profile/").then((data) => normalizeProfileResponse(data));
   }
 
   getOAuth42Url() {
@@ -245,6 +275,10 @@ class ApiClient {
 
   getListing(id: string) {
     return this.request<any>("GET", `/listings/${id}/`);
+  }
+
+  getPublicUserProfile(userId: string | number) {
+    return this.request<any>("GET", `/users/${userId}/`).then((data) => normalizeProfileResponse(data));
   }
 
   createListing(data: any) {
@@ -281,8 +315,78 @@ class ApiClient {
     );
   }
 
-  getReviews(listingId: string) {
-    return this.request<any>("GET", `/listings/${listingId}/review/`);
+  async getReviews(listingId: string) {
+    try {
+      const data = await this.request<any>("GET", `/listings/${listingId}/review/`);
+      return Array.isArray(data) ? data : data?.results || [];
+    } catch {
+      return [];
+    }
+  }
+
+  uploadImage(file: File) {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const headers: HeadersInit = {};
+    if (this.token) {
+      headers.Authorization = `Bearer ${this.token}`;
+    }
+
+    return fetch("/images/upload", {
+      method: "POST",
+      headers,
+      credentials: "include",
+      body: formData,
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(this.getErrorMessage(data, response.statusText));
+        }
+
+        return data as { filename: string; url?: string };
+      });
+  }
+
+  // FOLLOW/SOCIAL
+  followUser(followingId: number) {
+    return this.request<any>("POST", "/follow/", {
+      following_id: followingId,
+    });
+  }
+
+  unfollowUser(followingId: number) {
+    return this.request<any>("DELETE", "/follow/", {
+      following_id: followingId,
+    });
+  }
+
+  getFollowerCount(userId: number) {
+    return this.request<{ followers: number; following: number }>("GET", `/follow/counts/${userId}/`);
+  }
+
+  getFollowingCount(userId: number) {
+    return this.request<{ followers: number; following: number }>("GET", `/follow/counts/${userId}/`);
+  }
+
+  getFollowing(userId: number, limit?: number, offset?: number) {
+    let url = `/follow/following/${userId}/`;
+    const params = new URLSearchParams();
+    if (limit) params.append("limit", limit.toString());
+    if (offset) params.append("offset", offset.toString());
+    if (params.toString()) url += `?${params.toString()}`;
+    return this.request<any>("GET", url);
+  }
+
+  getFollowers(userId: number, limit?: number, offset?: number) {
+    let url = `/follow/followers/${userId}/`;
+    const params = new URLSearchParams();
+    if (limit) params.append("limit", limit.toString());
+    if (offset) params.append("offset", offset.toString());
+    if (params.toString()) url += `?${params.toString()}`;
+    return this.request<any>("GET", url);
   }
 }
 

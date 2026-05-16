@@ -32,6 +32,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     api.setToken(null);
   };
 
+  const isUsableToken = (value: unknown): value is string => {
+    return typeof value === "string" && value.trim().length > 0 && value !== "undefined" && value !== "null";
+  };
+
   const persistAuth = (newToken: string, nextUser: User | null) => {
     setToken(newToken);
     setUser(nextUser);
@@ -41,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     api.setTokenChangeHandler((newToken) => {
-      if (newToken) {
+      if (isUsableToken(newToken)) {
         setToken(newToken);
         localStorage.setItem("auth_token", newToken);
       } else {
@@ -51,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const initAuth = async () => {
       const savedToken = localStorage.getItem("auth_token");
-      if (savedToken) {
+      if (isUsableToken(savedToken)) {
         setToken(savedToken);
         api.setToken(savedToken);
 
@@ -66,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               email: profile.email,
               name: profile.name,
               phone: profile.phone,
+              avatar_url: profile.avatar_url,
               role: profile.role,
               status: profile.status?.toLowerCase(),
             });
@@ -73,6 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch {
           if (!fallbackUser) clearAuthState();
         }
+      } else {
+        localStorage.removeItem("auth_token");
       }
       setLoading(false);
     };
@@ -97,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .refresh()
             .then((res) => {
               const newToken = getAccessToken(res);
-              if (!newToken) throw new Error("Missing refreshed token");
+              if (!isUsableToken(newToken)) throw new Error("Missing refreshed token");
               setToken(newToken);
               setUser((prev) => normalizeUser(res, newToken) ?? prev);
               localStorage.setItem("auth_token", newToken);
@@ -131,11 +138,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     phone?: string;
   }) => {
     const res = await api.register(data);
-    const newToken = res.access;
-    setToken(newToken);
-    setUser(res.user);
-    localStorage.setItem("auth_token", newToken);
+    const newToken = getAccessToken(res);
+
+    if (!isUsableToken(newToken)) {
+      clearAuthState();
+      throw new Error("Register response did not include a valid access token");
+    }
+
     api.setToken(newToken);
+    const profile = await api.getProfile().catch(() => null);
+    persistAuth(newToken, normalizeUser(profile ?? res, newToken));
   };
 
   const loginWithOAuth = async (accessToken: string, oauthUser?: User) => {
@@ -156,11 +168,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser({
           id: String(profile.id),
           email: profile.email,
-          name: profile.name,
-          phone: profile.phone,
-          role: profile.role,
-          status: profile.status?.toLowerCase(),
-        });
+            name: profile.name,
+            phone: profile.phone,
+            avatar_url: profile.avatar_url,
+            role: profile.role,
+            status: profile.status?.toLowerCase(),
+          });
       }
     } catch {
       // Keep token-derived or backend-provided user if profile fetch fails.
@@ -184,6 +197,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const payload = {
       name: data.name,
       phone: data.phone,
+      avatar_url: data.avatar_url,
     };
 
     const updated = await api.updateProfile(payload);
@@ -196,6 +210,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email: updated?.email ?? prev.email,
             name: updated?.name ?? data.name ?? prev.name,
             phone: updated?.phone ?? data.phone ?? prev.phone,
+            avatar_url: updated?.avatar_url ?? data.avatar_url ?? prev.avatar_url,
             role: updated?.role ?? prev.role,
             status: updated?.status?.toLowerCase() ?? prev.status,
           }

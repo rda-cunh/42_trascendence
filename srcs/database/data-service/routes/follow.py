@@ -46,7 +46,7 @@ def ApplyLimitOffset(sql, params, limit, offset):
 	return sql
 
 # Optional: ?limit or ?limit=5&offset=10
-@router.get('/following/{user_id}/', response_model=list[FollowUserInfo])
+@router.get('/following/{user_id}/', response_model=list[FollowUserInfo], status_code=200)
 def FollowingList(
 	user_id: int,
 	limit: int | None = Query(None, ge=1),
@@ -76,7 +76,7 @@ def FollowingList(
 	return following_list
 	
 # Optional: ?limit or ?limit=5&offset=10
-@router.get('/followers/{user_id}/', response_model=list[FollowUserInfo])
+@router.get('/followers/{user_id}/', response_model=list[FollowUserInfo], status_code=200)
 def FollowersList(
 	user_id: int,
 	limit: int | None = Query(None, ge=1),
@@ -105,7 +105,7 @@ def FollowersList(
 		followers_list.append(follower_user)
 	return followers_list
 
-@router.get('/followers-count/{user_id}/', response_model=FollowCount)
+@router.get('/followers-count/{user_id}/', response_model=FollowCount, status_code=200)
 def FollowersCount(user_id: int, db=Depends(get_db_dep)):
 	_, cursor = db
 	cursor.execute('''
@@ -116,7 +116,7 @@ def FollowersCount(user_id: int, db=Depends(get_db_dep)):
 	result = cursor.fetchone()
 	return (FollowCount(**result))
 
-@router.get('/following-count/{user_id}/', response_model=FollowCount)
+@router.get('/following-count/{user_id}/', response_model=FollowCount, status_code=200)
 def FollowingCount(user_id: int, db=Depends(get_db_dep)):
 	_, cursor = db
 	cursor.execute('''
@@ -127,7 +127,7 @@ def FollowingCount(user_id: int, db=Depends(get_db_dep)):
 	result = cursor.fetchone()
 	return (FollowCount(**result))
 
-@router.get('/feed/{user_id}/', response_model=list[FollowFeedItem])
+@router.get('/feed/{user_id}/', response_model=list[FollowFeedItem], status_code=200)
 def FollowFeed(
     user_id: int,
     limit: int | None = Query(None, ge=1, le=100),

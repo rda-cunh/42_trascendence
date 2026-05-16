@@ -16,6 +16,7 @@ class ProductCreate(BaseModel):
 	slug:			str
 	description:	Optional[str] = None
 	price:			Decimal
+	images:			list[str] = []
 
 	@field_validator('price')
 	@classmethod
@@ -28,6 +29,7 @@ class ProductUpdate(BaseModel):
 	description:	Optional[str] = None
 	price:			Optional[Decimal] = None
 	status:			Optional[ProductStatus] = None
+	images:			Optional[list[str]] = None
 
 class ProductImages(BaseModel):
 	image_hash:		str
@@ -48,7 +50,9 @@ class ProductResponse(BaseModel):
 	description:	Optional[str]
 	price:			Decimal
 	status:			ProductStatus
-	images:			list[ProductImages] = []
+	avg_rating:		Optional[Decimal]
+	review_count:	Optional[int]
+	images:			list[str] = []
 	created_at:		datetime
 	seller:			SellerModel = []
 
@@ -58,3 +62,35 @@ class ProductImagesResponse(BaseModel):
 	image_hash:		str
 	display_order:	int
 	created_at:		datetime
+
+class ReviewCreate(BaseModel):
+	reviewer_id:	int
+	rating:			int
+	title:			Optional[str] = []
+	body:			Optional[str] = []
+
+class ReviewUpdate(BaseModel):
+    rating: Optional[int] = None
+    title: Optional[str] = None
+    body: Optional[str] = None
+
+    @field_validator("rating")
+    @classmethod
+    def rating_range(cls, v: int) -> int:
+        if v is not None and not 1 <= v <= 5:
+            raise ValueError("rating must be between 1 and 5")
+        return v
+
+
+class ReviewResponse(BaseModel):
+    id:               int
+    product_id:       int
+    reviewer_id:      int
+    rating:           int
+    title:            Optional[str]
+    body:             Optional[str]
+    status:           str
+    created_at:       datetime
+    updated_at:       datetime
+    reviewer_name:    str
+    reviewer_avatar:  Optional[str]

@@ -51,7 +51,7 @@ def GetConversationById(conv_id: int, db=Depends(get_db_dep)):
 	chat['other_id'] = chat['seller_id']
 	return UserConversation(**chat)
 
-@router.post('/conversations/', response_model=UserConversation, status_code=200)
+@router.post('/conversations/', response_model=UserConversation, status_code=201)
 def PostConversation(conv_in: PostConversation, db=Depends(get_db_dep)):
 	conn, cursor = db
 	# If exists, then pass to load history
@@ -154,7 +154,7 @@ def GetConversations(user_id: int, db=Depends(get_db_dep)):
 
 	return chats
 
-@router.get('/conversations/{conv_id}/messages/', response_model=list[ConversationMessages])
+@router.get('/conversations/{conv_id}/messages/', response_model=list[ConversationMessages], status_code=200)
 def GetMessages(conv_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
 

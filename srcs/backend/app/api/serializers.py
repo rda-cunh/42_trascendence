@@ -9,7 +9,7 @@ class RegisterSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(min_length=8, max_length=64, write_only=True)
     phone = serializers.CharField(allow_null=True, allow_blank=True, required=False, max_length=13)
-    avatar_url = serializers.URLField(allow_null=True, allow_blank=True, required=False)
+    avatar_url = serializers.CharField(allow_null=True, allow_blank=True, required=False, max_length=500)
 
 class LoginSerializer(serializers.Serializer):
     """POST /api/auth/login/ — validate credentials before proxying"""
@@ -20,7 +20,7 @@ class ProfilePatchSerializer(serializers.Serializer):
     """PATCH /api/auth/profile/ — partial update fields"""
     name = serializers.CharField(allow_null=True, allow_blank=True, required=False, max_length=150) 
     phone = serializers.CharField(allow_null=True, allow_blank=True, required=False, max_length=13)
-    avatar_url = serializers.URLField(allow_null=True, allow_blank=True, required=False)
+    avatar_url = serializers.CharField(allow_null=True, allow_blank=True, required=False, max_length=500)
 
 class ChangePasswordSerializer(serializers.Serializer):
     """PATCH /api/auth/password/"""
@@ -83,4 +83,3 @@ class listinsIdPatch(serializers.Serializer):
 
 
 # /api/users/{id}
-

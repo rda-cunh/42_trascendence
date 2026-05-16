@@ -12,6 +12,7 @@ from urllib.parse import urlencode
 from .permissions import IsAdminRole
 
 from . import serializers
+from . import presence as presence_store
 import requests
 import secrets
 import json
@@ -460,38 +461,172 @@ class auth_42_callback(APIView):
         return response
 
 # --- CHAT API interfaces ---
+def ensure_chat_member(request, conversation_id):
+    """
+    Validate that the authenticated user belongs to the conversation
+    before allowing message history access through this proxy layer.
+    """
+    conversation_response = proxy_request(
+        "GET",
+        f"/chat/conversations/by-id/{conversation_id}/"
+    )
+
+    if conversation_response.status_code != 200:
+        return conversation_response
+
+    conversation = conversation_response.data or {}
+    allowed_user_ids = {
+        conversation.get("buyer_id"),
+        conversation.get("seller_id"),
+    }
+
+    if request.user.id not in allowed_user_ids:
+        raise PermissionDenied("You do not have permission to access this conversation.")
+
+    return None
+
+def normalize_chat_conversation_for_user(user_id, conversation):
+    """
+    Normalize a raw conversation object from data-service into a shape that is
+    stable for frontend use, including the correct 'other' participant.
+    """
+    if not isinstance(conversation, dict):
+        return conversation
+
+    buyer_id = conversation.get("buyer_id")
+    seller_id = conversation.get("seller_id")
+    buyer = conversation.get("buyer") or {}
+    seller = conversation.get("seller") or {}
+    listing = conversation.get("listing") or {}
+
+    is_buyer = user_id == buyer_id
+    other_id = seller_id if is_buyer else buyer_id
+    other_user = seller if is_buyer else buyer
+
+    normalized = dict(conversation)
+    normalized["other_id"] = other_id
+    normalized["other_user"] = other_user
+    normalized["listing_name"] = listing.get("name")
+    normalized["listing_image_hash"] = listing.get("image_hash")
+    normalized["listing_price"] = listing.get("price")
+
+    return normalized
+
+
+def normalize_chat_conversation_response(user_id, payload):
+    if isinstance(payload, list):
+        return [normalize_chat_conversation_for_user(user_id, item) for item in payload]
+    if isinstance(payload, dict):
+        return normalize_chat_conversation_for_user(user_id, payload)
+    return payload
+
+
 class chat_conversations(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         """ lists all conversations for the user (retrieved from JWT) """
-        return proxy_request(
+        upstream_response = proxy_request(
             "GET",
             f"/chat/conversations/{request.user.id}/"
         )
 
+        if upstream_response.status_code != 200:
+            return upstream_response
+
+        return Response(
+            normalize_chat_conversation_response(request.user.id, upstream_response.data),
+            status=upstream_response.status_code,
+        )
+
     def post(self, request):
-        """ creates or fetchs the conversation for a listing """
+        """ creates or fetches the conversation for a listing """
 
         serializer = serializers.ChatConversationCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        listing_id = serializer.validated_data["listing_id"]
+
+        listing_response = proxy_request("GET", f"/listings/{listing_id}/")
+        if listing_response.status_code != 200:
+            return listing_response
+
+        listing_data = listing_response.data or {}
+        seller_id = (
+            listing_data.get("seller_id")
+            or listing_data.get("user_id")
+            or listing_data.get("owner_id")
+        )
+
+        if not seller_id:
+            return Response(
+                {"detail": "Could not resolve seller for this listing."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
         payload = {
-            "listing_id": serializer.validated_data["listing_id"],
-            "buyer_id": request.user.id,
+            "listing_id": listing_id,
+            "user_id": request.user.id,
+            "seller_id": seller_id,
         }
 
-        return proxy_request("POST", "/chat/conversations/", data=payload)
+        upstream_response = proxy_request("POST", "/chat/conversations/", data=payload)
+
+        if upstream_response.status_code not in (200, 201):
+            return upstream_response
+
+        return Response(
+            normalize_chat_conversation_response(request.user.id, upstream_response.data),
+            status=upstream_response.status_code,
+        )
+
 
 class chat_messages(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, conversation_id):
         """ gets message history for one conversation """
+        permission_error = ensure_chat_member(request, conversation_id)
+        if permission_error is not None:
+            return permission_error
+
         return proxy_request(
             "GET",
             f"/chat/conversations/{conversation_id}/messages/"
         )
+
+# --- PRESENCE API interfaces ---
+class presence_ping(APIView):
+    """ POST: refresh the caller online TTL key in Redis """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        presence_store.mark_online(request.user.id)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class presence_query(APIView):
+    """ GET: return {user_id: bool} for a comma-separated ?ids= list. Public. """
+    permission_classes = [AllowAny]
+
+    MAX_IDS = 200
+
+    def get(self, request):
+        raw = request.query_params.get("ids", "")
+        if not raw:
+            return Response({})
+        try:
+            user_ids = [int(x) for x in raw.split(",") if x.strip()]
+        except ValueError:
+            return Response(
+                {"detail": "ids must be comma-separated integers"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if len(user_ids) > self.MAX_IDS:
+            return Response(
+                {"detail": f"too many ids (max {self.MAX_IDS})"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(presence_store.are_online(user_ids))
 
 # --- FOLLOW API interfaces ---
 class follow_action(APIView):

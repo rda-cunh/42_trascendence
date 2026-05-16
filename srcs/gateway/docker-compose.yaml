@@ -10,7 +10,8 @@ services:
       - CA_CRT_NAME=${CA_CRT_NAME:-ca.crt}
       - INT_CRT_NAME=${INT_CRT_NAME:-internal.crt}
       - INT_KEY_NAME=${INT_KEY_NAME:-internal.key}
-      - ENVSUBST_VARS=CA_CRT_NAME,INT_CRT_NAME,INT_KEY_NAME
+      - ENVSUBST_VARS=CA_CRT_NAME,INT_CRT_NAME,INT_KEY_NAME,FRONTEND_TARGET
+      - FRONTEND_MODE=${FRONTEND_MODE:-production}
     volumes:
       - ./default.conf:/etc/nginx/templates/default.conf.template:ro
       - certs_data:/certs:ro
@@ -18,3 +19,10 @@ services:
     depends_on:
       pki-init:
         condition: service_completed_successfully
+      backend:
+        condition: service_started
+      database:
+        condition: service_healthy
+      data-service:
+        condition: service_started
+      
