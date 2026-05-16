@@ -78,7 +78,12 @@ export function Profile() {
 
         <div className="surface overflow-hidden">
           <div className="flex flex-col gap-6 bg-gradient-to-r from-purple-600 to-purple-800 p-8 sm:flex-row sm:items-center">
-            <UserAvatar src={user?.avatar_url} name={user?.name || user?.email || initials} sizeClassName="h-20 w-20 text-xl" />
+            <UserAvatar
+              userId={user?.id}
+              src={user?.avatar_url}
+              name={user?.name || user?.email || initials}
+              sizeClassName="h-20 w-20 text-xl"
+            />
             <div className="min-w-0 flex-1">
               <h2 className="text-2xl font-bold text-white">{user?.name}</h2>
               <p className="break-words text-purple-200">{user?.email}</p>

@@ -28,7 +28,24 @@ export function ShaderPreview({
 
     setRenderError(null);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const canvas = document.createElement("canvas");
+    const gl =
+      (canvas.getContext && (canvas.getContext("webgl2", { antialias: true }) as WebGLRenderingContext)) ||
+      (canvas.getContext && (canvas.getContext("webgl", { antialias: true }) as WebGLRenderingContext));
+
+    if (!gl) {
+      setRenderError("WebGL is not available in this environment.");
+      return;
+    }
+
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, context: gl, alpha: true });
+    } catch (err) {
+      setRenderError(err instanceof Error ? err.message : "Error creating WebGL renderer");
+      return;
+    }
+
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
 
@@ -39,11 +56,20 @@ export function ShaderPreview({
       u_resolution: { value: new THREE.Vector2(1, 1) },
     };
     const geometry = new THREE.PlaneGeometry(2, 2);
-    const material = new THREE.ShaderMaterial({
-      vertexShader: VERTEX_SHADER,
-      fragmentShader,
-      uniforms,
-    });
+    let material: THREE.ShaderMaterial;
+    try {
+      material = new THREE.ShaderMaterial({
+        vertexShader: VERTEX_SHADER,
+        fragmentShader,
+        uniforms,
+      });
+    } catch (err) {
+      setRenderError(err instanceof Error ? err.message : "Shader compilation failed");
+      renderer.dispose();
+      renderer.domElement.remove();
+      return;
+    }
+
     const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
 
