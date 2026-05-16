@@ -443,7 +443,49 @@ curl -X POST http://data-service:9000/api/orders/ -H "Content-Type: application/
 
 <details>
 <summary><h1> Product Review </h1></summary>
-(To be implemented)
+
+## - Reviews  (POST):
+```
+POST http://data-service:9000/api/listings/{listing_id}/reviews/ -H "Content-Type: application/json" -d '{
+  "reviewer_id": 1,
+  "rating": 5,
+  "title": "Nice Product", (OPTIONAL)
+  "body": "Example description bla bla bla..." (OPTIONAL)
+}'
+```
+
+## - Reviews  (GET):
+```
+(list review from a product)
+GET http://data-service:9000/api/listings/{listing_id}/reviews/
+```
+
+## - Reviews  (GET w/ Pagination):
+```
+(list review from a product)
+GET http://data-service:9000/api/listings/{listing_id}/reviews/?page=2
+```
+
+## - Reviews  (GET specific review):
+```
+(list review from a product)
+GET http://data-service:9000/api/listings/{listing_id}/reviews/{review_id}/
+```
+
+## - Reviews  (PATCH):
+```
+PATCH http://data-service:9000/api/listings/{listing_id}/reviews/{review_id}/ -H "Content-Type: application/json" -d '{
+  "rating": 3,
+  "title": "Título atualizado",
+  "body": "Bla Bla Bla."
+}'
+```
+
+## - Reviews  (DELETE):
+```
+DELETE http://data-service:9000/api/listings/{listing_id}/reviews/{review_id}/
+```
+
 </details>
 
 
@@ -551,3 +593,62 @@ curl -X GET "https://localhost/api/follow/following-count/{user_id}/"
 ```
 
 </details>
+
+
+
+<details>
+<summary><h1> Admin </h1></summary>
+
+## Endpoints
+
+# Banned Users
+```
+(Have pagination '?page=1')
+curl --insecure -X GET "https://localhost/api/admin/bans/"
+```
+
+# Ban user
+```
+curl --insecure -X POST "https://localhost/api/admin/bans/{user_id}/"
+```
+
+# Unban user
+```
+curl --insecure -X DELETE "https://localhost/api/admin/bans/{user_id}/"
+```
+
+# Admin Users
+```
+(Have pagination '?page=1')
+curl --insecure -X GET "https://localhost/api/admin/manage/"
+```
+
+# Followers list
+```
+curl -X GET "https://localhost/api/follow/followers/{user_id}/"
+
+# limit
+curl -X GET "https://localhost/api/follow/followers/{user_id}/?limit=5"
+
+# limit and offset
+curl -X GET "https://localhost/api/follow/followers/{user_id}/?limit=5&offset=10"
+```
+
+# Following Feed
+```
+curl -X GET "https://localhost/api/friends/feed/{user_id}/"
+
+curl -X GET "https://localhost/api/friends/feed/{user_id}/?page=2"
+
+curl -X GET "https://localhost/api/friends/feed/{user_id}/?search=test"
+```
+
+# Followers/Following count
+```
+curl -X GET "https://localhost/api/friends/followers-count/{user_id}/"
+
+curl -X GET "https://localhost/api/friends/following-count/{user_id}/"
+```
+
+</details>
+

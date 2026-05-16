@@ -13,6 +13,8 @@ class UserProducts(BaseModel):
 	name:			str
 	description:	str
 	price:			Decimal
+	avg_rating:		Optional[Decimal]
+	review_count:	Optional[int]
 	images:			list[str] = []
 
 class UserResponse(BaseModel):

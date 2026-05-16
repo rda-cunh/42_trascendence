@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(255) NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   phone VARCHAR(30) NULL DEFAULT NULL,
-  role ENUM('user', 'admin') NOT NULL DEFAULT 'user',
+  role ENUM('User', 'Admin') NOT NULL DEFAULT 'User',
   status ENUM('Active','Suspended','Banned','Deactivated') NOT NULL DEFAULT 'Active',
   avatar_url VARCHAR(255),
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS users_address (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_addresses_users (users_id),
-  CONSTRAINT fk_addresses_users FOREIGN KEY (users_id) REFERENCES users (id)
+  CONSTRAINT fk_addresses_users FOREIGN KEY (users_id) REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS products (
@@ -40,12 +40,15 @@ CREATE TABLE IF NOT EXISTS products (
   price DECIMAL(12,2) NOT NULL,
   images JSON NULL,
   status ENUM('Draft', 'Active', 'Paused', 'Deleted') NOT NULL DEFAULT 'Active',
+  avg_rating DECIMAL(3,2) NULL DEFAULT NULL,
+  review_count INT UNSIGNED NOT NULL DEFAULT 0,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uq_product_slug (slug),
   KEY idx_seller_id (seller_id),
-  CONSTRAINT fk_product_users FOREIGN KEY (seller_id) REFERENCES users (id)
+  KEY idx_product_status (status),
+  CONSTRAINT fk_product_users FOREIGN KEY (seller_id) REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS product_images (
@@ -56,7 +59,7 @@ CREATE TABLE IF NOT EXISTS product_images (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_product_images_product (product_id),
-  CONSTRAINT fk_product_images_product FOREIGN KEY (product_id) REFERENCES products (id)
+  CONSTRAINT fk_product_images_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS orders (
@@ -91,28 +94,28 @@ CREATE TABLE IF NOT EXISTS order_items (
   KEY idx_order_items_product (product_id),
   KEY idx_order_items_seller (seller_id),
   CONSTRAINT fk_order_items_order FOREIGN KEY (order_id) REFERENCES orders (id),
-  CONSTRAINT fk_order_items_product FOREIGN KEY (product_id) REFERENCES products (id),
-  CONSTRAINT fk_order_items_seller FOREIGN KEY (seller_id) REFERENCES users (id)
+  CONSTRAINT fk_order_items_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE SET NULL,
+  CONSTRAINT fk_order_items_seller FOREIGN KEY (seller_id) REFERENCES users (id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS product_reviews (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   product_id BIGINT UNSIGNED NOT NULL,
-  buyer_id BIGINT UNSIGNED NOT NULL,
+  reviewer_id BIGINT UNSIGNED NOT NULL,
   order_items_id BIGINT UNSIGNED NULL DEFAULT NULL,
-  review TINYINT UNSIGNED NOT NULL,
+  rating TINYINT UNSIGNED NOT NULL,
   title VARCHAR(150) NULL DEFAULT NULL,
   body TEXT NULL DEFAULT NULL,
-  status ENUM('Pending', 'Approved', 'Rejected') NOT NULL DEFAULT 'Pending',
+  status ENUM('Pending', 'Approved', 'Rejected', 'Deleted') NOT NULL DEFAULT 'Approved',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uq_review_per_item (order_items_id),
   KEY idx_review_product (product_id),
-  KEY idx_review_buyer (buyer_id),
-  CONSTRAINT chk_rating CHECK (review BETWEEN 1 AND 5),
-  CONSTRAINT fk_review_product FOREIGN KEY (product_id) REFERENCES products (id),
-  CONSTRAINT fk_review_buyer FOREIGN KEY (buyer_id) REFERENCES users (id),
-  CONSTRAINT fk_review_order_items FOREIGN KEY (order_items_id) REFERENCES order_items (id)
+  KEY idx_review_reviewer (reviewer_id),
+  CONSTRAINT chk_rating CHECK (rating BETWEEN 1 AND 5),
+  CONSTRAINT fk_review_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE,
+  CONSTRAINT fk_review_reviewer FOREIGN KEY (reviewer_id) REFERENCES users (id) ON DELETE CASCADE,
+  CONSTRAINT fk_review_order_items FOREIGN KEY (order_items_id) REFERENCES order_items (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS payments (
@@ -126,7 +129,7 @@ CREATE TABLE IF NOT EXISTS payments (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_payments_order (order_id),
-  CONSTRAINT fk_payments_order FOREIGN KEY (order_id) REFERENCES orders (id)
+  CONSTRAINT fk_payments_order FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS conversations (
@@ -141,9 +144,9 @@ CREATE TABLE IF NOT EXISTS conversations (
   KEY idx_conversation_listing (listing_id),
   KEY idx_conversation_buyer (buyer_id),
   KEY idx_conversation_seller (seller_id),
-  CONSTRAINT fk_conversation_listing FOREIGN KEY (listing_id) REFERENCES products (id),
-  CONSTRAINT fk_conversation_buyer FOREIGN KEY (buyer_id) REFERENCES users (id),
-  CONSTRAINT fk_conversation_seller FOREIGN KEY (seller_id) REFERENCES users (id)
+  CONSTRAINT fk_conversation_listing FOREIGN KEY (listing_id) REFERENCES products (id) ON DELETE CASCADE,
+  CONSTRAINT fk_conversation_buyer FOREIGN KEY (buyer_id) REFERENCES users (id) ON DELETE CASCADE,
+  CONSTRAINT fk_conversation_seller FOREIGN KEY (seller_id) REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS messages (
@@ -156,8 +159,8 @@ CREATE TABLE IF NOT EXISTS messages (
   PRIMARY KEY (id),
   KEY idx_messages_conversation (conversation_id),
   KEY idx_messages_sender (sender_id),
-  CONSTRAINT fk_messages_conversation FOREIGN KEY (conversation_id) REFERENCES conversations (id),
-  CONSTRAINT fk_messages_sender FOREIGN KEY (sender_id) REFERENCES users (id)
+  CONSTRAINT fk_messages_conversation FOREIGN KEY (conversation_id) REFERENCES conversations (id) ON DELETE CASCADE,
+  CONSTRAINT fk_messages_sender FOREIGN KEY (sender_id) REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS follows (
@@ -171,3 +174,6 @@ CREATE TABLE IF NOT EXISTS follows (
 	CONSTRAINT fk_follows_following FOREIGN KEY (following_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+INSERT INTO users (name, email, password_hash, role, status, created_at, updated_at)
+SELECT 'System Administrator', 'admin@admin.com', SHA2('12345678', 256), 'Admin', 'Active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+WHERE NOT EXISTS ( SELECT 1 FROM users WHERE email = 'admin@admin.com');

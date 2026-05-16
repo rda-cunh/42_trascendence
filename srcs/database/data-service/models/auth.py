@@ -93,10 +93,11 @@ class ProductResponse(BaseModel):
 	description:	str
 	price:			Decimal
 	status:			ProductStatus
+	avg_rating:		Optional[Decimal]
+	review_count:	Optional[int]
 	images:			list[str] = []
 
 class ProfileResponse(UserBase):
 	name:			str
 	email:			str
-	owner:			bool = True
 	listings:		list[ProductResponse] = []
