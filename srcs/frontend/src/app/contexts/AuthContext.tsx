@@ -157,7 +157,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     phone?: string;
   }) => {
     const res = await api.register(data);
-    const newToken = getAccessToken(res);
+    let newToken = getAccessToken(res);
+
+    // Some backends create the user on registration but do not issue an access
+    // token. In that case, attempt to login immediately using the provided
+    // credentials so the user is signed in after registering.
+    if (!isUsableToken(newToken)) {
+      try {
+        const loginResp = await api.login(data.email, data.password);
+        newToken = getAccessToken(loginResp);
+      } catch (err) {
+        clearAuthState();
+        throw new Error("Register response did not include a valid access token");
+      }
+    }
 
     if (!isUsableToken(newToken)) {
       clearAuthState();
