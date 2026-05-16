@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat Conversations Debug</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 900px;
+      margin: 24px auto;
+      padding: 0 16px 40px;
+      background: #111827;
+      color: #f9fafb;
+    }
+
+    button {
+      padding: 10px 14px;
+      border: 0;
+      border-radius: 6px;
+      background: #9333ea;
+      color: white;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    pre {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 8px;
+      background: #030712;
+      border: 1px solid #374151;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Chat Conversations Debug</h1>
+  <button id="loadBtn">Load Conversations</button>
+  <pre id="output">Click the button.</pre>
+
+  <script>
+    const output = document.getElementById("output");
+    const loadBtn = document.getElementById("loadBtn");
+
+    function getAuthHeaders() {
+      const token = localStorage.getItem("auth_token");
+      const headers = { "Content-Type": "application/json" };
+      if (token && token !== "undefined" && token !== "null" && token.trim() !== "") {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      return headers;
+    }
+
+    async function readJsonSafe(response) {
+      try {
+        return await response.json();
+      } catch {
+        return await response.text();
+      }
+    }
+
+    loadBtn.addEventListener("click", async () => {
+      output.textContent = "Loading...";
+
+      try {
+        const response = await fetch("/api/chat/conversations/", {
+          method: "GET",
+          headers: getAuthHeaders(),
+          credentials: "include",
+        });
+
+        const data = await readJsonSafe(response);
+
+        console.log("[chat-conversations-debug] status:", response.status);
+        console.log("[chat-conversations-debug] raw data:", data);
+        console.log("[chat-conversations-debug] first item:", Array.isArray(data) ? data[0] : null);
+
+        output.textContent = JSON.stringify(
+          {
+            status: response.status,
+            isArray: Array.isArray(data),
+            count: Array.isArray(data) ? data.length : null,
+            firstItem: Array.isArray(data) && data.length > 0 ? data[0] : null,
+            raw: data
+          },
+          null,
+          2
+        );
+      } catch (error) {
+        console.error("[chat-conversations-debug] failed:", error);
+        output.textContent = String(error);
+      }
+    });
+  </script>
+</body>
+</html>

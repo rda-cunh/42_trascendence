@@ -1,16 +1,50 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router";
+import { Camera, Edit3, Mail, Phone, Plus, Save, Shield, Upload, User } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
-import { User, Mail, Phone, Save, Edit3, Shield } from "lucide-react";
+import { ProductCard } from "../components/ProductCard";
+import { api, mapListing } from "../lib/api";
+import { Listing } from "../types";
 import { toast } from "sonner";
+import { UserAvatar } from "../components/UserAvatar";
+import { useImageUpload } from "../hooks/useImageUpload";
 
 export function Profile() {
   const { user, updateUser } = useAuth();
   const [editing, setEditing] = useState(false);
+  const [products, setProducts] = useState<Listing[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
     phone: user?.phone || "",
   });
+
+  const avatarUpload = useImageUpload({
+    onSuccess: async (result) => {
+      await updateUser({ avatar_url: result.url });
+    },
+    successMessage: "Profile photo updated",
+    errorContext: "profile photo",
+  });
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      if (!user?.id) return;
+
+      try {
+        const profile = await api.getProfile();
+        const listings = Array.isArray(profile?.listings) ? profile.listings : [];
+        setProducts(listings.map(mapListing));
+      } catch (err) {
+        console.error("Failed to load products:", err);
+      } finally {
+        setIsLoadingProducts(false);
+      }
+    };
+
+    fetchProducts();
+  }, [user?.id]);
 
   const handleSave = async () => {
     try {
@@ -22,20 +56,32 @@ export function Profile() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
-      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-        <h1 className="mb-8 text-3xl font-bold text-gray-900 dark:text-white">My Profile</h1>
+  const toggleEditing = () => {
+    setFormData({
+      name: user?.name || "",
+      email: user?.email || "",
+      phone: user?.phone || "",
+    });
+    setEditing((current) => !current);
+  };
 
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          {/* Avatar section */}
-          <div className="flex items-center gap-6 bg-gradient-to-r from-purple-600 to-purple-800 p-8">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/20 text-3xl font-bold text-white backdrop-blur-sm">
-              {user?.name?.charAt(0).toUpperCase() || "U"}
-            </div>
-            <div>
+  const handleAvatarUpload = () => {
+    avatarUpload.handleUpload();
+  };
+
+  const initials = user?.name?.charAt(0).toUpperCase() || "U";
+
+  return (
+    <div className="app-page">
+      <div className="app-container-form">
+        <h1 className="page-title mb-8">My Profile</h1>
+
+        <div className="surface overflow-hidden">
+          <div className="flex flex-col gap-6 bg-gradient-to-r from-purple-600 to-purple-800 p-8 sm:flex-row sm:items-center">
+            <UserAvatar src={user?.avatar_url} name={user?.name || user?.email || initials} sizeClassName="h-20 w-20 text-xl" />
+            <div className="min-w-0 flex-1">
               <h2 className="text-2xl font-bold text-white">{user?.name}</h2>
-              <p className="text-purple-200">{user?.email}</p>
+              <p className="break-words text-purple-200">{user?.email}</p>
               {user?.role && (
                 <span className="mt-2 inline-flex items-center gap-1 rounded bg-white/20 px-2 py-1 text-xs text-white backdrop-blur-sm">
                   <Shield className="h-3 w-3" />
@@ -45,15 +91,14 @@ export function Profile() {
             </div>
           </div>
 
-          {/* Profile form */}
           <div className="space-y-5 p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Account Details
               </h3>
               <button
-                onClick={() => setEditing(!editing)}
-                className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm text-purple-600 transition-colors hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20"
+                onClick={toggleEditing}
+                className="btn-ghost text-purple-600 dark:text-purple-400"
               >
                 <Edit3 className="h-4 w-4" />
                 {editing ? "Cancel" : "Edit"}
@@ -61,7 +106,30 @@ export function Profile() {
             </div>
 
             <div>
-              <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="form-label">
+                <Camera className="h-4 w-4" /> Profile Photo
+              </label>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => avatarUpload.setSelectedFile(e.target.files?.[0] ?? null)}
+                  className="form-control"
+                />
+                <button
+                  type="button"
+                  onClick={handleAvatarUpload}
+                  disabled={!avatarUpload.selectedFile || avatarUpload.isUploading}
+                  className="btn-secondary h-10 shrink-0"
+                >
+                  <Upload className="h-4 w-4" />
+                  <span>{avatarUpload.isUploading ? "Uploading..." : "Upload photo"}</span>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="form-label">
                 <User className="h-4 w-4" /> Name
               </label>
               <input
@@ -69,25 +137,25 @@ export function Profile() {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 disabled={!editing}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="form-control"
               />
             </div>
 
             <div>
-              <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="form-label">
                 <Mail className="h-4 w-4" /> Email
               </label>
               <input
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                disabled={!editing}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                disabled
+                className="form-control"
               />
             </div>
 
             <div>
-              <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="form-label">
                 <Phone className="h-4 w-4" /> Phone
               </label>
               <input
@@ -96,20 +164,60 @@ export function Profile() {
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 disabled={!editing}
                 placeholder="Not set"
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="form-control"
               />
             </div>
 
             {editing && (
-              <button
-                onClick={handleSave}
-                className="flex items-center gap-2 rounded-lg bg-purple-600 px-6 py-3 font-medium text-white transition-colors hover:bg-purple-700"
-              >
+              <button onClick={handleSave} className="btn-primary px-6 py-3">
                 <Save className="h-4 w-4" />
                 Save Changes
               </button>
             )}
           </div>
+        </div>
+
+        <div className="mt-8">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Your Products</h2>
+            <Link to="/sell" className="btn-primary">
+              <Plus className="h-4 w-4" />
+              New Product
+            </Link>
+          </div>
+
+          {isLoadingProducts ? (
+            <div className="empty-state">
+              <p className="text-gray-500 dark:text-gray-400">Loading products...</p>
+            </div>
+          ) : products.length === 0 ? (
+            <div className="empty-state">
+              <p className="mb-4 text-gray-600 dark:text-gray-400">
+                You haven't posted any products yet.
+              </p>
+              <Link to="/sell" className="btn-primary px-6 py-3">
+                <Plus className="h-4 w-4" />
+                Create Your First Product
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {products.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  listing={product}
+                  footerAction={
+                    <Link
+                      to={`/listing/${product.id}/edit`}
+                      className="text-sm font-medium text-purple-600 transition-colors hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
+                    >
+                      Edit
+                    </Link>
+                  }
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
