@@ -443,7 +443,49 @@ curl -X POST http://data-service:9000/api/orders/ -H "Content-Type: application/
 
 <details>
 <summary><h1> Product Review </h1></summary>
-(To be implemented)
+
+## - Reviews  (POST):
+```
+POST http://data-service:9000/api/listings/{listing_id}/reviews/ -H "Content-Type: application/json" -d '{
+  "reviewer_id": 1,
+  "rating": 5,
+  "title": "Nice Product", (OPTIONAL)
+  "body": "Example description bla bla bla..." (OPTIONAL)
+}'
+```
+
+## - Reviews  (GET):
+```
+(list review from a product)
+GET http://data-service:9000/api/listings/{listing_id}/reviews/
+```
+
+## - Reviews  (GET w/ Pagination):
+```
+(list review from a product)
+GET http://data-service:9000/api/listings/{listing_id}/reviews/?page=2
+```
+
+## - Reviews  (GET specific review):
+```
+(list review from a product)
+GET http://data-service:9000/api/listings/{listing_id}/reviews/{review_id}/
+```
+
+## - Reviews  (PATCH):
+```
+PATCH http://data-service:9000/api/listings/{listing_id}/reviews/{review_id}/ -H "Content-Type: application/json" -d '{
+  "rating": 3,
+  "title": "Título atualizado",
+  "body": "Bla Bla Bla."
+}'
+```
+
+## - Reviews  (DELETE):
+```
+DELETE http://data-service:9000/api/listings/{listing_id}/reviews/{review_id}/
+```
+
 </details>
 
 
