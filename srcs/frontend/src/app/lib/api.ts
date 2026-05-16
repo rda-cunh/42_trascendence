@@ -46,7 +46,7 @@ export function getAccessToken(data: any): string | null {
 export function normalizeUser(data: any, fallbackToken?: string | null): User | null {
   const source = data?.user ?? data;
   const tokenUser = fallbackToken ? parseUserFromToken(fallbackToken) : null;
-  const id = source?.id ?? source?.user_id ?? source?.external_user_id ?? tokenUser?.id;
+  const id = source?.id ?? source?.user_id ?? tokenUser?.id ?? source?.external_user_id;
 
   if (!id) return tokenUser;
 
@@ -66,7 +66,8 @@ export function parseUserFromToken(jwt: string): User | null {
     const payload = JSON.parse(window.atob(jwt.split(".")[1]));
     return normalizeUser(
       {
-        id: payload.external_user_id ?? payload.user_id ?? payload.sub,
+        id: payload.user_id ?? payload.sub ?? payload.external_user_id,
+        external_user_id: payload.external_user_id,
         email: payload.email,
         name: payload.name,
         role: payload.role,
