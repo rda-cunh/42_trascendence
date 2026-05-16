@@ -12,6 +12,7 @@ from urllib.parse import urlencode
 from .permissions import IsAdminRole
 
 from . import serializers
+from . import presence as presence_store
 import requests
 import secrets
 import json
@@ -593,6 +594,39 @@ class chat_messages(APIView):
             "GET",
             f"/chat/conversations/{conversation_id}/messages/"
         )
+
+# --- PRESENCE API interfaces ---
+class presence_ping(APIView):
+    """ POST: refresh the caller online TTL key in Redis """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        presence_store.mark_online(request.user.id)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class presence_query(APIView):
+    """ GET: return {user_id: bool} for a comma-separated ?ids= list. Public. """
+    permission_classes = [AllowAny]
+
+    MAX_IDS = 200
+
+    def get(self, request):
+        raw = request.query_params.get("ids", "")
+        if not raw:
+            return Response({})
+        try:
+            user_ids = [int(x) for x in raw.split(",") if x.strip()]
+        except ValueError:
+            return Response(
+                {"detail": "ids must be comma-separated integers"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if len(user_ids) > self.MAX_IDS:
+            return Response(
+                {"detail": f"too many ids (max {self.MAX_IDS})"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(presence_store.are_online(user_ids))
 
 # --- FOLLOW API interfaces ---
 class follow_action(APIView):

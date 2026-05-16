@@ -42,6 +42,8 @@ from .views import (
     auth_42_callback,
     chat_conversations,
     chat_messages,
+    presence_ping,
+    presence_query,
     admin_bans,
     manage_admins,
     manage_bans,
@@ -78,6 +80,10 @@ urlpatterns = [
         # chat paths
         path("chat/conversations/", chat_conversations.as_view()),
         path("chat/conversations/<int:conversation_id>/messages/", chat_messages.as_view()),
+
+        # presence paths
+        path("presence/ping/", presence_ping.as_view()),
+        path("presence/",      presence_query.as_view()),
 
         # follow paths
         path("follow/",                              follow_action.as_view()),
