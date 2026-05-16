@@ -6,7 +6,6 @@ from models.user import UserResponse
 
 router = APIRouter(prefix='/api/users', tags=['Users'])
 
-
 @router.get('/{user_id}/', response_model=UserResponse)
 def	get_profile(user_id: int, page: int = 1, db=Depends(get_db_dep)):
 	conn, cursor = db
@@ -22,7 +21,7 @@ def	get_profile(user_id: int, page: int = 1, db=Depends(get_db_dep)):
 	n_prod = cursor.fetchone()['COUNT(*)']
 	user['pages'] = (n_prod // 10) if (n_prod % 10) == 0 else (n_prod // 10 + 1)
 
-	cursor.execute('SELECT id, name, description, price FROM products WHERE seller_id = %s ORDER BY created_at DESC LIMIT %s OFFSET %s', (user_id, limit, skip))
+	cursor.execute('SELECT id, name, description, price, avg_rating, review_count FROM products WHERE seller_id = %s ORDER BY created_at DESC LIMIT %s OFFSET %s', (user_id, limit, skip))
 	products = cursor.fetchall()
 	user['owner'] = False		## Check user_id == current_user['id'] || current_user['role'] == 'Admin'
 	if not products:
@@ -34,7 +33,7 @@ def	get_profile(user_id: int, page: int = 1, db=Depends(get_db_dep)):
 
 	cursor.execute(
 		f'''
-		SELECT product_id, image_hash, display_order FROM product_images WHERE product_id IN ({placeholders}) ORDER BY display_order''',
+		SELECT product_id, image_hash AS images FROM product_images WHERE product_id IN ({placeholders}) ORDER BY display_order''',
 		tuple(product_ids)
 	)
 	image_rows = cursor.fetchall()
@@ -42,15 +41,9 @@ def	get_profile(user_id: int, page: int = 1, db=Depends(get_db_dep)):
 
 	for img in image_rows:
 		pid = img['product_id']
-		images_map.setdefault(pid, []).append({'image_hash': img['image_hash'], 'display_order': img['display_order']})
+		images_map.setdefault(pid, []).append(img['images'])
 	
 	for p in products:
 		p['images'] = images_map.get(p['id'], [])
-		del p['id']
 	user['listings'] = products
 	return (UserResponse(**user))
-
-
-# Admin view
-# TO DO
-

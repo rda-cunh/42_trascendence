@@ -2,6 +2,8 @@ import { useCart } from "../contexts/CartContext";
 import { ShoppingCart, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
+import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { resolveImageUrl } from "../lib/images";
 
 export function Cart() {
   const { items, removeItem, total, itemCount } = useCart();
@@ -48,8 +50,8 @@ export function Cart() {
                       key={item.listing.id}
                       className="flex items-center gap-3 border-b border-gray-100 p-3 last:border-0 dark:border-gray-800"
                     >
-                      <img
-                        src={item.listing.image}
+                      <ImageWithFallback
+                        src={resolveImageUrl(item.listing.image)}
                         alt={item.listing.title}
                         className="h-10 w-10 rounded object-cover"
                       />
