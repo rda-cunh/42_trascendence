@@ -15,6 +15,14 @@ interface RequestOptions {
   retryOnUnauthorized?: boolean;
 }
 
+export interface ListingImageRecord {
+  id: number;
+  product_id: number;
+  image_hash: string;
+  display_order: number;
+  created_at: string;
+}
+
 function pickFirstErrorValue(value: unknown): string | null {
   if (typeof value === "string") {
     const trimmed = value.trim();
@@ -329,6 +337,7 @@ class ApiClient {
     }
   }
 
+  // IMAGES
   uploadImage(file: File) {
     const formData = new FormData();
     formData.append("image", file);
@@ -352,6 +361,21 @@ class ApiClient {
 
       return data as { filename: string; url?: string };
     });
+  }
+
+  getListingImages(listingId: string | number) {
+    return this.request<ListingImageRecord[]>("GET", `/listings/${listingId}/images/`);
+  }
+
+  addListingImage(listingId: string | number, imageHash: string, displayOrder: number) {
+    return this.request<ListingImageRecord>("POST", `/listings/${listingId}/images/`, {
+      image_hash: imageHash,
+      display_order: displayOrder,
+    });
+  }
+
+  deleteListingImage(listingId: string | number, imageId: number) {
+    return this.request<void>("DELETE", `/listings/${listingId}/images/${imageId}/`, {});
   }
 
   // FOLLOW/SOCIAL

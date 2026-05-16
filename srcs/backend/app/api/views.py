@@ -10,6 +10,7 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import redirect as django_redirect
 from urllib.parse import urlencode
 from .permissions import IsAdminRole
+from decimal import Decimal
 
 from . import serializers
 from . import presence as presence_store
@@ -30,19 +31,37 @@ def is_admin(request):
         return False
     return token['role'] == 'admin'
 
+# utility to convert non-JSON-serializable values (like Decimal) into strings for safe JSON responses
+def make_json_safe(value):
+    """Convert DRF/Python values like Decimal into JSON-serializable primitives."""
+    if isinstance(value, Decimal):
+        return str(value)
+
+    if isinstance(value, dict):
+        return {key: make_json_safe(val) for key, val in value.items()}
+
+    if isinstance(value, list):
+        return [make_json_safe(item) for item in value]
+
+    if isinstance(value, tuple):
+        return [make_json_safe(item) for item in value]
+
+    return value
+
 # data-service proxy configuration
 def proxy_request(method, endpoint, data=None, params=None):
     """ helper function: proxy to data-service with auth headers"""
-    base_url = settings.DATA_SERVICE_URL.rstrip("/")                            # added this to ensure no double slashes in the URL
+    base_url = settings.DATA_SERVICE_URL.rstrip("/")
     endpoint_path = endpoint if endpoint.startswith("/") else f"/{endpoint}"
     url = f"{base_url}{endpoint_path}"
-    headers = {"X-Internal-Token": settings.DATA_SERVICE_TOKEN}                 # to check with the team if we want to use this for internal auth between services
+    headers = {"X-Internal-Token": settings.DATA_SERVICE_TOKEN}
+    safe_data = make_json_safe(data)
 
     try:
         resp = requests.request(
             method=method,
             url=url,
-            json=data,
+            json=safe_data,
             params=params,
             headers=headers,
             timeout=5,
@@ -719,13 +738,13 @@ class listing_id(APIView):
         serializer.is_valid(raise_exception=True)
 
         product_data = proxy_request("GET", f"/listings/{product_id}/").data
-        if not request.user.id == product_data.get("owner_id") or is_admin(request):
+        if request.user.id != product_data.get("seller_id") and not is_admin(request):
             raise PermissionDenied("You do not have permission to edit this product.")
         return proxy_request("PATCH", f"/listings/{product_id}/", serializer.validated_data)
 
     def delete(self, request, product_id):
         product_data = proxy_request("GET", f"/listings/{product_id}/").data
-        if not request.user.id == product_data.get("owner_id") or is_admin(request):
+        if request.user.id != product_data.get("seller_id") and not is_admin(request):
             raise PermissionDenied("You do not have permission to delete this product.")
         return proxy_request("DELETE", f"/listings/{product_id}/")
 
@@ -737,6 +756,32 @@ class listing_full(APIView):
     def get(self, request):
         return proxy_request("GET", "/listings/")
 
+class listings_image(APIView):
+    def get(self, request, product_id):
+        product_data = proxy_request("GET", f"/listings/{product_id}/").data
+        if not request.user.id == product_data.get("seller_id") and not is_admin(request):
+            raise PermissionDenied("You do not have permission to view this product images metadata.")
+        return proxy_request("GET", f"/listings/{product_id}/images/")
+
+    def post(self, request, product_id):
+        product_data = proxy_request("GET", f"/listings/{product_id}/").data
+        if not request.user.id == product_data.get("seller_id") and not is_admin(request):
+            raise PermissionDenied("You do not have permission to edit this product.")
+        return proxy_request("POST", f"/listings/{product_id}/images/", request.data)
+
+
+class listings_image_id(APIView):
+    def get(self, request, product_id, image_id):
+        product_data = proxy_request("GET", f"/listings/{product_id}/").data
+        if not request.user.id == product_data.get("seller_id") and not is_admin(request):
+            raise PermissionDenied("You do not have permission to view this product image metadata.")
+        return proxy_request("GET", f"/listings/{product_id}/images/{image_id}")
+
+    def delete(self, request, product_id, image_id):
+        product_data = proxy_request("GET", f"/listings/{product_id}/").data
+        if not request.user.id == product_data.get("seller_id") and not is_admin(request):
+            raise PermissionDenied("You do not have permission to edit this product.")
+        return proxy_request("DELETE", f"/listings/{product_id}/images/{image_id}")
 
 class listings_review(APIView):
     def post(self, request, product_id):

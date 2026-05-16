@@ -55,7 +55,7 @@ class ProductResponse(BaseModel):
 	seller:			SellerModel = []
 
 class ProductImagesResponse(BaseModel):
-	# id:				int
+	id:				int
 	product_id:		int
 	image_hash:		str
 	display_order:	int
