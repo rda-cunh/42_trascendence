@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useCart } from "../contexts/CartContext";
 import { api } from "../lib/api";
-import { Trash2, CreditCard, ArrowLeft, MapPin } from "lucide-react";
+import { Trash2, CreditCard, ArrowLeft } from "lucide-react";
+import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { resolveImageUrl } from "../lib/images";
 import { toast } from "sonner";
 import { Link } from "react-router";
 
@@ -10,7 +12,6 @@ export function Checkout() {
   const { items, removeItem, total, clear } = useCart();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [address, setAddress] = useState({ line1: "", city: "", country: "" });
 
   const handlePlaceOrder = async () => {
     if (items.length === 0) {
@@ -23,7 +24,6 @@ export function Checkout() {
       await api.createOrder({
         items: items.map((i: typeof items[number]) => ({ listing_id: i.listing.id, quantity: i.quantity })),
         total,
-        address: address.line1 ? address : undefined,
       });
 
       clear();
@@ -39,7 +39,7 @@ export function Checkout() {
 
   if (items.length === 0) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 transition-colors dark:bg-gray-950">
+      <div className="app-page flex items-center justify-center">
         <div className="text-center">
           <CreditCard className="mx-auto mb-4 h-16 w-16 text-gray-300 dark:text-gray-600" />
           <h2 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
@@ -54,8 +54,8 @@ export function Checkout() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="app-page">
+      <div className="app-container-narrow">
         <Link
           to="/"
           className="mb-6 inline-flex items-center gap-2 text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
@@ -63,11 +63,11 @@ export function Checkout() {
           <ArrowLeft className="h-4 w-4" /> Continue Shopping
         </Link>
 
-        <h1 className="mb-8 text-3xl font-bold text-gray-900 dark:text-white">Checkout</h1>
+        <h1 className="page-title mb-8">Checkout</h1>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="space-y-4 lg:col-span-2">
-            <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+            <div className="surface-padded">
               <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
                 Order Summary
               </h2>
@@ -77,8 +77,8 @@ export function Checkout() {
                     key={item.listing.id}
                     className="flex items-center gap-4 border-b border-gray-100 pb-4 last:border-0 dark:border-gray-800"
                   >
-                    <img
-                      src={item.listing.image}
+                    <ImageWithFallback
+                      src={resolveImageUrl(item.listing.image)}
                       alt={item.listing.title}
                       className="h-16 w-16 rounded-lg object-cover"
                     />
@@ -106,38 +106,10 @@ export function Checkout() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-              <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
-                <MapPin className="h-5 w-5" /> Delivery Information
-              </h2>
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  value={address.line1}
-                  onChange={(e) => setAddress({ ...address, line1: e.target.value })}
-                  placeholder="Address"
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                />
-                <input
-                  type="text"
-                  value={address.city}
-                  onChange={(e) => setAddress({ ...address, city: e.target.value })}
-                  placeholder="City"
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                />
-                <input
-                  type="text"
-                  value={address.country}
-                  onChange={(e) => setAddress({ ...address, country: e.target.value })}
-                  placeholder="Country"
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                />
-              </div>
-            </div>
           </div>
 
           <div>
-            <div className="sticky top-24 rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+            <div className="surface-padded sticky top-24">
               <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Payment</h2>
               <div className="mb-6 space-y-3">
                 <div className="flex justify-between text-sm">
@@ -154,7 +126,7 @@ export function Checkout() {
               <button
                 onClick={handlePlaceOrder}
                 disabled={isProcessing}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-purple-600 py-3 font-medium text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
+                className="btn-primary w-full py-3"
               >
                 <CreditCard className="h-5 w-5" />
                 {isProcessing ? "Processing..." : "Place Order"}

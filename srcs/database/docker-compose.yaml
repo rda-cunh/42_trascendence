@@ -61,3 +61,34 @@ services:
       --ssl-certfile=/certs/$${INT_CRT_NAME}
       --ssl-keyfile=/certs/$${INT_KEY_NAME}
       "
+
+  image-service:
+    image: python:3.11-alpine
+    container_name: image-service
+    restart: unless-stopped
+    expose:
+      - "8000"
+    environment:
+      INT_CRT_NAME: ${INT_CRT_NAME:-internal.crt}
+      INT_KEY_NAME: ${INT_KEY_NAME:-internal.key}
+      MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-5}
+      ALLOWED_EXTENSIONS: ${ALLOWED_EXTENSIONS:-jpg,jpeg,png,gif,webp}
+      STORAGE_PATH: ${STORAGE_PATH:-/data/images}
+    volumes:
+      - certs_data:/certs:ro
+      - image_data:/data/images
+      - ./image-service:/app:ro
+    depends_on:
+      pki-init:
+        condition: service_completed_successfully
+    entrypoint: []
+    command: >
+      sh -c "
+      pip install -q fastapi uvicorn python-multipart pillow &&
+      cd /app &&
+      exec uvicorn main:app
+      --host 0.0.0.0
+      --port 8000
+      --ssl-certfile=/certs/$${INT_CRT_NAME}
+      --ssl-keyfile=/certs/$${INT_KEY_NAME}
+      "

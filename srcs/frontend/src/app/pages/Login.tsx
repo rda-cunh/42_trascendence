@@ -28,17 +28,17 @@ export function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 transition-colors dark:bg-gray-950">
-      <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-8 shadow-xl dark:border-gray-800 dark:bg-gray-900">
+    <div className="app-page flex items-center justify-center px-4">
+      <div className="surface w-full max-w-md p-8">
         <div className="mb-8 text-center">
           <LogIn className="mx-auto mb-3 h-12 w-12 text-purple-600" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Welcome Back</h1>
-          <p className="mt-1 text-gray-600 dark:text-gray-400">Sign in to your account</p>
+          <p className="muted-text mt-1">Sign in to your account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="form-label">
               Email
             </label>
             <div className="relative">
@@ -49,12 +49,12 @@ export function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
-                className="w-full rounded-lg border border-gray-300 bg-white py-3 pr-4 pl-10 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="form-control-icon"
               />
             </div>
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="form-label">
               Password
             </label>
             <div className="relative">
@@ -65,14 +65,14 @@ export function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-lg border border-gray-300 bg-white py-3 pr-4 pl-10 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="form-control-icon"
               />
             </div>
           </div>
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full rounded-lg bg-purple-600 py-3 font-medium text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
+            className="btn-primary w-full py-3"
           >
             {isLoading ? "Signing in..." : "Sign In"}
           </button>
@@ -89,7 +89,7 @@ export function Login() {
           onClick={() => {
             window.location.href = "/api/auth/42/";
           }}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white py-3 font-medium text-gray-900 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
+          className="btn-secondary w-full py-3"
         >
           <span className="flex h-5 w-5 items-center justify-center rounded-sm bg-black font-bold text-white dark:bg-white dark:text-black">
             42
@@ -97,7 +97,7 @@ export function Login() {
           Sign in with 42
         </button>
 
-        <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+        <p className="muted-text mt-6 text-center text-sm">
           Don't have an account?{" "}
           <Link
             to="/register"

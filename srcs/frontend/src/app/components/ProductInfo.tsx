@@ -1,4 +1,5 @@
-import { MapPin, User, Calendar, Tag, Package } from "lucide-react";
+import { User, Calendar, Tag, Package } from "lucide-react";
+import { Link } from "react-router";
 import { ReviewStars } from "./ReviewStars";
 import { Listing } from "../types";
 
@@ -60,13 +61,19 @@ export function ProductInfo({ listing, averageRating, reviewCount }: ProductInfo
           </div>
         )}
         <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
-          <MapPin className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-          <span>{listing.location}</span>
-        </div>
-        <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
           <User className="h-5 w-5 text-gray-400 dark:text-gray-500" />
           <span>
-            Seller: <span className="font-semibold">{listing.seller}</span>
+            Seller:{" "}
+            {listing.seller_id ? (
+              <Link
+                to={`/seller/${listing.seller_id}`}
+                className="font-semibold text-purple-600 transition-colors hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
+              >
+                {listing.seller}
+              </Link>
+            ) : (
+              <span className="font-semibold">{listing.seller}</span>
+            )}
           </span>
         </div>
         <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">

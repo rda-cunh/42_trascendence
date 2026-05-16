@@ -55,21 +55,17 @@ def	get_user_products(user_id: int, limit: int = 20, db=Depends(get_db_dep)):
 	product_ids = [p['id'] for p in products]
 	placeholders = ','.join(['%s'] * len(product_ids))
 
-	cursor.execute(f'''SELECT product_id, image_hash, display_order FROM product_images WHERE product_id IN ({placeholders}) ORDER BY display_order''',
+	cursor.execute(f'''SELECT product_id, image_hash AS images FROM product_images WHERE product_id IN ({placeholders}) ORDER BY display_order''',
 				tuple(product_ids))
 	
 	image_rows = cursor.fetchall()
 	images_map = {}
 	for img in image_rows:
 		pid = img['product_id']
-		images_map.setdefault(pid, []).append({
-			'image_hash': img['image_hash'],
-			'display_order': img['display_order']
-		})
+		images_map.setdefault(pid, []).append(img['images'])
 
 	for p in products:
 		p['images'] = images_map.get(p['id'], [])
-		del p['id']
 	user['listings'] = products
 	return UserProductsResponse(**user)
 
@@ -110,22 +106,18 @@ def	list_products(
 
 	cursor.execute(
 		f'''
-		SELECT product_id, image_hash, display_order FROM product_images WHERE product_id IN ({placeholders}) ORDER BY display_order''', 
+		SELECT product_id, image_hash AS images FROM product_images WHERE product_id IN ({placeholders}) ORDER BY display_order''', 
 		tuple(product_ids)
 	)
 	image_rows = cursor.fetchall()
 	images_map = {}
 	for img in image_rows:
 		pid = img['product_id']
-		images_map.setdefault(pid, []).append({
-			'image_hash': img['image_hash'],
-			'display_order': img['display_order']
-		})
+		images_map.setdefault(pid, []).append(img['images'])
 
 
 	for p in products:
 		p['images'] = images_map.get(p['id'], [])
-		del p['id']
 	return [ProductResponse(**p) for p in products]
 
 
@@ -144,7 +136,13 @@ def	get_listing(product_id: int, db=Depends(get_db_dep)):
 	row = cursor.fetchone()
 	if not row:
 		raise HTTPException(status_code=404, detail='Product not found')
-	return ListingResponse(**row)
+	cursor.execute("""
+				SELECT image_hash AS images
+				FROM product_images
+				WHERE product_id = %s
+				ORDER BY display_order ASC""", (product_id,))
+	images = cursor.fetchall()
+	return ListingResponse(**row, images=[img['images'] for img in images])
 
 # @router.get('/listings/{product_id}/', response_model=ListingResponse)
 # def	get_listing(product_id: int, db=Depends(get_db_dep)):

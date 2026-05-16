@@ -165,14 +165,6 @@ export function OrderDetail() {
               </span>
             </div>
 
-            {order.shipping_address && (
-              <div className="mt-6 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Delivery</p>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                  {order.shipping_address}
-                </p>
-              </div>
-            )}
           </div>
         </div>
       </div>

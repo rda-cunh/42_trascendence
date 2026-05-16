@@ -34,17 +34,17 @@ export function Register() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 transition-colors dark:bg-gray-950">
-      <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-8 shadow-xl dark:border-gray-800 dark:bg-gray-900">
+    <div className="app-page flex items-center justify-center px-4">
+      <div className="surface w-full max-w-md p-8">
         <div className="mb-8 text-center">
           <UserPlus className="mx-auto mb-3 h-12 w-12 text-purple-600" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create Account</h1>
-          <p className="mt-1 text-gray-600 dark:text-gray-400">Join the game assets marketplace</p>
+          <p className="muted-text mt-1">Join the game assets marketplace</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="form-label">
               Full Name
             </label>
             <div className="relative">
@@ -56,12 +56,12 @@ export function Register() {
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="John Doe"
-                className="w-full rounded-lg border border-gray-300 bg-white py-3 pr-4 pl-10 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="form-control-icon"
               />
             </div>
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="form-label">
               Email
             </label>
             <div className="relative">
@@ -73,12 +73,12 @@ export function Register() {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="your@email.com"
-                className="w-full rounded-lg border border-gray-300 bg-white py-3 pr-4 pl-10 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="form-control-icon"
               />
             </div>
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="form-label">
               Password
             </label>
             <div className="relative">
@@ -91,12 +91,12 @@ export function Register() {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="••••••••"
-                className="w-full rounded-lg border border-gray-300 bg-white py-3 pr-4 pl-10 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="form-control-icon"
               />
             </div>
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="form-label">
               Phone (optional)
             </label>
             <div className="relative">
@@ -107,20 +107,20 @@ export function Register() {
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="+1 234 567 8900"
-                className="w-full rounded-lg border border-gray-300 bg-white py-3 pr-4 pl-10 text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="form-control-icon"
               />
             </div>
           </div>
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full rounded-lg bg-purple-600 py-3 font-medium text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
+            className="btn-primary w-full py-3"
           >
             {isLoading ? "Creating account..." : "Create Account"}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+        <p className="muted-text mt-6 text-center text-sm">
           Already have an account?{" "}
           <Link
             to="/login"

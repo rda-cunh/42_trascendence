@@ -6,6 +6,7 @@ export interface User {
   email: string;
   name?: string;
   phone?: string;
+  avatar_url?: string;
   role?: "user" | "seller" | "admin";
   status?: "active" | "suspended" | "banned";
   created_at?: string;

@@ -14,7 +14,11 @@ export default function MessageList({ messages, currentUserId }: Props) {
   }, [messages]);
 
   if (messages.length === 0) {
-    return <div className="chat-messages-empty">No messages yet. Say hello.</div>;
+    return (
+      <div className="chat-messages-empty">
+        No messages yet. Start the conversation.
+      </div>
+    );
   }
 
   return (

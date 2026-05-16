@@ -7,6 +7,7 @@ from django.conf import settings
 from channels.generic.websocket import AsyncWebsocketConsumer
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.exceptions import TokenError
+from http.cookies import SimpleCookie
 
 # httpx ignores REQUESTS_CA_BUNDLE, so resolve the internal CA bundle ourselves and pass it via verify=
 _CA_BUNDLE = os.environ.get("REQUESTS_CA_BUNDLE") or os.environ.get("SSL_CERT_FILE")
@@ -38,8 +39,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.conversation_id = self.scope["url_route"]["kwargs"]["conversation_id"]
         self.group_name = f"chat_{self.conversation_id}"
 
-        # extract the token from the query string
-        token = self._extract_token_from_query_string()
+        token = self._extract_access_token()
         if not token:
             await self.close(code=4001)
             return
@@ -130,6 +130,28 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "type": "message",
             "message": event["message"],
         }))
+
+    def _extract_access_token(self):
+        """
+        Preferred auth source is the HttpOnly access_token cookie.
+        Keep query-string fallback temporarily so existing clients do not break
+        during migration.
+        """
+        return self._extract_token_from_cookie() or self._extract_token_from_query_string()
+
+    def _extract_token_from_cookie(self):
+        headers = dict(self.scope.get("headers", []))
+        raw_cookie = headers.get(b"cookie")
+        if not raw_cookie:
+            return None
+
+        try:
+            cookie = SimpleCookie()
+            cookie.load(raw_cookie.decode("utf-8"))
+            access_cookie = cookie.get("access_token")
+            return access_cookie.value if access_cookie else None
+        except Exception:
+            return None
 
     def _extract_token_from_query_string(self):
         """ channels showd the query string in scope['query_string'] as bytes and is decoded and parsed like a normal URL query string """
