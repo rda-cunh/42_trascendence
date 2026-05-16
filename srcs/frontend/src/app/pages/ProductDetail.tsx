@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router";
 import { ArrowLeft, ShoppingCart, CreditCard } from "lucide-react";
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
-import { ShaderPreview } from "../components/ShaderPreview";
+import { ListingPreview } from "../components/ListingPreview";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { ProductInfo } from "../components/ProductInfo";
 import { ReviewSection } from "../components/ReviewSection";
+import { ProductChatWidget } from "../components/ProductChatWidget";
 import { api, mapListing } from "../lib/api";
-import { getListingDescription, isShaderListing } from "../lib/shaders";
+import { getListingDescription } from "../lib/shaders";
 import { Listing, Review } from "../types";
 import { toast } from "sonner";
 
@@ -79,7 +79,7 @@ export function ProductDetail() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 transition-colors dark:bg-gray-950">
+      <div className="app-page flex items-center justify-center">
         <p className="text-lg text-gray-500 dark:text-gray-400">Loading asset...</p>
       </div>
     );
@@ -87,16 +87,13 @@ export function ProductDetail() {
 
   if (!listing) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 transition-colors dark:bg-gray-950">
+      <div className="app-page flex items-center justify-center">
         <div className="text-center">
           <h2 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">Asset not found</h2>
           <p className="mb-4 text-gray-600 dark:text-gray-400">
             The asset you're looking for doesn't exist.
           </p>
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-white transition-colors hover:bg-purple-700"
-          >
+          <Link to="/" className="btn-primary">
             <ArrowLeft className="h-4 w-4" /> Back to Browse
           </Link>
         </div>
@@ -106,12 +103,11 @@ export function ProductDetail() {
 
   const avgRating =
     reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0;
-  const hasShaderPreview = isShaderListing(listing);
   const description = getListingDescription(listing);
 
   return (
-    <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="app-page">
+      <div className="app-container">
         <Link
           to="/"
           className="mb-6 inline-flex items-center gap-2 text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
@@ -121,22 +117,8 @@ export function ProductDetail() {
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           {/* Preview */}
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-colors dark:border-gray-800 dark:bg-gray-900">
-            <div className="aspect-square">
-              {hasShaderPreview ? (
-                <ShaderPreview
-                  fragmentShader={listing.shader.code}
-                  label={`${listing.title} shader preview`}
-                  className="h-full w-full"
-                />
-              ) : (
-                <ImageWithFallback
-                  src={listing.image}
-                  alt={listing.title}
-                  className="h-full w-full object-cover"
-                />
-              )}
-            </div>
+          <div className="surface overflow-hidden">
+            <ListingPreview key={listing.id} listing={listing} />
           </div>
 
           {/* Details */}
@@ -146,14 +128,14 @@ export function ProductDetail() {
             <div className="flex gap-3">
               <button
                 onClick={handleBuyNow}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-purple-600 px-6 py-3 text-white transition-colors hover:bg-purple-700"
+                className="btn-primary flex-1 px-6 py-3"
               >
                 <CreditCard className="h-5 w-5" />
                 <span>Buy Now</span>
               </button>
               <button
                 onClick={handleAddToCart}
-                className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-6 py-3 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                className="btn-secondary px-6 py-3"
               >
                 <ShoppingCart className="h-5 w-5" />
                 <span className="hidden sm:inline">Add to Cart</span>
@@ -161,34 +143,12 @@ export function ProductDetail() {
             </div>
 
             {/* Description */}
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-colors dark:border-gray-800 dark:bg-gray-900">
+            <div className="surface-padded">
               <h2 className="mb-3 text-xl font-bold text-gray-900 dark:text-white">Description</h2>
               <p className="leading-relaxed text-gray-700 dark:text-gray-300">{description}</p>
             </div>
 
-            {hasShaderPreview && (
-              <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-colors dark:border-gray-800 dark:bg-gray-900">
-                <h2 className="mb-3 text-xl font-bold text-gray-900 dark:text-white">
-                  Shader Source
-                </h2>
-                <pre className="max-h-96 overflow-auto rounded-lg bg-gray-950 p-4 text-sm leading-relaxed text-gray-100">
-                  <code>{listing.shader.code}</code>
-                </pre>
-              </div>
-            )}
 
-            {/* License */}
-            <div className="rounded-xl border border-blue-200 bg-blue-50 p-6 transition-colors dark:border-blue-800 dark:bg-blue-900/20">
-              <h3 className="mb-2 font-semibold text-blue-900 dark:text-blue-400">
-                License & Usage
-              </h3>
-              <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-300">
-                <li>• Personal and commercial use allowed</li>
-                <li>• Cannot redistribute or resell as-is</li>
-                <li>• Lifetime updates included</li>
-                <li>• Email support from creator</li>
-              </ul>
-            </div>
           </div>
         </div>
 
@@ -198,6 +158,13 @@ export function ProductDetail() {
           reviews={reviews}
           isLoggedIn={!!user}
           onReviewSubmitted={handleReviewSubmitted}
+        />
+
+        <ProductChatWidget
+          listingId={listing?.id ? Number(listing.id) : null}
+          sellerId={listing?.seller_id ? Number(listing.seller_id) : null}
+          sellerName={listing?.seller}
+          productTitle={listing?.title}
         />
       </div>
     </div>

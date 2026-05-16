@@ -66,7 +66,6 @@ def	get_user_products(user_id: int, limit: int = 20, db=Depends(get_db_dep)):
 
 	for p in products:
 		p['images'] = images_map.get(p['id'], [])
-		del p['id']
 	user['listings'] = products
 	return UserProductsResponse(**user)
 
@@ -119,7 +118,6 @@ def	list_products(
 
 	for p in products:
 		p['images'] = images_map.get(p['id'], [])
-		del p['id']
 	return [ProductResponse(**p) for p in products]
 
 

@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS products (
   slug VARCHAR(255) NOT NULL,
   description TEXT NULL DEFAULT NULL COMMENT 'Product description',
   price DECIMAL(12,2) NOT NULL,
+  images JSON NULL,
   status ENUM('Draft', 'Active', 'Paused', 'Deleted') NOT NULL DEFAULT 'Active',
   avg_rating DECIMAL(3,2) NULL DEFAULT NULL,
   review_count INT UNSIGNED NOT NULL DEFAULT 0,

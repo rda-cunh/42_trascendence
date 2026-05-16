@@ -9,6 +9,7 @@ class ProductImages(BaseModel):
 	display_order:	int
 
 class UserProducts(BaseModel):
+	id:				int
 	name:			str
 	description:	str
 	price:			Decimal
@@ -24,5 +25,4 @@ class UserResponse(BaseModel):
 	owner:			bool
 	pages:			int
 	listings:		list[UserProducts] = []
-
 

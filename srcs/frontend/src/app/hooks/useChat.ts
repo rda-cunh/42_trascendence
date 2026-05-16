@@ -9,8 +9,11 @@ type UseChatResult = {
   messages: Message[];
   loadingConversations: boolean;
   loadingMessages: boolean;
+  refreshingConversations: boolean;
   socketConnected: boolean;
   error: string | null;
+  updatedConversationIds: number[];
+  lastRefreshedAt: string | null;
   selectConversation: (conversation: Conversation) => void;
   sendMessage: (text: string) => void;
   refreshConversations: () => Promise<void>;
@@ -22,17 +25,30 @@ export function useChat(accessToken: string | null): UseChatResult {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [refreshingConversations, setRefreshingConversations] = useState(false);
   const [socketConnected, setSocketConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [updatedConversationIds, setUpdatedConversationIds] = useState<number[]>([]);
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<string | null>(null);
 
   const socketRef = useRef<ChatSocket | null>(null);
+  const tokenRef = useRef(accessToken);
+  const conversationsRef = useRef<Conversation[]>([]);
+  const selectedConversationIdRef = useRef<number | null>(null);
+
   const selectedConversationId = selectedConversation?.id ?? null;
 
-  // tracks the latest token in a ref so a silent refresh updates would not shutdown open webSockets
-  const tokenRef = useRef(accessToken);
   useEffect(() => {
     tokenRef.current = accessToken;
   }, [accessToken]);
+
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
+
+  useEffect(() => {
+    selectedConversationIdRef.current = selectedConversationId;
+  }, [selectedConversationId]);
 
   const hasToken = accessToken !== null;
 
@@ -40,34 +56,77 @@ export function useChat(accessToken: string | null): UseChatResult {
     if (!tokenRef.current) {
       setConversations([]);
       setSelectedConversation(null);
+      setUpdatedConversationIds([]);
       setLoadingConversations(false);
+      setRefreshingConversations(false);
       setError("You need to be logged in to use chat");
       return;
     }
 
+    const isInitialLoad = conversationsRef.current.length === 0;
+
     try {
-      setLoadingConversations(true);
+      if (isInitialLoad) {
+        setLoadingConversations(true);
+      } else {
+        setRefreshingConversations(true);
+      }
+
       setError(null);
       const data = await fetchConversations();
-      setConversations(data);
+      const previous = conversationsRef.current;
+      const previousById = new Map(previous.map((conversation) => [conversation.id, conversation]));
 
-      if (!selectedConversationId && data.length > 0) {
+      setUpdatedConversationIds((prevUpdated) => {
+        const nextUpdated = new Set(prevUpdated);
+
+        for (const conversation of data) {
+          const previousConversation = previousById.get(conversation.id);
+          const changed =
+            previousConversation &&
+            previousConversation.last_message_at !== conversation.last_message_at;
+
+          if (changed && conversation.id !== selectedConversationIdRef.current) {
+            nextUpdated.add(conversation.id);
+          }
+        }
+
+        return Array.from(nextUpdated);
+      });
+
+      setConversations(data);
+      setLastRefreshedAt(new Date().toISOString());
+
+      if (!selectedConversationIdRef.current && data.length > 0) {
         setSelectedConversation(data[0]);
-      } else if (selectedConversationId) {
-        const updatedSelected = data.find((c) => c.id === selectedConversationId) || null;
+      } else if (selectedConversationIdRef.current) {
+        const updatedSelected =
+          data.find((conversation) => conversation.id === selectedConversationIdRef.current) || null;
         setSelectedConversation(updatedSelected);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load conversations");
     } finally {
       setLoadingConversations(false);
+      setRefreshingConversations(false);
     }
-  }, [selectedConversationId]);
+  }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshConversations();
   }, [refreshConversations]);
+
+  useEffect(() => {
+    if (!hasToken) return;
+
+    const interval = window.setInterval(() => {
+      void refreshConversations();
+    }, 15000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [hasToken, refreshConversations]);
 
   useEffect(() => {
     if (!selectedConversationId || !hasToken) {
@@ -88,14 +147,9 @@ export function useChat(accessToken: string | null): UseChatResult {
           setMessages(history);
         }
 
-        // Read the latest token at connect time — a silent refresh between
-        // render and here should use the new value, not a stale closure.
-        const tokenForSocket = tokenRef.current;
-        if (!tokenForSocket) return;
-
         socketRef.current?.disconnect();
 
-        const socket = new ChatSocket(selectedConversationId, tokenForSocket, {
+        const socket = new ChatSocket(selectedConversationId, {
           onOpen: () => {
             if (!cancelled) setSocketConnected(true);
           },
@@ -117,21 +171,31 @@ export function useChat(accessToken: string | null): UseChatResult {
             if (payload.type === "message") {
               if (!cancelled) {
                 setMessages((prev) => {
-                  const exists = prev.some((m) => m.id === payload.message.id);
+                  const exists = prev.some((message) => message.id === payload.message.id);
                   return exists ? prev : [...prev, payload.message];
                 });
 
-                setConversations((prev) =>
-                  prev.map((conv) =>
-                    conv.id === payload.message.conversation_id
+                setUpdatedConversationIds((prevUpdated) =>
+                  prevUpdated.filter((id) => id !== payload.message.conversation_id)
+                );
+
+                setConversations((prev) => {
+                  const updated = prev.map((conversation) =>
+                    conversation.id === payload.message.conversation_id
                       ? {
-                          ...conv,
+                          ...conversation,
                           last_message: payload.message.content,
                           last_message_at: payload.message.created_at,
                         }
-                      : conv
-                  )
-                );
+                      : conversation
+                  );
+
+                  return [...updated].sort((a, b) => {
+                    const aTime = a.last_message_at ?? a.created_at ?? "";
+                    const bTime = b.last_message_at ?? b.created_at ?? "";
+                    return bTime.localeCompare(aTime);
+                  });
+                });
               }
             }
           },
@@ -162,6 +226,9 @@ export function useChat(accessToken: string | null): UseChatResult {
 
   const selectConversation = (conversation: Conversation) => {
     setSelectedConversation(conversation);
+    setUpdatedConversationIds((prevUpdated) =>
+      prevUpdated.filter((id) => id !== conversation.id)
+    );
   };
 
   const sendMessage = (text: string) => {
@@ -186,8 +253,11 @@ export function useChat(accessToken: string | null): UseChatResult {
     messages,
     loadingConversations,
     loadingMessages,
+    refreshingConversations,
     socketConnected,
     error,
+    updatedConversationIds,
+    lastRefreshedAt,
     selectConversation,
     sendMessage,
     refreshConversations,

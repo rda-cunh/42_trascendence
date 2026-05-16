@@ -4,9 +4,6 @@ services:
       context: .
       dockerfile: Dockerfile.dev
     container_name: frontend
-    ports:
-      - "5173:5173"
-      - "24678:24678"
     volumes:
       - .:/app
       - /app/node_modules

@@ -10,9 +10,6 @@ router = APIRouter(prefix='/api/auth', tags=['Users'])
 def hash_pw(pw: str) -> str:
 	return hashlib.sha256(pw.encode()).hexdigest()
 
-
-
-
 # Create new user
 @router.post('/register/', response_model=UserResponse, status_code=201)
 def create_user(user_in: UserCreate, db=Depends(get_db_dep)):
@@ -51,8 +48,6 @@ def delete_user(user_id: int, db=Depends(get_db_dep)):
 	cursor.execute('DELETE FROM users WHERE id = %s', (user_id,))
 	if cursor.rowcount == 0:
 		raise HTTPException(status_code=404, detail='User not found')
-
-
 
 
 # internal lookup by email (used by backend OAuth flow on duplicate-email)
@@ -102,6 +97,7 @@ def	get_user(user_id: int, page: int = 1, db=Depends(get_db_dep)):
 	user = cursor.fetchone()
 	if not user:
 		raise HTTPException(status_code=404, detail='User not found')
+	user['owner'] = True
 	
 	cursor.execute('SELECT COUNT(*) AS total FROM products WHERE seller_id = %s AND status = %s', (user_id, 'Active'))
 	n_prod = cursor.fetchone()['total']
@@ -128,7 +124,6 @@ def	get_user(user_id: int, page: int = 1, db=Depends(get_db_dep)):
 
 	for p in products:
 		p['images'] = images_map.get(p['id'], [])
-		del p['id']
 	user['listings'] = products
 	return ProfileResponse(**user)
 
