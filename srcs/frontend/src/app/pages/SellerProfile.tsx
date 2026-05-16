@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useParams, useNavigate } from "react-router";
 import { ArrowLeft, UserPlus, UserCheck } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { ProductCard } from "../components/ProductCard";
@@ -19,6 +19,7 @@ interface SellerData {
 
 export function SellerProfile() {
   const { sellerId } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [seller, setSeller] = useState<SellerData | null>(null);
   const [products, setProducts] = useState<Listing[]>([]);
@@ -155,18 +156,30 @@ export function SellerProfile() {
             </div>
 
             {!isOwnProfile && user && (
-              <button
-                onClick={() => void handleToggleFollow()}
-                disabled={isFollowPending}
-                className={`inline-flex items-center gap-2 rounded-lg px-6 py-3 font-medium transition-colors ${
-                  isFollowing
-                    ? "border border-white/20 bg-white/10 text-white hover:bg-white/15"
-                    : "border border-white bg-white text-purple-700 hover:bg-purple-50"
-                } disabled:cursor-not-allowed disabled:opacity-60`}
-              >
-                {isFollowing ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-                {isFollowPending ? "Updating..." : isFollowing ? "Following" : "Follow"}
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => void handleToggleFollow()}
+                  disabled={isFollowPending}
+                  className={`inline-flex items-center gap-2 rounded-lg px-6 py-3 font-medium transition-colors ${
+                    isFollowing
+                      ? "border border-white/20 bg-white/10 text-white hover:bg-white/15"
+                      : "border border-white bg-white text-purple-700 hover:bg-purple-50"
+                  } disabled:cursor-not-allowed disabled:opacity-60`}
+                >
+                  {isFollowing ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+                  {isFollowPending ? "Updating..." : isFollowing ? "Following" : "Follow"}
+                </button>
+                <button
+                  onClick={() => {
+                    // Navigate to messages; user can start a conversation with the seller from the inbox
+                    navigate("/chat");
+                    toast.success("Open Messages to start a conversation with this seller");
+                  }}
+                  className="inline-flex items-center gap-2 rounded-lg border border-white bg-white text-purple-700 px-4 py-2 hover:bg-purple-50"
+                >
+                  Chat
+                </button>
+              </div>
             )}
           </div>
 

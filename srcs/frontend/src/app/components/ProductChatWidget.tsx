@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { MessageCircle, Send, X } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useProductChat } from "../hooks/useProductChat";
@@ -9,6 +9,8 @@ type ProductChatWidgetProps = {
   sellerId: number | null;
   sellerName?: string;
   productTitle?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 function formatTime(value: string) {
@@ -67,10 +69,17 @@ export function ProductChatWidget({
   sellerId,
   sellerName,
   productTitle,
+  open,
+  onOpenChange,
 }: ProductChatWidgetProps) {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState("");
+
+  // Sync external control
+  useEffect(() => {
+    if (typeof open === "boolean") setIsOpen(open);
+  }, [open]);
 
   const currentUserId = Number(user?.id);
   const normalizedListingId =
@@ -182,7 +191,11 @@ export function ProductChatWidget({
 
       <button
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={() => {
+          const next = !isOpen;
+          setIsOpen(next);
+          onOpenChange?.(next);
+        }}
         className="fixed bottom-4 left-4 z-50 inline-flex h-14 w-14 items-center justify-center rounded-full bg-purple-600 text-white shadow-lg transition-colors hover:bg-purple-700"
         aria-label={isOpen ? "Close product chat" : "Open product chat"}
       >
