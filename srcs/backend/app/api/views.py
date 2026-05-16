@@ -226,7 +226,8 @@ class auth_logout(APIView):
                 pass
         
         response = Response({"detail": "Logged out."})
-        response.delete_cookie("refresh_token", path="/api/auth/")
+        response.delete_cookie("refresh_token", path="/")
+        response.delete_cookie("access_token", path="/")
         return response
 
 # --- AUTH REFRESH (when jwt access token expires)---
@@ -249,18 +250,28 @@ class auth_refresh(APIView):
                 if claim in token:
                     new_refresh[claim] = token[claim]
 
-            response = Response({"access": str(new_refresh.access_token)})    # new access token
-            response.set_cookie(            # new refresh token
+            new_access_token = new_refresh.access_token
+
+            response = Response({"access": str(new_access_token)})
+            response.set_cookie(
                 key="refresh_token",
                 value=str(new_refresh),
                 httponly=True,
                 secure=True,
                 samesite="Strict",
-                max_age=7*24*3600,
+                max_age=7 * 24 * 3600,
                 path="/",
             )
-            
-            # invalidate old refresh token after issuing a new one
+            response.set_cookie(
+                key="access_token",
+                value=str(new_access_token),
+                httponly=True,
+                secure=True,
+                samesite="Strict",
+                max_age=int(settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"].total_seconds()),
+                path="/",
+            )
+
             token.blacklist()
             return response
         except (TokenError, UserModel.DoesNotExist):
@@ -453,9 +464,22 @@ class auth_42_callback(APIView):
             },
         )
         response.set_cookie(
-            key="refresh_token", value=str(refresh),
-            httponly=True, secure=True, samesite="Strict",
-            max_age=7*24*3600, path="/",
+            key="refresh_token",
+            value=str(refresh),
+            httponly=True,
+            secure=True,
+            samesite="Strict",
+            max_age=7 * 24 * 3600,
+            path="/",
+        )
+        response.set_cookie(
+            key="access_token",
+            value=str(access_token),
+            httponly=True,
+            secure=True,
+            samesite="Strict",
+            max_age=int(settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"].total_seconds()),
+            path="/",
         )
         response.delete_cookie("oauth42_state", path="/api/auth/42/")
         return response
