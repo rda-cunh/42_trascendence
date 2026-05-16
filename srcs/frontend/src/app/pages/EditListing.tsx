@@ -65,17 +65,14 @@ export function EditListing() {
     if (!token || !id) return;
     setIsSaving(true);
     try {
-      await api.updateListing(
-        id,
-        {
-          name: formData.title,
-          price: parseFloat(formData.price),
-          category: formData.category,
-          description: formData.description,
-          fileFormat: formData.fileFormat,
-          engine: formData.engine,
-        }
-      );
+      await api.updateListing(id, {
+        name: formData.title,
+        price: parseFloat(formData.price),
+        category: formData.category,
+        description: formData.description,
+        fileFormat: formData.fileFormat,
+        engine: formData.engine,
+      });
       toast.success("Listing updated successfully!");
       navigate(`/product/${id}`);
     } catch {

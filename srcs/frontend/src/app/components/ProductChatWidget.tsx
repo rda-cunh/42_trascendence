@@ -38,10 +38,7 @@ function ProductChatMessages({
         const mine = message.sender_id === currentUserId;
 
         return (
-          <div
-            key={message.id}
-            className={`flex ${mine ? "justify-end" : "justify-start"}`}
-          >
+          <div key={message.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
             <div
               className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
                 mine
@@ -76,8 +73,10 @@ export function ProductChatWidget({
   const [draft, setDraft] = useState("");
 
   const currentUserId = Number(user?.id);
-  const normalizedListingId = Number.isInteger(listingId) && listingId && listingId > 0 ? listingId : null;
-  const normalizedSellerId = Number.isInteger(sellerId) && sellerId && sellerId > 0 ? sellerId : null;
+  const normalizedListingId =
+    Number.isInteger(listingId) && listingId && listingId > 0 ? listingId : null;
+  const normalizedSellerId =
+    Number.isInteger(sellerId) && sellerId && sellerId > 0 ? sellerId : null;
 
   const canRender = useMemo(() => {
     if (!user) return false;
@@ -118,7 +117,9 @@ export function ProductChatWidget({
               </div>
               <div
                 className={`mt-1 text-[11px] ${
-                  socketConnected ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-400"
+                  socketConnected
+                    ? "text-green-600 dark:text-green-400"
+                    : "text-gray-500 dark:text-gray-400"
                 }`}
               >
                 {socketConnected ? "Connected" : "Connecting"}

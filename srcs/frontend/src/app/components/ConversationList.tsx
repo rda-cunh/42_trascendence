@@ -60,7 +60,7 @@ function ConversationItem({
         <div className="chat-conversation-avatar">{initials}</div>
         {conversation.other_id != null && (
           <span
-            className={`absolute bottom-0 right-0 block h-3 w-3 rounded-full ring-2 ring-white dark:ring-gray-900 ${
+            className={`absolute right-0 bottom-0 block h-3 w-3 rounded-full ring-2 ring-white dark:ring-gray-900 ${
               isOnline ? "bg-green-500" : "bg-gray-400"
             }`}
             title={isOnline ? "Online" : "Offline"}

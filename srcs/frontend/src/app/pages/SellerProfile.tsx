@@ -55,7 +55,7 @@ export function SellerProfile() {
 
           if (user?.id && user.id !== sellerId) {
             const following = await api.getFollowing(Number(user.id)).catch(() => null);
-            const followedUsers = Array.isArray(following) ? following : following?.results ?? [];
+            const followedUsers = Array.isArray(following) ? following : (following?.results ?? []);
             setIsFollowing(
               followedUsers.some((entry: { user_id?: number | string; id?: number | string }) => {
                 const entryId = String(entry.user_id ?? entry.id ?? "");
@@ -142,9 +142,14 @@ export function SellerProfile() {
         <div className="surface mb-8 overflow-hidden">
           <div className="flex flex-col gap-6 bg-gradient-to-r from-purple-600 to-purple-800 p-8 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex items-end gap-6">
-              <UserAvatar userId={seller.id} src={seller.avatar_url} name={seller.name} sizeClassName="h-24 w-24 text-2xl" />
+              <UserAvatar
+                userId={seller.id}
+                src={seller.avatar_url}
+                name={seller.name}
+                sizeClassName="h-24 w-24 text-2xl"
+              />
               <div className="min-w-0">
-                <h1 className="break-words text-3xl font-bold text-white">{seller.name}</h1>
+                <h1 className="text-3xl font-bold break-words text-white">{seller.name}</h1>
                 {seller.email && <p className="break-words text-purple-200">{seller.email}</p>}
               </div>
             </div>
@@ -165,7 +170,7 @@ export function SellerProfile() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4 border-t border-gray-200 p-6 dark:border-gray-800 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-4 border-t border-gray-200 p-6 sm:grid-cols-3 dark:border-gray-800">
             <div className="text-center">
               <p className="text-2xl font-bold text-gray-900 dark:text-white">{products.length}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400">Products</p>
@@ -199,7 +204,10 @@ export function SellerProfile() {
               <p className="text-gray-600 dark:text-gray-400">
                 No products yet.{" "}
                 {isOwnProfile && (
-                  <Link to="/sell" className="text-purple-600 hover:text-purple-700 dark:text-purple-400">
+                  <Link
+                    to="/sell"
+                    className="text-purple-600 hover:text-purple-700 dark:text-purple-400"
+                  >
                     Start selling
                   </Link>
                 )}

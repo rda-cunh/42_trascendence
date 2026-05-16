@@ -70,7 +70,7 @@ export function ProductInfo({ listing, averageRating, reviewCount }: ProductInfo
             {listing.seller_id ? (
               <Link
                 to={`/seller/${listing.seller_id}`}
-                className="font-semibold text-purple-600 transition-colors hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 flex items-center gap-2"
+                className="flex items-center gap-2 font-semibold text-purple-600 transition-colors hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
               >
                 {listing.seller}
                 <span
@@ -81,7 +81,7 @@ export function ProductInfo({ listing, averageRating, reviewCount }: ProductInfo
                 />
               </Link>
             ) : (
-              <span className="font-semibold flex items-center gap-2">
+              <span className="flex items-center gap-2 font-semibold">
                 {listing.seller}
                 {listing.seller_id && (
                   <span

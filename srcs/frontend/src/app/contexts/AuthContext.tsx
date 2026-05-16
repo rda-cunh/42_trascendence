@@ -33,7 +33,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const isUsableToken = (value: unknown): value is string => {
-    return typeof value === "string" && value.trim().length > 0 && value !== "undefined" && value !== "null";
+    return (
+      typeof value === "string" &&
+      value.trim().length > 0 &&
+      value !== "undefined" &&
+      value !== "null"
+    );
   };
 
   const persistAuth = (newToken: string, nextUser: User | null) => {
@@ -182,12 +187,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser({
           id: String(profile.id),
           email: profile.email,
-            name: profile.name,
-            phone: profile.phone,
-            avatar_url: profile.avatar_url,
-            role: profile.role,
-            status: profile.status?.toLowerCase(),
-          });
+          name: profile.name,
+          phone: profile.phone,
+          avatar_url: profile.avatar_url,
+          role: profile.role,
+          status: profile.status?.toLowerCase(),
+        });
       }
     } catch {
       // Keep token-derived or backend-provided user if profile fetch fails.

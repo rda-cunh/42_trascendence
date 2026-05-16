@@ -44,9 +44,7 @@ export function Register() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="form-label">
-              Full Name
-            </label>
+            <label className="form-label">Full Name</label>
             <div className="relative">
               <User className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
               <input
@@ -61,9 +59,7 @@ export function Register() {
             </div>
           </div>
           <div>
-            <label className="form-label">
-              Email
-            </label>
+            <label className="form-label">Email</label>
             <div className="relative">
               <Mail className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
               <input
@@ -78,9 +74,7 @@ export function Register() {
             </div>
           </div>
           <div>
-            <label className="form-label">
-              Password
-            </label>
+            <label className="form-label">Password</label>
             <div className="relative">
               <Lock className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
               <input
@@ -96,9 +90,7 @@ export function Register() {
             </div>
           </div>
           <div>
-            <label className="form-label">
-              Phone (optional)
-            </label>
+            <label className="form-label">Phone (optional)</label>
             <div className="relative">
               <Phone className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
               <input
@@ -111,11 +103,7 @@ export function Register() {
               />
             </div>
           </div>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="btn-primary w-full py-3"
-          >
+          <button type="submit" disabled={isLoading} className="btn-primary w-full py-3">
             {isLoading ? "Creating account..." : "Create Account"}
           </button>
         </form>

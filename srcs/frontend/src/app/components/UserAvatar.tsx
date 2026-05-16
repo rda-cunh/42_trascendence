@@ -26,14 +26,14 @@ export function UserAvatar({ userId, name, src, sizeClassName, className }: User
             className="h-full w-full object-cover"
           />
         ) : (
-          <span className="text-[0.55em] font-semibold uppercase tracking-[0.2em] text-white/90">
+          <span className="text-[0.55em] font-semibold tracking-[0.2em] text-white/90 uppercase">
             {initials}
           </span>
         )}
       </div>
       {userId != null && (
         <span
-          className={`absolute bottom-0 right-0 block h-3 w-3 rounded-full ring-2 ring-white dark:ring-gray-900 ${
+          className={`absolute right-0 bottom-0 block h-3 w-3 rounded-full ring-2 ring-white dark:ring-gray-900 ${
             isOnline ? "bg-green-500" : "bg-gray-400"
           }`}
           title={isOnline ? "Online" : "Offline"}

@@ -34,14 +34,16 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
 
     const fetchPresence = async () => {
       try {
-        const idsArray = Array.from(trackedIds).map(Number).filter(id => !isNaN(id));
+        const idsArray = Array.from(trackedIds)
+          .map(Number)
+          .filter((id) => !isNaN(id));
         if (idsArray.length === 0) return;
 
         const data = await api.getPresence(idsArray);
         setOnlineUsers((prev) => {
           let changed = false;
           const next = { ...prev };
-          
+
           // Set all tracked to offline first
           for (const id of idsArray) {
             if (next[String(id)] !== false) {
@@ -83,12 +85,14 @@ export function usePresence(userId?: string | number | null) {
     throw new Error("usePresence must be used within PresenceProvider");
   }
 
+  const { subscribe, unsubscribe, onlineUsers } = context;
+
   useEffect(() => {
     if (userId != null) {
-      context.subscribe(userId);
-      return () => context.unsubscribe(userId);
+      subscribe(userId);
+      return () => unsubscribe(userId);
     }
-  }, [userId, context.subscribe, context.unsubscribe]);
+  }, [userId, subscribe, unsubscribe]);
 
-  return userId != null ? !!context.onlineUsers[String(userId)] : false;
+  return userId != null ? !!onlineUsers[String(userId)] : false;
 }

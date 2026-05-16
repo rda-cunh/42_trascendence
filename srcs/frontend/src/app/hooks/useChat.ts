@@ -101,7 +101,8 @@ export function useChat(accessToken: string | null): UseChatResult {
         setSelectedConversation(data[0]);
       } else if (selectedConversationIdRef.current) {
         const updatedSelected =
-          data.find((conversation) => conversation.id === selectedConversationIdRef.current) || null;
+          data.find((conversation) => conversation.id === selectedConversationIdRef.current) ||
+          null;
         setSelectedConversation(updatedSelected);
       }
     } catch (err) {
@@ -113,7 +114,13 @@ export function useChat(accessToken: string | null): UseChatResult {
   }, []);
 
   useEffect(() => {
-    void refreshConversations();
+    const timer = window.setTimeout(() => {
+      void refreshConversations();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, [refreshConversations]);
 
   useEffect(() => {
@@ -226,9 +233,7 @@ export function useChat(accessToken: string | null): UseChatResult {
 
   const selectConversation = (conversation: Conversation) => {
     setSelectedConversation(conversation);
-    setUpdatedConversationIds((prevUpdated) =>
-      prevUpdated.filter((id) => id !== conversation.id)
-    );
+    setUpdatedConversationIds((prevUpdated) => prevUpdated.filter((id) => id !== conversation.id));
   };
 
   const sendMessage = (text: string) => {

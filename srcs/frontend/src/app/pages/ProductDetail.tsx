@@ -126,17 +126,11 @@ export function ProductDetail() {
             <ProductInfo listing={listing} averageRating={avgRating} reviewCount={reviews.length} />
 
             <div className="flex gap-3">
-              <button
-                onClick={handleBuyNow}
-                className="btn-primary flex-1 px-6 py-3"
-              >
+              <button onClick={handleBuyNow} className="btn-primary flex-1 px-6 py-3">
                 <CreditCard className="h-5 w-5" />
                 <span>Buy Now</span>
               </button>
-              <button
-                onClick={handleAddToCart}
-                className="btn-secondary px-6 py-3"
-              >
+              <button onClick={handleAddToCart} className="btn-secondary px-6 py-3">
                 <ShoppingCart className="h-5 w-5" />
                 <span className="hidden sm:inline">Add to Cart</span>
               </button>
@@ -147,8 +141,6 @@ export function ProductDetail() {
               <h2 className="mb-3 text-xl font-bold text-gray-900 dark:text-white">Description</h2>
               <p className="leading-relaxed text-gray-700 dark:text-gray-300">{description}</p>
             </div>
-
-
           </div>
         </div>
 

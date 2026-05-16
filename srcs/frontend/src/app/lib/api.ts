@@ -84,13 +84,13 @@ export function mapListing(item: any): Listing {
   const createdAt = item?.created_at ?? item?.postedDate ?? item?.posted_date;
   const images = Array.isArray(item?.images) ? item.images : [];
   const normalizedImages = images
-    .map((image: any) => (typeof image === "string" ? image : image?.image_hash ?? image?.images))
+    .map((image: any) => (typeof image === "string" ? image : (image?.image_hash ?? image?.images)))
     .filter((image: unknown): image is string => typeof image === "string" && image.length > 0);
   const firstImage = normalizedImages[0];
   const sellerName =
     typeof item?.seller === "string"
       ? item.seller
-      : item?.seller?.name ?? item?.seller_name ?? "Creator Studio";
+      : (item?.seller?.name ?? item?.seller_name ?? "Creator Studio");
 
   return {
     id: String(item?.product_id ?? item?.id),
@@ -250,7 +250,9 @@ class ApiClient {
   }
 
   getProfile() {
-    return this.request<any>("GET", "/auth/profile/").then((data) => normalizeProfileResponse(data));
+    return this.request<any>("GET", "/auth/profile/").then((data) =>
+      normalizeProfileResponse(data)
+    );
   }
 
   getOAuth42Url() {
@@ -278,7 +280,9 @@ class ApiClient {
   }
 
   getPublicUserProfile(userId: string | number) {
-    return this.request<any>("GET", `/users/${userId}/`).then((data) => normalizeProfileResponse(data));
+    return this.request<any>("GET", `/users/${userId}/`).then((data) =>
+      normalizeProfileResponse(data)
+    );
   }
 
   createListing(data: any) {
@@ -338,16 +342,15 @@ class ApiClient {
       headers,
       credentials: "include",
       body: formData,
-    })
-      .then(async (response) => {
-        const data = await response.json().catch(() => ({}));
+    }).then(async (response) => {
+      const data = await response.json().catch(() => ({}));
 
-        if (!response.ok) {
-          throw new Error(this.getErrorMessage(data, response.statusText));
-        }
+      if (!response.ok) {
+        throw new Error(this.getErrorMessage(data, response.statusText));
+      }
 
-        return data as { filename: string; url?: string };
-      });
+      return data as { filename: string; url?: string };
+    });
   }
 
   // FOLLOW/SOCIAL
@@ -364,11 +367,17 @@ class ApiClient {
   }
 
   getFollowerCount(userId: number) {
-    return this.request<{ followers: number; following: number }>("GET", `/follow/counts/${userId}/`);
+    return this.request<{ followers: number; following: number }>(
+      "GET",
+      `/follow/counts/${userId}/`
+    );
   }
 
   getFollowingCount(userId: number) {
-    return this.request<{ followers: number; following: number }>("GET", `/follow/counts/${userId}/`);
+    return this.request<{ followers: number; following: number }>(
+      "GET",
+      `/follow/counts/${userId}/`
+    );
   }
 
   getFollowing(userId: number, limit?: number, offset?: number) {
