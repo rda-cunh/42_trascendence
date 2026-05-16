@@ -2,14 +2,13 @@ import type { Conversation, Message, CreateConversationPayload } from "../types/
 
 const API_BASE = "/api";
 
-// always read the token from localStorage at request time. AuthContext keeps localStorage in sync on login, register, etc.
 function getAuthHeaders() {
   const accessToken = localStorage.getItem("auth_token");
   const headers: HeadersInit = {
     "Content-Type": "application/json",
   };
 
-  if (accessToken) {
+  if (accessToken && accessToken !== "undefined" && accessToken !== "null") {
     headers.Authorization = `Bearer ${accessToken}`;
   }
 
@@ -31,6 +30,31 @@ async function handleJsonResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+function normalizeConversation(item: any): Conversation {
+  return {
+    id: Number(item?.id),
+    listing_id: Number(item?.listing_id),
+    buyer_id: Number(item?.buyer_id),
+    seller_id: Number(item?.seller_id),
+    last_message: item?.last_message ?? null,
+    last_message_at: item?.last_message_at ?? null,
+    created_at: item?.created_at ?? undefined,
+    listing_name: item?.listing_name ?? item?.listing?.name ?? null,
+    listing_image_hash: item?.listing_image_hash ?? item?.listing?.image_hash ?? null,
+    listing_price: item?.listing_price ?? item?.listing?.price ?? null,
+    other_id: item?.other_id ?? null,
+    other_user: item?.other_user ?? null,
+  };
+}
+
+function sortConversationsByNewest(conversations: Conversation[]) {
+  return [...conversations].sort((a, b) => {
+    const aTime = a.last_message_at ?? a.created_at ?? "";
+    const bTime = b.last_message_at ?? b.created_at ?? "";
+    return bTime.localeCompare(aTime);
+  });
+}
+
 export async function fetchConversations(): Promise<Conversation[]> {
   const response = await fetch(`${API_BASE}/chat/conversations/`, {
     method: "GET",
@@ -38,7 +62,8 @@ export async function fetchConversations(): Promise<Conversation[]> {
     credentials: "include",
   });
 
-  return handleJsonResponse<Conversation[]>(response);
+  const data = await handleJsonResponse<any[]>(response);
+  return sortConversationsByNewest((Array.isArray(data) ? data : []).map(normalizeConversation));
 }
 
 export async function createOrGetConversation(
@@ -51,7 +76,8 @@ export async function createOrGetConversation(
     body: JSON.stringify(payload),
   });
 
-  return handleJsonResponse<Conversation>(response);
+  const data = await handleJsonResponse<any>(response);
+  return normalizeConversation(data);
 }
 
 export async function fetchMessages(conversationId: number): Promise<Message[]> {

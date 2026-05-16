@@ -13,6 +13,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 import { Cart } from "./Cart";
 import { NotificationBell } from "./NotificationBell";
+import { UserAvatar } from "./UserAvatar";
 
 export function Header() {
   const location = useLocation();
@@ -34,10 +35,10 @@ export function Header() {
             {user && (
               <Link
                 to="/sell"
-                className={`flex items-center gap-2 rounded-lg px-3 py-2 transition-colors ${
+                className={`btn h-10 px-3 ${
                   location.pathname === "/sell"
                     ? "bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
-                    : "text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                    : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
                 }`}
               >
                 <PlusCircle className="h-5 w-5" />
@@ -51,10 +52,10 @@ export function Header() {
             {user && (
               <Link
                 to="/chat"
-                className={`rounded-lg p-2 transition-colors ${
+                className={`btn-icon ${
                   location.pathname === "/chat"
                     ? "bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
-                    : "text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                    : ""
                 }`}
               >
                 <MessageCircle className="h-5 w-5" />
@@ -63,7 +64,7 @@ export function Header() {
 
             <button
               onClick={toggleTheme}
-              className="rounded-lg p-2 text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+              className="btn-icon"
               aria-label="Toggle theme"
             >
               {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
@@ -73,11 +74,13 @@ export function Header() {
               <div className="flex items-center gap-2">
                 <Link
                   to="/profile"
-                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                  className="btn-ghost h-10 gap-3 px-2.5 pr-4"
                 >
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-100 text-sm font-semibold text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
-                    {(user.name || user.email).charAt(0).toUpperCase()}
-                  </div>
+                    <UserAvatar
+                      src={user.avatar_url}
+                      name={user.name || user.email}
+                      sizeClassName="h-7 w-7"
+                    />
                   <span className="hidden text-sm font-medium md:inline">
                     {user.name || user.email}
                   </span>
@@ -85,7 +88,7 @@ export function Header() {
                 {user.role === "admin" && (
                   <Link
                     to="/admin"
-                    className="rounded-lg p-2 text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                    className="btn-icon"
                     title="Admin Panel"
                   >
                     <Shield className="h-5 w-5" />
@@ -95,7 +98,7 @@ export function Header() {
                   onClick={() => {
                     void logout();
                   }}
-                  className="rounded-lg p-2 text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                  className="btn-icon"
                   title="Logout"
                 >
                   <LogOut className="h-5 w-5" />
@@ -104,7 +107,7 @@ export function Header() {
             ) : (
               <Link
                 to="/login"
-                className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-white transition-colors hover:bg-purple-700"
+                className="btn-primary h-10"
               >
                 <LogIn className="h-5 w-5" />
                 <span className="hidden sm:inline">Login</span>

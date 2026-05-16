@@ -21,6 +21,9 @@ Here is a complete list of APIs used in this project, separated by cateories in 
       - [/api/follow/followers/{user_id}/](#/api/follow/followers/{user_id}/)
       - [/api/follow/counts/{user_id}/](#/api/follow/counts/{user_id}/)
       - [/api/follow/feed/{user_id}/](#/api/follow/feed/{user_id}/)
+    - [Presence](#presence)
+      - [/api/presence/ping/](#/api/presence/ping/)
+      - [/api/presence/](#/api/presence/)
   - [Database APIs](#database-apis)
 - [Public APIs](#public-apis)
 
@@ -195,6 +198,23 @@ Auth required: No
 Feed of active product listings posted by every user that `user_id` follows, newest first. Each item carries both the listing and the seller info so the frontend can render a card without extra requests. Optional pagination: `?limit=N` (1–100) or `?limit=N&offset=M`.
 Body: (none)
 Returns: [ { listing: { id, name, slug, price, created_at, image_hash }, user: { user_id, name, avatar_url, following_since } } ]
+Auth required: No
+
+### Presence / Online Status
+
+This power the online/offline indicator on user profiles, seller cards and chat lists. State lives in Redis with a 60s TTL: while a user has the tab open, the frontend POST a request every 30s; if no answer arrives within 60s the key expires and the user is reported offline. There is no database table — restarts of the backend simply clear all presence and users repopulate it on the next ping.
+
+#### POST /api/presence/ping/
+Refreshes the caller online status (resets the 60s TTL in Redis). The user id is taken from the JWT.
+Body: (none)
+Returns: 204 No Content
+Auth required: Yes (Bearer header)
+
+#### GET /api/presence/
+Bulk online-status lookup for a list of users. Public. Pass the ids as a comma-separated query string. Maximum 200 ids per request.
+Query: `?ids=1,2,3`
+Body: (none)
+Returns: { "1": true, "2": false, "3": true }
 Auth required: No
 
 ## Database APIs

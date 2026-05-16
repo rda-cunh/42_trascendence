@@ -69,11 +69,11 @@ const stats = [
 
 export function AdminDashboard() {
   return (
-    <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-          <p className="mt-1 text-gray-600 dark:text-gray-400">Overview of your marketplace</p>
+    <div className="app-page">
+      <div className="app-container">
+        <div className="page-header">
+          <h1 className="page-title">Admin Dashboard</h1>
+          <p className="page-description">Overview of your marketplace</p>
         </div>
 
         {/* Stats */}
@@ -83,7 +83,7 @@ export function AdminDashboard() {
             return (
               <div
                 key={stat.title}
-                className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900"
+                className="surface-padded"
               >
                 <div className="mb-4 flex items-center justify-between">
                   <div className={`rounded-lg p-2 ${stat.bg}`}>
@@ -102,7 +102,7 @@ export function AdminDashboard() {
 
         {/* Charts */}
         <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="surface-padded">
             <h3 className="mb-4 flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
               <BarChart3 className="h-5 w-5 text-purple-600" /> Revenue Overview
             </h3>
@@ -124,7 +124,7 @@ export function AdminDashboard() {
             </ResponsiveContainer>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="surface-padded">
             <h3 className="mb-4 flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
               <TrendingUp className="h-5 w-5 text-purple-600" /> Orders Trend
             </h3>
@@ -153,7 +153,7 @@ export function AdminDashboard() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+        <div className="surface-padded">
           <h3 className="mb-4 font-semibold text-gray-900 dark:text-white">
             Category Distribution
           </h3>

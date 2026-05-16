@@ -1,0 +1,7 @@
+#!/bin/sh
+if [ "$FRONTEND_MODE" = "dev" ]; then
+    export FRONTEND_TARGET="https://frontend:5173"
+else
+    export FRONTEND_TARGET="https://frontend:443"
+fi
+echo "Frontend target set to: $FRONTEND_TARGET"

@@ -74,7 +74,7 @@ export function Orders() {
 
   if (!user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 transition-colors dark:bg-gray-950">
+      <div className="app-page flex items-center justify-center">
         <div className="text-center">
           <h2 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
             Sign in required
@@ -82,7 +82,7 @@ export function Orders() {
           <p className="mb-4 text-gray-600 dark:text-gray-400">Please log in to view your orders</p>
           <Link
             to="/login"
-            className="rounded-lg bg-purple-600 px-6 py-3 text-white transition-colors hover:bg-purple-700"
+            className="btn-primary px-6 py-3"
           >
             Sign In
           </Link>
@@ -92,9 +92,9 @@ export function Orders() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <h1 className="mb-8 text-3xl font-bold text-gray-900 dark:text-white">My Orders</h1>
+    <div className="app-page">
+      <div className="app-container-narrow">
+        <h1 className="page-title mb-8">My Orders</h1>
 
         {isLoading ? (
           <p className="py-12 text-center text-gray-500 dark:text-gray-400">Loading orders...</p>
@@ -109,7 +109,7 @@ export function Orders() {
             </p>
             <Link
               to="/"
-              className="rounded-lg bg-purple-600 px-6 py-3 text-white transition-colors hover:bg-purple-700"
+              className="btn-primary px-6 py-3"
             >
               Browse Assets
             </Link>
@@ -123,7 +123,7 @@ export function Orders() {
                 <Link
                   key={order.id}
                   to={`/orders/${order.id}`}
-                  className="block rounded-xl border border-gray-200 bg-white p-5 transition-all hover:shadow-md dark:border-gray-800 dark:bg-gray-900"
+                  className="surface-interactive block p-5"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
