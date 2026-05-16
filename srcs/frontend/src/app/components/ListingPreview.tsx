@@ -13,7 +13,11 @@ interface ListingPreviewProps {
   className?: string;
 }
 
-export function ListingPreview({ listing, variant = "showcase", className = "" }: ListingPreviewProps) {
+export function ListingPreview({
+  listing,
+  variant = "showcase",
+  className = "",
+}: ListingPreviewProps) {
   const previewImages = useMemo(
     () => (listing.images ?? []).filter((image): image is string => Boolean(image?.trim())),
     [listing.images]
@@ -52,11 +56,15 @@ export function ListingPreview({ listing, variant = "showcase", className = "" }
     <div className={`flex h-full flex-col ${className}`.trim()}>
       <div className="flex items-center justify-between gap-4 border-b border-gray-200 bg-white/80 px-5 py-4 backdrop-blur dark:border-gray-700 dark:bg-gray-900/70">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
+          <p className="text-xs font-semibold tracking-[0.2em] text-gray-500 uppercase dark:text-gray-400">
             Preview
           </p>
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-            {canRenderShader && canShowImages ? "Shader and uploaded images" : canShowImages ? "Uploaded images" : "Shader render"}
+            {canRenderShader && canShowImages
+              ? "Shader and uploaded images"
+              : canShowImages
+                ? "Uploaded images"
+                : "Shader render"}
           </h3>
         </div>
 
@@ -110,7 +118,7 @@ export function ListingPreview({ listing, variant = "showcase", className = "" }
         <div className="border-t border-gray-200 bg-white px-5 py-4 dark:border-gray-700 dark:bg-gray-900">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
+              <p className="text-xs font-semibold tracking-[0.2em] text-gray-500 uppercase dark:text-gray-400">
                 Uploaded images
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-300">

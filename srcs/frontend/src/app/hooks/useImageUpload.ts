@@ -14,11 +14,7 @@ interface UseImageUploadOptions {
 }
 
 export function useImageUpload(options: UseImageUploadOptions = {}) {
-  const {
-    onSuccess,
-    successMessage = "Image uploaded",
-    errorContext = "image",
-  } = options;
+  const { onSuccess, successMessage = "Image uploaded", errorContext = "image" } = options;
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
