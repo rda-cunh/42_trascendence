@@ -388,6 +388,16 @@ class ApiClient {
     if (params.toString()) url += `?${params.toString()}`;
     return this.request<any>("GET", url);
   }
+
+  pingPresence() {
+    return this.request<void>("POST", "/presence/ping/");
+  }
+
+  getPresence(userIds: number[]) {
+    if (!userIds || userIds.length === 0) return Promise.resolve({});
+    const uniqueIds = Array.from(new Set(userIds)).slice(0, 200);
+    return this.request<Record<string, boolean>>("GET", `/presence/?ids=${uniqueIds.join(",")}`);
+  }
 }
 
 export const api = new ApiClient();

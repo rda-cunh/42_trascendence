@@ -142,7 +142,7 @@ export function SellerProfile() {
         <div className="surface mb-8 overflow-hidden">
           <div className="flex flex-col gap-6 bg-gradient-to-r from-purple-600 to-purple-800 p-8 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex items-end gap-6">
-              <UserAvatar src={seller.avatar_url} name={seller.name} sizeClassName="h-24 w-24 text-2xl" />
+              <UserAvatar userId={seller.id} src={seller.avatar_url} name={seller.name} sizeClassName="h-24 w-24 text-2xl" />
               <div className="min-w-0">
                 <h1 className="break-words text-3xl font-bold text-white">{seller.name}</h1>
                 {seller.email && <p className="break-words text-purple-200">{seller.email}</p>}

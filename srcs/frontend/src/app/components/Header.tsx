@@ -77,6 +77,7 @@ export function Header() {
                   className="btn-ghost h-10 gap-3 px-2.5 pr-4"
                 >
                     <UserAvatar
+                      userId={user.id}
                       src={user.avatar_url}
                       name={user.name || user.email}
                       sizeClassName="h-7 w-7"

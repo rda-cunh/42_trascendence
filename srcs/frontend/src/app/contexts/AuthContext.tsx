@@ -121,6 +121,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [token]);
 
+  useEffect(() => {
+    if (!token || !user) return;
+
+    const ping = () => {
+      api.pingPresence().catch(() => {
+        // Ignore presence ping errors silently
+      });
+    };
+
+    ping();
+    const interval = setInterval(ping, 30000);
+    return () => clearInterval(interval);
+  }, [token, user]);
+
   const login = async (email: string, password: string) => {
     const res = await api.login(email, password);
     const newToken = getAccessToken(res);
