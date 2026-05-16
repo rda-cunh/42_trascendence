@@ -2,6 +2,7 @@
 import { createBrowserRouter, Outlet } from "react-router";
 import { Home } from "./pages/Home";
 import { ProductDetail } from "./pages/ProductDetail";
+import { SellerProfile } from "./pages/SellerProfile";
 import { SellItem } from "./pages/SellItem";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
@@ -56,6 +57,7 @@ export const router = createBrowserRouter([
       { path: "login/error", element: <OAuthCallback status="error" /> },
       { path: "register", element: <Register /> },
       { path: "product/:id", element: <ProductDetail /> },
+      { path: "seller/:sellerId", element: <SellerProfile /> },
       {
         path: "sell",
         element: (

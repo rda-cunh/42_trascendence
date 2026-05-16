@@ -42,6 +42,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,                     // enable SSL verification
       },
+      '/images': {
+        target: process.env.BACKEND_URL || 'https://gateway',
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 });

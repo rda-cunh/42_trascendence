@@ -13,3 +13,4 @@ volumes:
   db_data:
   prometheus_data:
   grafana_data:
+  image_data:

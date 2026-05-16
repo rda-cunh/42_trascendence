@@ -21,12 +21,13 @@ class ProductImages(BaseModel):
 	display_order:	int
 
 class ProductResponse(BaseModel):
+	id:				int
 	name:			str
 	slug:			str
 	description:	str
 	price:			Decimal
 	status:			ProductStatus
-	images:			list[ProductImages] = []
+	images:			list[str] = []
 
 # GET /users/
 class UserProductsResponse(BaseModel):
@@ -46,6 +47,7 @@ class ListingResponse(BaseModel):
 	description:	str
 	price:		Decimal
 	status:		ProductStatus
+	images: 		list[str] = []
 
 class UserResponse(BaseModel):
 	name:		str
