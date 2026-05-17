@@ -65,7 +65,7 @@ def create_order(order_in: OrderCreate, db=Depends(get_db_dep)):
 	return OrderResponse(**order)
 
 # GET /orders/{order_id}
-@router.get('/{order_id}/', response_model=OrderResponse)
+@router.get('/{order_id}/', response_model=OrderResponse, status_code=200)
 def get_order(order_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
 
@@ -82,7 +82,7 @@ def get_order(order_id: int, db=Depends(get_db_dep)):
 	return OrderResponse(**order)
 
 # GET /orders/buyer/{id}
-@router.get('/buyer/{buyer_id}/', response_model=list[OrderResponse])
+@router.get('/buyer/{buyer_id}/', response_model=list[OrderResponse], status_code=200)
 def get_buyer_orders(buyer_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
 
@@ -98,7 +98,7 @@ def get_buyer_orders(buyer_id: int, db=Depends(get_db_dep)):
 	return [OrderResponse(**o) for o in orders]
 
 # PATCH /orders{order_id}
-@router.patch('/{order_id}/', response_model=OrderResponse)
+@router.patch('/{order_id}/', response_model=OrderResponse, status_code=200)
 def update_orders(order_id: int, order_in: OrderUpdate, db=Depends(get_db_dep)):
 	conn, cursor = db
 	cursor.execute('SELECT * FROM orders WHERE id = %s', (order_id,))
