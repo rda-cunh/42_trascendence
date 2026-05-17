@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, Link } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
 import { ArrowLeft, Package, Clock, CheckCircle, Truck, XCircle } from "lucide-react";
 import { Order } from "../types";
 import { toast } from "sonner";
+import { useAsyncEffect } from "../hooks/useAsyncEffect";
 
 const statusConfig: Record<
   string,
@@ -42,28 +43,25 @@ export function OrderDetail() {
   const { id } = useParams();
   const { user } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchOrder = async () => {
-      if (!user || !id) {
-        setIsLoading(false);
-        return;
-      }
+  const isLoading = useAsyncEffect(
+    async ({ isCancelled }) => {
+      if (!user || !id) return;
 
-      try {
-        const data = await api.getOrder(id);
-        setOrder(data);
-      } catch (err) {
-        console.error("Failed to load order:", err);
+      const data = await api.getOrder(id);
+
+      if (isCancelled()) return;
+
+      setOrder(data);
+    },
+    [id, user],
+    {
+      onError: (error) => {
+        console.error("Failed to load order:", error);
         toast.error("Failed to load order");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchOrder();
-  }, [id, user]);
+      },
+    }
+  );
 
   if (!user) {
     return (

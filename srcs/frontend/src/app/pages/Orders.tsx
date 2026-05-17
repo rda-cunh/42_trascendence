@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
 import { Package, Clock, CheckCircle, Truck, XCircle, ChevronRight } from "lucide-react";
 import { Order } from "../types";
+import { useAsyncEffect } from "../hooks/useAsyncEffect";
 
 const statusConfig: Record<
   string,
@@ -39,30 +40,19 @@ const statusConfig: Record<
 export function Orders() {
   const { user, token } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      if (!user || !token) {
-        setIsLoading(false);
-        return;
-      }
+  const isLoading = useAsyncEffect(async ({ isCancelled }) => {
+    if (!user || !token) return;
 
-      try {
-        const data = await api.getOrders();
-        if (data?.results) {
-          setOrders(data.results);
-        } else if (Array.isArray(data)) {
-          setOrders(data);
-        }
-      } catch (err) {
-        console.error("Failed to load orders:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    const data = await api.getOrders();
 
-    fetchOrders();
+    if (isCancelled()) return;
+
+    if (data?.results) {
+      setOrders(data.results);
+    } else if (Array.isArray(data)) {
+      setOrders(data);
+    }
   }, [user, token]);
 
   const formatDate = (dateStr: string) =>

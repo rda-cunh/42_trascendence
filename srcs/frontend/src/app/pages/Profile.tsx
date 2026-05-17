@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router";
 import { Camera, Edit3, Mail, Phone, Plus, Save, Shield, Upload, User } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
@@ -8,12 +8,12 @@ import { Listing } from "../types";
 import { toast } from "sonner";
 import { UserAvatar } from "../components/UserAvatar";
 import { useImageUpload } from "../hooks/useImageUpload";
+import { useAsyncEffect } from "../hooks/useAsyncEffect";
 
 export function Profile() {
   const { user, updateUser } = useAuth();
   const [editing, setEditing] = useState(false);
   const [products, setProducts] = useState<Listing[]>([]);
-  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
@@ -28,22 +28,15 @@ export function Profile() {
     errorContext: "profile photo",
   });
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      if (!user?.id) return;
+  const isLoadingProducts = useAsyncEffect(async ({ isCancelled }) => {
+    if (!user?.id) return;
 
-      try {
-        const profile = await api.getProfile();
-        const listings = Array.isArray(profile?.listings) ? profile.listings : [];
-        setProducts(listings.map(mapListing));
-      } catch (err) {
-        console.error("Failed to load products:", err);
-      } finally {
-        setIsLoadingProducts(false);
-      }
-    };
+    const profile = await api.getProfile();
+    const listings = Array.isArray(profile?.listings) ? profile.listings : [];
 
-    fetchProducts();
+    if (isCancelled()) return;
+
+    setProducts(listings.map(mapListing));
   }, [user?.id]);
 
   const handleSave = async () => {
