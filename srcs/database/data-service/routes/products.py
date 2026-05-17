@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from database import get_db_dep
-from models.product import ProductCreate, ProductImages, ProductUpdate, ProductResponse, ProductImagesResponse
+from models.product import *
 
 router = APIRouter(prefix='/api/listings', tags=['Products'])
 
@@ -10,7 +10,7 @@ router = APIRouter(prefix='/api/listings', tags=['Products'])
 def GetProductInfo(db, product_id:	int):
 	conn, cursor = db
 	cursor.execute(
-		'SELECT id, seller_id, name, slug, description, price, status, created_at FROM products WHERE id = %s',
+		'SELECT id, seller_id, name, slug, description, price, status, avg_rating, review_count, created_at FROM products WHERE id = %s',
 		(product_id,)
 	)
 	product = cursor.fetchone()
@@ -18,15 +18,15 @@ def GetProductInfo(db, product_id:	int):
 		raise HTTPException(status_code=404, detail='Product not found')
 	
 	cursor.execute(
-		f'''SELECT image_hash FROM product_images WHERE product_id = %s ORDER BY display_order''',
+		'''SELECT image_hash FROM product_images WHERE product_id = %s ORDER BY display_order''',
 		(product['id'],)
 	)
 	image_rows = cursor.fetchall()
 	product['images'] = [img['image_hash'] for img in image_rows]
 
 	cursor.execute(
-		f'''SELECT name, email, avatar_url FROM users WHERE id = %s''',
-		(product['seller_id'])
+		'''SELECT name, email, avatar_url FROM users WHERE id = %s''',
+		(product['seller_id'],)
 	)
 	user = cursor.fetchone()
 
@@ -37,6 +37,23 @@ def GetProductInfo(db, product_id:	int):
 
 	product['seller'] = user
 	return product
+
+def _recalc_listing_rating(cursor, product_id: int) -> None:
+	cursor.execute(
+		'''UPDATE products
+		   SET avg_rating   = (
+				 SELECT ROUND(AVG(rating), 2)
+				 FROM   product_reviews
+				 WHERE  product_id = %s AND status = 'approved'
+				),
+				review_count = (
+				 SELECT COUNT(*)
+				 FROM   product_reviews
+				 WHERE  product_id = %s AND status = 'approved'
+			   )
+		   WHERE id = %s''',
+		(product_id, product_id, product_id)
+	)
 
 # POST /listings
 @router.post('/', response_model=ProductResponse, status_code=201)
@@ -58,13 +75,8 @@ def	create_product(product_in: ProductCreate, db=Depends(get_db_dep)):
 
 	if product_in.images:
 		values = [(new_id, img, idx) for idx, img in enumerate(product_in.images)]
-		cursor.executemany(
-			'''
-			INSERT INTO product_images (product_id, image_hash, display_order)
-			VALUES (%s, %s, %s)
-			''',
-			values
-		)
+		cursor.executemany('''INSERT INTO product_images (product_id, image_hash, display_order) VALUES (%s, %s, %s)''', values)
+	conn.commit()
 	product = GetProductInfo(db, new_id)
 	return ProductResponse(**product)
 
@@ -83,7 +95,8 @@ def	list_products(
 	skip = (page - 1) * limit
 	if page < 1:
 		raise HTTPException(status_code=400, detail="Invalid page")
-	sql = 'SELECT * FROM products WHERE 1=1'
+	sql = '''SELECT id, seller_id, name, slug, description, price, status,
+					avg_rating, review_count, created_at FROM products WHERE 1=1'''
 	params = []
 	
 	if search:
@@ -108,8 +121,7 @@ def	list_products(
 	placeholders = ','.join(['%s'] * len(product_ids))
 
 	cursor.execute(
-		f'''
-		SELECT product_id, image_hash AS images FROM product_images WHERE product_id IN ({placeholders}) ORDER BY display_order''', 
+		f'''SELECT product_id, image_hash AS images FROM product_images WHERE product_id IN ({placeholders}) ORDER BY display_order''', 
 		tuple(product_ids)
 	)
 	image_rows = cursor.fetchall()
@@ -136,7 +148,7 @@ def update_products(product_id: int, product_in: ProductUpdate, db=Depends(get_d
 		raise HTTPException(status_code=404, detail='Product not found')
 	update_data = {
 		k: v for k, v in product_in.model_dump(exclude_none=True).items()
-    	if v != ""
+		if v != ""
 		}
 	if not update_data:
 		raise HTTPException(status_code=400, detail='No fields to update')
@@ -147,6 +159,7 @@ def update_products(product_id: int, product_in: ProductUpdate, db=Depends(get_d
 		f'UPDATE products SET {set_clause} WHERE id = %s',
 		values
 	)
+	conn.commit()
 	product = GetProductInfo(db, product_id)
 	return ProductResponse(**product)
 
@@ -156,10 +169,15 @@ def update_products(product_id: int, product_in: ProductUpdate, db=Depends(get_d
 # DELETE /listings/{id}
 @router.delete('/{product_id}/', status_code=204)
 def delete_product(product_id: int, db=Depends(get_db_dep)):
-	con, cursor = db
-	cursor.execute('DELETE FROM products WHERE id = %s', (product_id))
+	conn, cursor = db
+ 
+	cursor.execute(
+		"UPDATE products SET status = 'Deleted' WHERE id = %s AND status != 'Deleted'",
+		(product_id,)
+	)
 	if cursor.rowcount == 0:
 		raise HTTPException(status_code=404, detail='Product not found')
+	conn.commit()
 
 
 # PRODUCT IMAGES
@@ -167,23 +185,20 @@ def delete_product(product_id: int, db=Depends(get_db_dep)):
 @router.post('/{product_id}/images/', response_model=ProductImagesResponse, status_code=201)
 def	create_product_image(product_id: int, image_in: ProductImages, db=Depends(get_db_dep)):
 	conn, cursor = db
-
-	cursor.execute('SELECT * FROM products WHERE id = %s', (product_id,))
-	if cursor.rowcount == 0:
+ 
+	cursor.execute('SELECT id FROM products WHERE id = %s', (product_id,))
+	if not cursor.fetchone():
 		raise HTTPException(status_code=404, detail='Product not found')
-
+ 
 	cursor.execute(
-		'''
-		INSERT INTO product_images (product_id, image_hash, display_order)
-		VALUES (%s, %s, %s)
-		''',
-		(product_id, image_in.image_hash, image_in.display_order,)
+		'INSERT INTO product_images (product_id, image_hash, display_order) VALUES (%s, %s, %s)',
+		(product_id, image_in.image_hash, image_in.display_order)
 	)
 	new_id = conn.insert_id()
-	cursor.execute('SELECT * FROM product_images WHERE id = %s', (new_id))
-	new_image = cursor.fetchone()
-
-	return (ProductImagesResponse(**new_image))
+	conn.commit()
+ 
+	cursor.execute('SELECT * FROM product_images WHERE id = %s', (new_id,))
+	return ProductImagesResponse(**cursor.fetchone())
 
 @router.get('/{product_id}/images/', response_model=list[ProductImagesResponse])
 def	list_product_images(product_id: int, db=Depends(get_db_dep)):
@@ -202,28 +217,185 @@ def	get_product_image(product_id: int, image_id: int, db=Depends(get_db_dep)):
 	return ProductImagesResponse(**image)
 
 @router.delete('/{product_id}/images/{image_id}', status_code=204)
-def delete_user(product_id: int, image_id: int, db=Depends(get_db_dep)):
+def delete_product_image(product_id: int, image_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
-	cursor.execute('DELETE FROM product_images WHERE id = %s', (image_id,))
+	cursor.execute(
+		'DELETE FROM product_images WHERE id = %s AND product_id = %s',
+		(image_id, product_id)
+	)
 	if cursor.rowcount == 0:
 		raise HTTPException(status_code=404, detail='Image not found')
-
-
-# POST /product_review
-
+	conn.commit()
 
 
 
-# GET /product_review
+@router.post('/{product_id}/reviews/', status_code=201)
+def post_review(product_id: int, review_in: ReviewCreate, db=Depends(get_db_dep)):
+	conn, cursor = db
 
+	cursor.execute(
+		"SELECT id, seller_id FROM products WHERE id = %s AND status != 'Deleted'",
+		(product_id,)
+	)
+	listing = cursor.fetchone()
+	if not listing:
+		raise HTTPException(status_code=404, detail='Listing not found')
 
+	if listing['seller_id'] == review_in.reviewer_id:
+		raise HTTPException(status_code=400, detail='Cannot review your own listing')
 
+	cursor.execute(
+		'''SELECT oi.id AS order_items_id
+		   FROM   orders o
+		   JOIN   order_items oi ON oi.order_id = o.id
+		   WHERE  o.buyer_id    = %s
+			 AND  oi.product_id = %s
+			 AND  o.status      = 'Done'
+		   LIMIT 1''',
+		(review_in.reviewer_id, product_id)
+	)
+	order_row = cursor.fetchone()
+	if not order_row: 
+		raise HTTPException(status_code=403, detail='Purchase not verified')
 
-# PATCH /product_review
+	cursor.execute(
+		'SELECT id FROM product_reviews WHERE reviewer_id = %s AND product_id = %s',
+		(review_in.reviewer_id, product_id)
+	)
+	if cursor.fetchone():
+		raise HTTPException(status_code=409, detail='Already reviewed this listing')
 
+	cursor.execute(
+		'''INSERT INTO product_reviews (product_id, reviewer_id, order_items_id, rating, title, body)
+		   VALUES (%s, %s, %s, %s, %s, %s)''',
+		(product_id, review_in.reviewer_id, order_row['order_items_id'],
+		 review_in.rating, review_in.title, review_in.body)
+	)
+	new_id = conn.insert_id()
+	_recalc_listing_rating(cursor, product_id)
+	conn.commit()
+ 
+	cursor.execute(
+		'''SELECT r.id, r.product_id, r.reviewer_id, r.rating, r.title, r.body,
+				  r.status, r.created_at, r.updated_at,
+				  u.name AS reviewer_name, u.avatar_url AS reviewer_avatar
+		   FROM product_reviews r
+		   JOIN users u ON u.id = r.reviewer_id
+		   WHERE r.id = %s''',
+		(new_id,)
+	)
+	return ReviewResponse(**cursor.fetchone())
 
+@router.get('/{product_id}/reviews/', response_model=list[ReviewResponse])
+def list_reviews(
+	product_id: int,
+	page:       int = 1,
+	db=Depends(get_db_dep)
+):
+	conn, cursor = db
+ 
+	if page < 1:
+		raise HTTPException(status_code=400, detail='Invalid page')
 
-# DELETE /product_review
+	limit = 10
+	skip  = (page - 1) * limit
 
+	cursor.execute(
+		'''SELECT r.id, r.product_id, r.reviewer_id, r.rating, r.title, r.body,
+				  r.status, r.created_at, r.updated_at,
+				  u.name AS reviewer_name, u.avatar_url AS reviewer_avatar
+		   FROM product_reviews r
+		   JOIN users u ON u.id = r.reviewer_id
+		   WHERE r.product_id = %s AND r.status = 'Approved'
+		   ORDER BY r.created_at DESC
+		   LIMIT %s OFFSET %s''',
+		(product_id, limit, skip)
+	)
+	return [ReviewResponse(**row) for row in cursor.fetchall()]
+ 
+ 
+@router.get('/{product_id}/reviews/{review_id}/', response_model=ReviewResponse)
+def get_review(product_id: int, review_id: int, db=Depends(get_db_dep)):
+	conn, cursor = db
+ 
+	cursor.execute(
+		'''SELECT r.id, r.product_id, r.reviewer_id, r.rating, r.title, r.body,
+				  r.status, r.created_at, r.updated_at,
+				  u.name AS reviewer_name, u.avatar_url AS reviewer_avatar
+		   FROM product_reviews r
+		   JOIN users u ON u.id = r.reviewer_id
+		   WHERE r.id = %s AND r.product_id = %s AND r.status = 'Approved' ''',
+		(review_id, product_id)
+	)
+	review = cursor.fetchone()
+	if not review:
+		raise HTTPException(status_code=404, detail='Review not found')
+	return ReviewResponse(**review)
+ 
+ 
+@router.patch('/{product_id}/reviews/{review_id}/', response_model=ReviewResponse)
+def update_review(product_id: int, review_id: int, review_in: ReviewUpdate, db=Depends(get_db_dep)):
+	conn, cursor = db
 
+	cursor.execute(
+		'SELECT id, reviewer_id, created_at FROM product_reviews WHERE id = %s AND product_id = %s',
+		(review_id, product_id)
+	)
+	review = cursor.fetchone()
+	if not review:
+		raise HTTPException(status_code=404, detail='Review not found')
 
+	# TO DO: verificar se caller é o reviewer ou admin
+	cursor.execute(
+		'SELECT id FROM product_reviews WHERE id = %s AND created_at >= NOW() - INTERVAL 30 DAY',
+		(review_id,)
+	)
+	if not cursor.fetchone():
+		raise HTTPException(status_code=403, detail='Edit window expired (30 days)')
+
+	update_data = {
+		k: v for k, v in review_in.model_dump(exclude_none=True).items()
+		if v != ''
+	}
+	if not update_data:
+		raise HTTPException(status_code=400, detail='No fields to update')
+
+	#TO DO
+	# update_data['status'] = 'Pending'
+	set_clause = ', '.join(f'{k} = %s' for k in update_data)
+	values     = list(update_data.values()) + [review_id, product_id]
+ 
+	cursor.execute(
+		f'UPDATE product_reviews SET {set_clause} WHERE id = %s AND product_id = %s',
+		values
+	)
+	_recalc_listing_rating(cursor, product_id)
+	conn.commit()
+
+	cursor.execute(
+		'''SELECT r.id, r.product_id, r.reviewer_id, r.rating, r.title, r.body,
+				  r.status, r.created_at, r.updated_at,
+				  u.name AS reviewer_name, u.avatar_url AS reviewer_avatar
+		   FROM product_reviews r
+		   JOIN users u ON u.id = r.reviewer_id
+		   WHERE r.id = %s''',
+		(review_id,)
+	)
+	return ReviewResponse(**cursor.fetchone())
+ 
+ 
+@router.delete('/{product_id}/reviews/{review_id}/', status_code=204)
+def delete_review(product_id: int, review_id: int, db=Depends(get_db_dep)):
+	conn, cursor = db
+
+	# TO DO: verificar se caller é o reviewer ou admin
+	cursor.execute(
+		"UPDATE product_reviews SET status = 'Deleted' WHERE id = %s AND product_id = %s",
+		(review_id, product_id)
+	)
+	if cursor.rowcount == 0:
+		raise HTTPException(status_code=404, detail='Review not found')
+
+	_recalc_listing_rating(cursor, product_id)
+	conn.commit()
+ 
