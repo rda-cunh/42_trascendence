@@ -111,9 +111,12 @@ export function useProductChat({
   }, [disconnectSocket, enabled, isOpen, listingId]);
 
   useEffect(() => {
-    void bootstrapConversation();
+    const timer = window.setTimeout(() => {
+      void bootstrapConversation();
+    }, 0);
 
     return () => {
+      window.clearTimeout(timer);
       disconnectSocket();
     };
   }, [bootstrapConversation, disconnectSocket]);
