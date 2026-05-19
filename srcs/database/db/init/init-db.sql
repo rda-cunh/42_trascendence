@@ -174,6 +174,23 @@ CREATE TABLE IF NOT EXISTS follows (
 	CONSTRAINT fk_follows_following FOREIGN KEY (following_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS notifications (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  receiver_id BIGINT UNSIGNED NOT NULL,
+  actor_id BIGINT UNSIGNED NULL,
+  type VARCHAR(40) NOT NULL,
+  product_id BIGINT UNSIGNED NULL,
+  payload JSON NULL,
+  read_at TIMESTAMP NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_notif_recipient_unread (receiver_id, read_at, created_at),
+  KEY idx_notif_recipient_created (receiver_id, created_at),
+  CONSTRAINT fk_notif_recipient FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_notif_actor FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_notif_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 INSERT INTO users (name, email, password_hash, role, status, created_at, updated_at)
 SELECT 'System Administrator', 'admin@admin.com', SHA2('12345678', 256), 'Admin', 'Active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 WHERE NOT EXISTS ( SELECT 1 FROM users WHERE email = 'admin@admin.com');
