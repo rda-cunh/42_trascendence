@@ -1,72 +1,46 @@
-import { useAuth } from "../contexts/AuthContext";
-import { useChat } from "../hooks/useChat";
-import ConversationList from "../components/ConversationList";
-import ChatWindow from "../components/ChatWindow";
-import "../../styles/chat.css";
-
-function formatSyncTime(value: string | null) {
-  if (!value) return "Not synced yet";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Not synced yet";
-  return `Last updated ${date.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  })}`;
+export interface ChatUserInfo {
+  name: string;
+  avatar_url?: string | null;
 }
 
-export function Chat() {
-  const { user, token } = useAuth();
-  const currentUserId = Number(user?.id);
-  const {
-    conversations,
-    selectedConversation,
-    messages,
-    loadingConversations,
-    loadingMessages,
-    refreshingConversations,
-    socketConnected,
-    error,
-    updatedConversationIds,
-    lastRefreshedAt,
-    selectConversation,
-    sendMessage,
-    refreshConversations,
-  } = useChat(token);
-
-  return (
-    <main className="chat-page">
-      <div className="chat-page-header">
-        <h1>Messages</h1>
-        <p>Your conversations about marketplace listings.</p>
-        <div className="chat-page-meta">
-          {formatSyncTime(lastRefreshedAt)}
-          {refreshingConversations ? " · Refreshing inbox" : ""}
-        </div>
-      </div>
-
-      {error && <div className="chat-error-banner">{error}</div>}
-
-      <div className="chat-shell">
-        <ConversationList
-          conversations={conversations}
-          selectedConversationId={selectedConversation?.id ?? null}
-          loading={loadingConversations}
-          refreshing={refreshingConversations}
-          updatedConversationIds={updatedConversationIds}
-          onSelect={selectConversation}
-          onRefresh={() => void refreshConversations()}
-        />
-        <div className="chat-main-column">
-          <ChatWindow
-            conversation={selectedConversation}
-            messages={messages}
-            currentUserId={Number.isFinite(currentUserId) ? currentUserId : -1}
-            loading={loadingMessages}
-            socketConnected={socketConnected}
-            onSend={sendMessage}
-          />
-        </div>
-      </div>
-    </main>
-  );
+export interface Conversation {
+  id: number;
+  listing_id: number;
+  buyer_id: number;
+  seller_id: number;
+  last_message: string | null;
+  last_message_at: string | null;
+  created_at?: string;
+  listing_name: string | null;
+  listing_image_hash: string | null;
+  listing_price: string | null;
+  other_id: number | null;
+  other_user: ChatUserInfo | null;
 }
+
+export interface Message {
+  id: number;
+  conversation_id: number;
+  sender_id: number;
+  content: string;
+  created_at: string;
+  read_at?: string | null;
+}
+
+export interface CreateConversationPayload {
+  listing_id: number;
+}
+
+export type ChatSocketMessage = {
+  type: "message";
+  message: Message;
+};
+
+export type ChatSocketError = {
+  type: "error";
+  detail: string;
+  upstream_status?: number;
+  upstream_response?: unknown;
+};
+
+export type ChatSocketIncoming = ChatSocketMessage | ChatSocketError;

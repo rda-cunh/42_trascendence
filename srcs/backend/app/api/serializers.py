@@ -73,11 +73,30 @@ class FollowActionSerializer(serializers.Serializer):
 
 # /api/listings/{id}
 
-class listinsIdPatch(serializers.Serializer):
-    product_name = serializers.CharField(allow_blank=True, min_length=3, max_length=255, trim_whitespace=True)
-    slug = serializers.SlugField(allow_null=True, allow_blank=True, required=False)
-    description = serializers.CharField(allow_null=True, allow_blank=True, required=False, min_length=3)
 
+class listingIdPatch(serializers.Serializer):
+    name = serializers.CharField(
+        allow_blank=True,
+        min_length=3,
+        max_length=255,
+        trim_whitespace=True,
+        required=False,
+    )
+    slug = serializers.SlugField(
+        allow_null=True,
+        allow_blank=True,
+        required=False,
+    )
+    description = serializers.CharField(
+        allow_null=True,
+        allow_blank=True,
+        required=False,
+    )
+    price = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        required=False,
+    )
 
 # /api/listings
 

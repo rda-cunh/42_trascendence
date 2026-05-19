@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router";
-import { ArrowLeft, ShoppingCart, CreditCard } from "lucide-react";
+import { ArrowLeft, ShoppingCart, CreditCard, MessageCircle } from "lucide-react";
 import { ListingPreview } from "../components/ListingPreview";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
@@ -20,6 +20,7 @@ export function ProductDetail() {
   const [listing, setListing] = useState<Listing | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -55,6 +56,12 @@ export function ProductDetail() {
       navigate("/login");
       return;
     }
+    // Prevent adding own listing
+    const isOwner = user && listing.seller_id && String(user.id) === String(listing.seller_id);
+    if (isOwner) {
+      toast.error("You cannot add your own listing to cart. Use Edit to update it.");
+      return;
+    }
     addItem(listing);
     toast.success("Added to cart!");
   };
@@ -66,8 +73,32 @@ export function ProductDetail() {
       navigate("/login");
       return;
     }
+    // Prevent buying own listing
+    const isOwner = user && listing.seller_id && String(user.id) === String(listing.seller_id);
+    if (isOwner) {
+      toast.error("You cannot purchase your own listing. Use Edit to manage it.");
+      return;
+    }
     addItem(listing);
     navigate("/checkout");
+  };
+
+  const handleDelete = async () => {
+    if (!listing) return;
+    if (!user || String(user.id) !== String(listing.seller_id)) {
+      toast.error("You are not allowed to delete this listing");
+      return;
+    }
+
+    if (!window.confirm("Delete this listing? This action cannot be undone.")) return;
+
+    try {
+      await api.deleteListing(listing.id);
+      toast.success("Listing deleted");
+      navigate("/");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete listing");
+    }
   };
 
   const handleReviewSubmitted = () => {
@@ -126,20 +157,37 @@ export function ProductDetail() {
             <ProductInfo listing={listing} averageRating={avgRating} reviewCount={reviews.length} />
 
             <div className="flex gap-3">
-              <button
-                onClick={handleBuyNow}
-                className="btn-primary flex-1 px-6 py-3"
-              >
-                <CreditCard className="h-5 w-5" />
-                <span>Buy Now</span>
-              </button>
-              <button
-                onClick={handleAddToCart}
-                className="btn-secondary px-6 py-3"
-              >
-                <ShoppingCart className="h-5 w-5" />
-                <span className="hidden sm:inline">Add to Cart</span>
-              </button>
+              {user && listing.seller_id && String(user.id) === String(listing.seller_id) ? (
+                <>
+                  <Link
+                    to={`/listing/${listing.id}/edit`}
+                    className="btn-primary flex-1 px-6 py-3"
+                  >
+                    Edit
+                  </Link>
+                  <button onClick={handleDelete} className="btn-secondary px-6 py-3">
+                    Delete
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button onClick={handleBuyNow} className="btn-primary flex-1 px-6 py-3">
+                    <CreditCard className="h-5 w-5" />
+                    <span>Buy Now</span>
+                  </button>
+                  <button onClick={handleAddToCart} className="btn-secondary px-6 py-3">
+                    <ShoppingCart className="h-5 w-5" />
+                    <span className="hidden sm:inline">Add to Cart</span>
+                  </button>
+                  <button
+                    onClick={() => setChatOpen(true)}
+                    className="ml-2 inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Chat
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Description */}
@@ -147,8 +195,6 @@ export function ProductDetail() {
               <h2 className="mb-3 text-xl font-bold text-gray-900 dark:text-white">Description</h2>
               <p className="leading-relaxed text-gray-700 dark:text-gray-300">{description}</p>
             </div>
-
-
           </div>
         </div>
 
@@ -165,6 +211,8 @@ export function ProductDetail() {
           sellerId={listing?.seller_id ? Number(listing.seller_id) : null}
           sellerName={listing?.seller}
           productTitle={listing?.title}
+          open={chatOpen}
+          onOpenChange={setChatOpen}
         />
       </div>
     </div>
