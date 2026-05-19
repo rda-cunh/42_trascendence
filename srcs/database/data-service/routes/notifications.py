@@ -155,8 +155,9 @@ def fanout_new_listing(payload: FanoutRequest, db=Depends(get_db_dep)):
 		raise HTTPException(status_code=404, detail='Product not found or not active')
 
 	# Fetch all followers of the seller
+	# follows table columns are user_id (the follower) and following_id (the followed)
 	cursor.execute(
-		'SELECT follower_id FROM follows WHERE following_id = %s',
+		'SELECT user_id FROM follows WHERE following_id = %s',
 		(payload.seller_id,)
 	)
 	followers = cursor.fetchall()
@@ -164,7 +165,7 @@ def fanout_new_listing(payload: FanoutRequest, db=Depends(get_db_dep)):
 	if not followers:
 		return FanoutResponse(receiver_ids=[], inserted=0)
 
-	receiver_ids = [row['follower_id'] for row in followers]
+	receiver_ids = [row['user_id'] for row in followers]
 
 	# Build payload snapshot stored in JSON column
 	notif_payload = json.dumps({

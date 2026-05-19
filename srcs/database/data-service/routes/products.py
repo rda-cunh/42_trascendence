@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from database import get_db_dep
 from models.product import *
+from models.notification import FanoutRequest
+from routes.notifications import fanout_new_listing
 
 router = APIRouter(prefix='/api/listings', tags=['Products'])
 
@@ -77,6 +79,14 @@ def	create_product(product_in: ProductCreate, db=Depends(get_db_dep)):
 		values = [(new_id, img, idx) for idx, img in enumerate(product_in.images)]
 		cursor.executemany('''INSERT INTO product_images (product_id, image_hash, display_order) VALUES (%s, %s, %s)''', values)
 	conn.commit()
+
+	# Fan out 'new_listing' notifications to the seller's followers.
+	# Wrapped so a notifications failure never rolls back the product creation.
+	try:
+		fanout_new_listing(FanoutRequest(seller_id=product_in.user_id, product_id=new_id), db)
+	except Exception as e:
+		print(f'fanout_new_listing failed for product {new_id}: {e}')
+
 	product = GetProductInfo(db, new_id)
 	return ProductResponse(**product)
 
