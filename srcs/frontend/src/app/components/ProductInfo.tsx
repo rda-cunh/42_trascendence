@@ -2,6 +2,7 @@ import { User, Calendar, Tag, Package } from "lucide-react";
 import { Link } from "react-router";
 import { ReviewStars } from "./ReviewStars";
 import { Listing } from "../types";
+import { usePresence } from "../contexts/PresenceContext";
 
 interface ProductInfoProps {
   listing: Listing;
@@ -16,6 +17,8 @@ export function ProductInfo({ listing, averageRating, reviewCount }: ProductInfo
       month: "long",
       day: "numeric",
     });
+
+  const isSellerOnline = usePresence(listing.seller_id);
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-colors dark:border-gray-800 dark:bg-gray-900">
@@ -62,17 +65,33 @@ export function ProductInfo({ listing, averageRating, reviewCount }: ProductInfo
         )}
         <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
           <User className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-          <span>
+          <span className="flex items-center gap-2">
             Seller:{" "}
             {listing.seller_id ? (
               <Link
                 to={`/seller/${listing.seller_id}`}
-                className="font-semibold text-purple-600 transition-colors hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
+                className="flex items-center gap-2 font-semibold text-purple-600 transition-colors hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
               >
                 {listing.seller}
+                <span
+                  className={`inline-block h-2.5 w-2.5 rounded-full ${
+                    isSellerOnline ? "bg-green-500" : "bg-gray-400"
+                  }`}
+                  title={isSellerOnline ? "Online" : "Offline"}
+                />
               </Link>
             ) : (
-              <span className="font-semibold">{listing.seller}</span>
+              <span className="flex items-center gap-2 font-semibold">
+                {listing.seller}
+                {listing.seller_id && (
+                  <span
+                    className={`inline-block h-2.5 w-2.5 rounded-full ${
+                      isSellerOnline ? "bg-green-500" : "bg-gray-400"
+                    }`}
+                    title={isSellerOnline ? "Online" : "Offline"}
+                  />
+                )}
+              </span>
             )}
           </span>
         </div>

@@ -33,7 +33,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const isUsableToken = (value: unknown): value is string => {
-    return typeof value === "string" && value.trim().length > 0 && value !== "undefined" && value !== "null";
+    return (
+      typeof value === "string" &&
+      value.trim().length > 0 &&
+      value !== "undefined" &&
+      value !== "null"
+    );
   };
 
   const persistAuth = (newToken: string, nextUser: User | null) => {
@@ -121,6 +126,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [token]);
 
+  useEffect(() => {
+    if (!token || !user) return;
+
+    const ping = () => {
+      api.pingPresence().catch(() => {
+        // Ignore presence ping errors silently
+      });
+    };
+
+    ping();
+    const interval = setInterval(ping, 30000);
+    return () => clearInterval(interval);
+  }, [token, user]);
+
   const login = async (email: string, password: string) => {
     const res = await api.login(email, password);
     const newToken = getAccessToken(res);
@@ -138,7 +157,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     phone?: string;
   }) => {
     const res = await api.register(data);
-    const newToken = getAccessToken(res);
+    let newToken = getAccessToken(res);
+
+    // Some backends create the user on registration but do not issue an access
+    // token. In that case, attempt to login immediately using the provided
+    // credentials so the user is signed in after registering.
+    if (!isUsableToken(newToken)) {
+      try {
+        const loginResp = await api.login(data.email, data.password);
+        newToken = getAccessToken(loginResp);
+      } catch (err) {
+        clearAuthState();
+        throw new Error("Register response did not include a valid access token");
+      }
+    }
 
     if (!isUsableToken(newToken)) {
       clearAuthState();
@@ -168,12 +200,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser({
           id: String(profile.id),
           email: profile.email,
-            name: profile.name,
-            phone: profile.phone,
-            avatar_url: profile.avatar_url,
-            role: profile.role,
-            status: profile.status?.toLowerCase(),
-          });
+          name: profile.name,
+          phone: profile.phone,
+          avatar_url: profile.avatar_url,
+          role: profile.role,
+          status: profile.status?.toLowerCase(),
+        });
       }
     } catch {
       // Keep token-derived or backend-provided user if profile fetch fails.

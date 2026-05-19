@@ -81,10 +81,7 @@ export function AdminDashboard() {
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
-              <div
-                key={stat.title}
-                className="surface-padded"
-              >
+              <div key={stat.title} className="surface-padded">
                 <div className="mb-4 flex items-center justify-between">
                   <div className={`rounded-lg p-2 ${stat.bg}`}>
                     <Icon className={`h-5 w-5 ${stat.color}`} />

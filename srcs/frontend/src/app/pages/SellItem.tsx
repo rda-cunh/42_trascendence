@@ -92,16 +92,14 @@ export function SellItem() {
         return;
       }
 
-      const listing = await api.createListing(
-        {
-          name: trimmedTitle,
-          user_id: sellerId,
-          slug,
-          description: buildShaderDescription(formData.notes, formData.code),
-          price,
-          images: uploadedImages.map((image) => image.filename),
-        }
-      );
+      const listing = await api.createListing({
+        name: trimmedTitle,
+        user_id: sellerId,
+        slug,
+        description: buildShaderDescription(formData.notes, formData.code),
+        price,
+        images: uploadedImages.map((image) => image.filename),
+      });
 
       const listingId = listing?.id ?? listing?.product_id;
 
@@ -123,7 +121,9 @@ export function SellItem() {
         lowered.includes("query") ||
         lowered.includes("field required")
       ) {
-        toast.error("Publishing is temporarily unavailable due to a server listing configuration issue.");
+        toast.error(
+          "Publishing is temporarily unavailable due to a server listing configuration issue."
+        );
       } else {
         toast.error(message);
       }
@@ -204,12 +204,7 @@ export function SellItem() {
                 <label className="form-label">
                   <Code2 className="h-4 w-4" /> Category
                 </label>
-                <input
-                  type="text"
-                  value="Shaders"
-                  disabled
-                  className="form-control"
-                />
+                <input type="text" value="Shaders" disabled className="form-control" />
               </div>
             </div>
 
@@ -317,11 +312,7 @@ export function SellItem() {
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="btn-primary w-full py-3"
-            >
+            <button type="submit" disabled={isLoading} className="btn-primary w-full py-3">
               <Save className="h-5 w-5" />
               <span>{isLoading ? "Publishing..." : "Publish Shader"}</span>
             </button>
@@ -330,9 +321,7 @@ export function SellItem() {
           <div className="surface h-fit p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className="font-semibold text-gray-900 dark:text-white">Live Preview</h2>
-              <span className="badge-muted">
-                Three.js
-              </span>
+              <span className="badge-muted">Three.js</span>
             </div>
             <ShaderPreview
               fragmentShader={formData.code}
