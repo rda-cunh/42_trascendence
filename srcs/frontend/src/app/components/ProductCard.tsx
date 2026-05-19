@@ -56,14 +56,8 @@ export function ProductCard({ listing, footerAction }: ProductCardProps) {
         </Link>
         <div className="flex items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="badge-primary">
-              {listing.category}
-            </span>
-            {listing.fileFormat && (
-              <span className="badge-muted">
-                {listing.fileFormat}
-              </span>
-            )}
+            <span className="badge-primary">{listing.category}</span>
+            {listing.fileFormat && <span className="badge-muted">{listing.fileFormat}</span>}
           </div>
           {footerAction}
         </div>

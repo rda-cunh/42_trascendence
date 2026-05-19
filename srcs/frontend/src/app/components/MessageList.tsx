@@ -14,11 +14,7 @@ export default function MessageList({ messages, currentUserId }: Props) {
   }, [messages]);
 
   if (messages.length === 0) {
-    return (
-      <div className="chat-messages-empty">
-        No messages yet. Start the conversation.
-      </div>
-    );
+    return <div className="chat-messages-empty">No messages yet. Start the conversation.</div>;
   }
 
   return (
@@ -27,10 +23,7 @@ export default function MessageList({ messages, currentUserId }: Props) {
         const mine = message.sender_id === currentUserId;
 
         return (
-          <div
-            key={message.id}
-            className={`chat-message-row ${mine ? "is-mine" : "is-theirs"}`}
-          >
+          <div key={message.id} className={`chat-message-row ${mine ? "is-mine" : "is-theirs"}`}>
             <div className="chat-message-bubble">
               <div className="chat-message-content">{message.content}</div>
               <div className="chat-message-time">

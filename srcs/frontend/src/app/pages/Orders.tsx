@@ -80,10 +80,7 @@ export function Orders() {
             Sign in required
           </h2>
           <p className="mb-4 text-gray-600 dark:text-gray-400">Please log in to view your orders</p>
-          <Link
-            to="/login"
-            className="btn-primary px-6 py-3"
-          >
+          <Link to="/login" className="btn-primary px-6 py-3">
             Sign In
           </Link>
         </div>
@@ -107,10 +104,7 @@ export function Orders() {
             <p className="mb-4 text-gray-500 dark:text-gray-400">
               Browse our marketplace and find something amazing!
             </p>
-            <Link
-              to="/"
-              className="btn-primary px-6 py-3"
-            >
+            <Link to="/" className="btn-primary px-6 py-3">
               Browse Assets
             </Link>
           </div>

@@ -62,35 +62,25 @@ export function Header() {
               </Link>
             )}
 
-            <button
-              onClick={toggleTheme}
-              className="btn-icon"
-              aria-label="Toggle theme"
-            >
+            <button onClick={toggleTheme} className="btn-icon" aria-label="Toggle theme">
               {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
             </button>
 
             {user ? (
               <div className="flex items-center gap-2">
-                <Link
-                  to="/profile"
-                  className="btn-ghost h-10 gap-3 px-2.5 pr-4"
-                >
-                    <UserAvatar
-                      src={user.avatar_url}
-                      name={user.name || user.email}
-                      sizeClassName="h-7 w-7"
-                    />
+                <Link to="/profile" className="btn-ghost h-10 gap-3 px-2.5 pr-4">
+                  <UserAvatar
+                    userId={user.id}
+                    src={user.avatar_url}
+                    name={user.name || user.email}
+                    sizeClassName="h-7 w-7"
+                  />
                   <span className="hidden text-sm font-medium md:inline">
                     {user.name || user.email}
                   </span>
                 </Link>
                 {user.role === "admin" && (
-                  <Link
-                    to="/admin"
-                    className="btn-icon"
-                    title="Admin Panel"
-                  >
+                  <Link to="/admin" className="btn-icon" title="Admin Panel">
                     <Shield className="h-5 w-5" />
                   </Link>
                 )}
@@ -105,10 +95,7 @@ export function Header() {
                 </button>
               </div>
             ) : (
-              <Link
-                to="/login"
-                className="btn-primary h-10"
-              >
+              <Link to="/login" className="btn-primary h-10">
                 <LogIn className="h-5 w-5" />
                 <span className="hidden sm:inline">Login</span>
               </Link>

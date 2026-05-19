@@ -15,6 +15,14 @@ interface RequestOptions {
   retryOnUnauthorized?: boolean;
 }
 
+export interface ListingImageRecord {
+  id: number;
+  product_id: number;
+  image_hash: string;
+  display_order: number;
+  created_at: string;
+}
+
 function pickFirstErrorValue(value: unknown): string | null {
   if (typeof value === "string") {
     const trimmed = value.trim();
@@ -46,7 +54,7 @@ export function getAccessToken(data: any): string | null {
 export function normalizeUser(data: any, fallbackToken?: string | null): User | null {
   const source = data?.user ?? data;
   const tokenUser = fallbackToken ? parseUserFromToken(fallbackToken) : null;
-  const id = source?.id ?? source?.user_id ?? source?.external_user_id ?? tokenUser?.id;
+  const id = source?.id ?? source?.user_id ?? tokenUser?.id ?? source?.external_user_id;
 
   if (!id) return tokenUser;
 
@@ -66,7 +74,8 @@ export function parseUserFromToken(jwt: string): User | null {
     const payload = JSON.parse(window.atob(jwt.split(".")[1]));
     return normalizeUser(
       {
-        id: payload.external_user_id ?? payload.user_id ?? payload.sub,
+        id: payload.user_id ?? payload.sub ?? payload.external_user_id,
+        external_user_id: payload.external_user_id,
         email: payload.email,
         name: payload.name,
         role: payload.role,
@@ -84,13 +93,13 @@ export function mapListing(item: any): Listing {
   const createdAt = item?.created_at ?? item?.postedDate ?? item?.posted_date;
   const images = Array.isArray(item?.images) ? item.images : [];
   const normalizedImages = images
-    .map((image: any) => (typeof image === "string" ? image : image?.image_hash ?? image?.images))
+    .map((image: any) => (typeof image === "string" ? image : (image?.image_hash ?? image?.images)))
     .filter((image: unknown): image is string => typeof image === "string" && image.length > 0);
   const firstImage = normalizedImages[0];
   const sellerName =
     typeof item?.seller === "string"
       ? item.seller
-      : item?.seller?.name ?? item?.seller_name ?? "Creator Studio";
+      : (item?.seller?.name ?? item?.seller_name ?? "Creator Studio");
 
   return {
     id: String(item?.product_id ?? item?.id),
@@ -250,7 +259,9 @@ class ApiClient {
   }
 
   getProfile() {
-    return this.request<any>("GET", "/auth/profile/").then((data) => normalizeProfileResponse(data));
+    return this.request<any>("GET", "/auth/profile/").then((data) =>
+      normalizeProfileResponse(data)
+    );
   }
 
   getOAuth42Url() {
@@ -278,7 +289,9 @@ class ApiClient {
   }
 
   getPublicUserProfile(userId: string | number) {
-    return this.request<any>("GET", `/users/${userId}/`).then((data) => normalizeProfileResponse(data));
+    return this.request<any>("GET", `/users/${userId}/`).then((data) =>
+      normalizeProfileResponse(data)
+    );
   }
 
   createListing(data: any) {
@@ -324,6 +337,7 @@ class ApiClient {
     }
   }
 
+  // IMAGES
   uploadImage(file: File) {
     const formData = new FormData();
     formData.append("image", file);
@@ -338,16 +352,30 @@ class ApiClient {
       headers,
       credentials: "include",
       body: formData,
-    })
-      .then(async (response) => {
-        const data = await response.json().catch(() => ({}));
+    }).then(async (response) => {
+      const data = await response.json().catch(() => ({}));
 
-        if (!response.ok) {
-          throw new Error(this.getErrorMessage(data, response.statusText));
-        }
+      if (!response.ok) {
+        throw new Error(this.getErrorMessage(data, response.statusText));
+      }
 
-        return data as { filename: string; url?: string };
-      });
+      return data as { filename: string; url?: string };
+    });
+  }
+
+  getListingImages(listingId: string | number) {
+    return this.request<ListingImageRecord[]>("GET", `/listings/${listingId}/images/`);
+  }
+
+  addListingImage(listingId: string | number, imageHash: string, displayOrder: number) {
+    return this.request<ListingImageRecord>("POST", `/listings/${listingId}/images/`, {
+      image_hash: imageHash,
+      display_order: displayOrder,
+    });
+  }
+
+  deleteListingImage(listingId: string | number, imageId: number) {
+    return this.request<void>("DELETE", `/listings/${listingId}/images/${imageId}/`, {});
   }
 
   // FOLLOW/SOCIAL
@@ -364,11 +392,17 @@ class ApiClient {
   }
 
   getFollowerCount(userId: number) {
-    return this.request<{ followers: number; following: number }>("GET", `/follow/counts/${userId}/`);
+    return this.request<{ followers: number; following: number }>(
+      "GET",
+      `/follow/counts/${userId}/`
+    );
   }
 
   getFollowingCount(userId: number) {
-    return this.request<{ followers: number; following: number }>("GET", `/follow/counts/${userId}/`);
+    return this.request<{ followers: number; following: number }>(
+      "GET",
+      `/follow/counts/${userId}/`
+    );
   }
 
   getFollowing(userId: number, limit?: number, offset?: number) {
@@ -387,6 +421,16 @@ class ApiClient {
     if (offset) params.append("offset", offset.toString());
     if (params.toString()) url += `?${params.toString()}`;
     return this.request<any>("GET", url);
+  }
+
+  pingPresence() {
+    return this.request<void>("POST", "/presence/ping/");
+  }
+
+  getPresence(userIds: number[]) {
+    if (!userIds || userIds.length === 0) return Promise.resolve({});
+    const uniqueIds = Array.from(new Set(userIds)).slice(0, 200);
+    return this.request<Record<string, boolean>>("GET", `/presence/?ids=${uniqueIds.join(",")}`);
   }
 }
 
