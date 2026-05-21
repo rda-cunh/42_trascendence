@@ -47,35 +47,6 @@ class UserResponse(UserBase):
 
 	model_config = {'from_attributes': True}
 
-class UserAddressCreate(BaseModel):
-	street:		str
-	number:		str
-	city:		str
-	state:		str
-	postal_code:	str
-	country:	str
-
-class UserAddressUpdate(BaseModel):
-	street:		Optional[str] = None
-	number:		Optional[str] = None
-	city:		Optional[str] = None
-	state:		Optional[str] = None
-	postal_code:	Optional[str] = None
-	country:	Optional[str] = None
-
-class UserAddressResponse(BaseModel):
-	id:			int
-	street:		str
-	number:		str
-	city:		str
-	state:		str
-	postal_code:	str
-	country:	str
-	created_at:	datetime
-	updated_at: datetime
-
-	model_config = {'from_attributes': True}
-
 class ProductStatus(str, Enum):
 	draft	= 'Draft'
 	active	= 'Active'
