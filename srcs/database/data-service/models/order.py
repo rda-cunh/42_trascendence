@@ -16,7 +16,7 @@ class OrderItemCreate(BaseModel):
 	qty:		int
 
 class OrderCreate(BaseModel):
-	buyer_id:			int
+	user_id:			int
 	notes:				Optional[str] = None
 	items:				list[OrderItemCreate]
 
