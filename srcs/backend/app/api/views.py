@@ -29,7 +29,7 @@ def is_admin(request):
     token = request.auth
     if token is None:
         return False
-    return token['role'] == 'admin'
+    return token['role'] == 'Admin'
 
 # utility to convert non-JSON-serializable values (like Decimal) into strings for safe JSON responses
 def make_json_safe(value):
