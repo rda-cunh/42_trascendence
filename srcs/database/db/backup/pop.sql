@@ -158,7 +158,6 @@ CREATE TABLE `orders` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `code` varchar(30) NOT NULL,
   `buyer_id` bigint unsigned NOT NULL,
-  `buyer_address_id` bigint unsigned DEFAULT NULL,
   `status` enum('Pending','Paid','Done','Cancelled','Refunded') NOT NULL DEFAULT 'Pending',
   `subtotal` decimal(12,2) NOT NULL,
   `total` decimal(12,2) NOT NULL,
@@ -168,8 +167,6 @@ CREATE TABLE `orders` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_order_code` (`code`),
   KEY `idx_order_buyer` (`buyer_id`),
-  KEY `fk_order_address` (`buyer_address_id`),
-  CONSTRAINT `fk_order_address` FOREIGN KEY (`buyer_address_id`) REFERENCES `users_address` (`id`),
   CONSTRAINT `fk_order_buyer` FOREIGN KEY (`buyer_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -181,8 +178,8 @@ CREATE TABLE `orders` (
 LOCK TABLES `orders` WRITE;
 /*!40000 ALTER TABLE `orders` DISABLE KEYS */;
 INSERT INTO `orders` VALUES
-(1,'ORD-2024-0001',3,3,'Done',   578.99,578.99,'Description 123.', '2026-03-22 10:00:00','2026-03-22 10:05:00'),
-(2,'ORD-3456-0002',4,4,'Pending',599.90,599.90,NULL,               '2026-03-22 11:00:00','2026-03-22 11:00:00');
+(1,'ORD-2024-0001',3,'Done',   578.99,578.99,'Description 123.', '2026-03-22 10:00:00','2026-03-22 10:05:00'),
+(2,'ORD-3456-0002',4,'Pending',599.90,599.90,NULL,               '2026-03-22 11:00:00','2026-03-22 11:00:00');
 /*!40000 ALTER TABLE `orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -374,44 +371,6 @@ INSERT INTO `users` VALUES
 (7,'Banned 2', 'Banned2@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 003','User','Banned','avatar.png', '2026-03-22 09:02:00','2026-03-22 09:02:00'),
 (8,'Banned 3', 'Banned3@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 003','User','Banned','avatar.png', '2026-03-22 09:02:00','2026-03-22 09:02:00');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `users_address`
---
-
-DROP TABLE IF EXISTS `users_address`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `users_address` (
-  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-  `users_id` bigint unsigned NOT NULL,
-  `street` varchar(255) NOT NULL,
-  `number` varchar(255) DEFAULT NULL,
-  `city` varchar(255) NOT NULL,
-  `state` varchar(255) NOT NULL,
-  `postal_code` varchar(255) NOT NULL,
-  `country` varchar(255) NOT NULL DEFAULT 'PT',
-  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `idx_addresses_users` (`users_id`),
-  CONSTRAINT `fk_addresses_users` FOREIGN KEY (`users_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `users_address`
---
-
-LOCK TABLES `users_address` WRITE;
-/*!40000 ALTER TABLE `users_address` DISABLE KEYS */;
-INSERT INTO `users_address` VALUES
-(1,1,'Rua das Flores',       '12',  'Porto', 'Porto', '4000-001','PT','2026-03-22 09:00:00','2026-03-22 09:00:00'),
-(2,2,'Avenida da Liberdade', '250', 'Lisboa','Lisboa','1250-096','PT','2026-03-22 09:01:00','2026-03-22 09:01:00'),
-(3,3,'Rua de Santa Catarina','88',  'Porto', 'Porto', '4000-447','PT','2026-03-22 09:02:00','2026-03-22 09:02:00'),
-(4,4,'Largo do Carmo',       '3',   'Lisboa','Lisboa','1200-092','PT','2026-03-22 09:03:00','2026-03-22 09:03:00');
-/*!40000 ALTER TABLE `users_address` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
