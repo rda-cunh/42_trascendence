@@ -38,7 +38,8 @@ export function ReviewSection({
       await api.createReview({
         listing_id: listingId,
         rating: newReview.rating,
-        comment: newReview.text,
+        title: "",
+        body: newReview.text,
       });
 
       toast.success("Review submitted!");
@@ -110,18 +111,25 @@ export function ReviewSection({
               <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-sm font-semibold text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
-                    {review.user?.charAt(0) || "?"}
+                    {review.reviewer_name?.charAt(0) || "?"}
                   </div>
                   <span className="font-medium text-gray-900 dark:text-white">
-                    {review.user || "Anonymous"}
+                    {review.reviewer_name || "Unknown user"}
                   </span>
                 </div>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatDate(review.date || new Date().toISOString())}
+                  {formatDate(review.created_at)}
                 </span>
               </div>
               <ReviewStars rating={review.rating} size="sm" />
-              <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">{review.text}</p>
+              {review.title && (
+                <p className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+                  {review.title}
+                </p>
+              )}
+              {review.body && (
+                <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">{review.body}</p>
+              )}
             </div>
           ))
         ) : (

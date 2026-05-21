@@ -132,8 +132,8 @@ export function ProductDetail() {
     );
   }
 
-  const avgRating =
-    reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0;
+  const avgRating = listing?.rating ?? 0;
+  const reviewCount = listing?.review_count ?? reviews.length;
   const description = getListingDescription(listing);
 
   return (
@@ -154,7 +154,7 @@ export function ProductDetail() {
 
           {/* Details */}
           <div className="space-y-6">
-            <ProductInfo listing={listing} averageRating={avgRating} reviewCount={reviews.length} />
+            <ProductInfo listing={listing} averageRating={avgRating} reviewCount={reviewCount} />
 
             <div className="flex gap-3">
               {user && listing.seller_id && String(user.id) === String(listing.seller_id) ? (

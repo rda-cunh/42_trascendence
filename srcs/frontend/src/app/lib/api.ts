@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Listing, User } from "../types";
+import { Listing, User, Review } from "../types";
 import { FALLBACK_LISTING_IMAGE, resolveImageUrl } from "./images";
 import { parseShaderDescription } from "./shaders";
 
@@ -118,6 +118,8 @@ export function mapListing(item: any): Listing {
       : new Date().toISOString().split("T")[0],
     fileFormat: shader ? "GLSL" : (item?.fileFormat ?? item?.file_format),
     engine: shader ? "Three.js" : item?.engine,
+    rating: item?.avg_rating != null ? Number(item.avg_rating) : undefined,
+    review_count: item?.review_count != null ? Number(item.review_count) : 0,
     shader: shader ?? undefined,
   };
 }
@@ -320,21 +322,46 @@ class ApiClient {
   }
 
   // REVIEWS
-  createReview(data: any) {
-    return this.request<any>(
-      "POST",
-      `/listings/${data.listing_id ?? data.product_id}/review/`,
-      data
-    );
+  createReview(data: {
+    listing_id?: string | number;
+    product_id?: string | number;
+    rating: number;
+    title?: string;
+    body?: string;
+  }) {
+    const productId = data.listing_id ?? data.product_id;
+    return this.request<Review>("POST", `/listings/${productId}/reviews/`, {
+      rating: data.rating,
+      ...(data.title !== undefined ? { title: data.title.trim() } : {}),
+      ...(data.body?.trim() ? { body: data.body.trim() } : {}),
+    });
   }
 
-  async getReviews(listingId: string) {
+  async getReviews(listingId: string, page = 1) {
     try {
-      const data = await this.request<any>("GET", `/listings/${listingId}/review/`);
-      return Array.isArray(data) ? data : data?.results || [];
+      const path =
+        page > 1 ? `/listings/${listingId}/reviews/?page=${page}` : `/listings/${listingId}/reviews/`;
+      const data = await this.request<Review[]>("GET", path);
+      return Array.isArray(data) ? data : [];
     } catch {
       return [];
     }
+  }
+
+  getReview(listingId: string, reviewId: string) {
+    return this.request<Review>("GET", `/listings/${listingId}/reviews/${reviewId}/`);
+  }
+
+  updateReview(
+    listingId: string,
+    reviewId: string,
+    data: { rating?: number; title?: string; body?: string }
+  ) {
+    return this.request<Review>("PATCH", `/listings/${listingId}/reviews/${reviewId}/`, data);
+  }
+
+  deleteReview(listingId: string, reviewId: string) {
+    return this.request<void>("DELETE", `/listings/${listingId}/reviews/${reviewId}/`);
   }
 
   // IMAGES

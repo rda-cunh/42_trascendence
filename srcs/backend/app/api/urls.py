@@ -26,6 +26,7 @@ from .views import (
     listings_image_id,
     listings_image,
     listings_review,
+    listings_reviews,
     user_list,
     public_user_list,
     user_id,
@@ -66,6 +67,8 @@ urlpatterns = [
         path("listings/<int:product_id>/images/", listings_image.as_view()),
         path("listings/<int:product_id>/review/", listings_review.as_view()),
         path("listings/<int:product_id>/review/<int:review_id>/", listings_review.as_view()),
+        path("listings/<int:product_id>/reviews/", listings_reviews.as_view()),
+        path("listings/<int:product_id>/reviews/<int:review_id>/", listings_reviews.as_view()),
         
         # auth paths [everything under /api/auth]
         path("auth/register/", auth_register.as_view()),

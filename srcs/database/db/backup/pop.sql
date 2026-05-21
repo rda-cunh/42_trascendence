@@ -143,7 +143,10 @@ LOCK TABLES `order_items` WRITE;
 INSERT INTO `order_items` VALUES
 (1,1,1,1,'Product 1', 349.99,1,349.99),
 (2,1,2,1,'Product 2', 229.00,1,229.00),
-(3,2,3,2,'Product 3', 599.90,1,599.90);
+(3,2,3,2,'Product 3', 599.90,1,599.90),
+(4,3,1,1,'Product 1',77.99,1,77.99),
+(5,3,2,1,'Product 2',88.00,1,88.00),
+(6,3,3,2,'Product 3',99.90,1,99.90);
 /*!40000 ALTER TABLE `order_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -182,7 +185,8 @@ LOCK TABLES `orders` WRITE;
 /*!40000 ALTER TABLE `orders` DISABLE KEYS */;
 INSERT INTO `orders` VALUES
 (1,'ORD-2024-0001',3,3,'Done',   578.99,578.99,'Description 123.', '2026-03-22 10:00:00','2026-03-22 10:05:00'),
-(2,'ORD-3456-0002',4,4,'Pending',599.90,599.90,NULL,               '2026-03-22 11:00:00','2026-03-22 11:00:00');
+(2,'ORD-3456-0002',4,4,'Pending',599.90,599.90,NULL,               '2026-03-22 11:00:00','2026-03-22 11:00:00'),
+(3,'ORD-2026-0003',5,5,'Done',265.89,265.89,'Seed order for admin review testing','2026-03-22 12:00:00','2026-03-22 12:05:00');
 /*!40000 ALTER TABLE `orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -410,7 +414,8 @@ INSERT INTO `users_address` VALUES
 (1,1,'Rua das Flores',       '12',  'Porto', 'Porto', '4000-001','PT','2026-03-22 09:00:00','2026-03-22 09:00:00'),
 (2,2,'Avenida da Liberdade', '250', 'Lisboa','Lisboa','1250-096','PT','2026-03-22 09:01:00','2026-03-22 09:01:00'),
 (3,3,'Rua de Santa Catarina','88',  'Porto', 'Porto', '4000-447','PT','2026-03-22 09:02:00','2026-03-22 09:02:00'),
-(4,4,'Largo do Carmo',       '3',   'Lisboa','Lisboa','1200-092','PT','2026-03-22 09:03:00','2026-03-22 09:03:00');
+(4,4,'Largo do Carmo',       '3',   'Lisboa','Lisboa','1200-092','PT','2026-03-22 09:03:00','2026-03-22 09:03:00'),
+(5,5,'Rua do Comercio',      '10',  'Lisboa','Lisboa','1100-148','PT','2026-03-22 09:04:00','2026-03-22 09:04:00');
 /*!40000 ALTER TABLE `users_address` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
