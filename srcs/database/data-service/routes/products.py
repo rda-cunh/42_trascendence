@@ -390,7 +390,7 @@ def delete_review(product_id: int, review_id: int, db=Depends(get_db_dep)):
 
 	# TO DO: verificar se caller é o reviewer ou admin
 	cursor.execute(
-		"UPDATE product_reviews SET status = 'Deleted' WHERE id = %s AND product_id = %s",
+		"DELETE FROM product_reviews WHERE id = %s AND product_id = %s",
 		(review_id, product_id)
 	)
 	if cursor.rowcount == 0:
