@@ -22,31 +22,28 @@ export function ProductDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [chatOpen, setChatOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!id) return;
+  const loadProductData = async () => {
+    if (!id) return;
 
-      try {
-        const [listingData, reviewsData] = await Promise.all([
-          api.getListing(id),
-          api.getReviews(id),
-        ]);
+    try {
+      const [listingData, reviewsData] = await Promise.all([api.getListing(id), api.getReviews(id)]);
 
-        if (listingData?.product_id || listingData?.id) {
-          setListing(mapListing(listingData));
-        }
-
-        if (Array.isArray(reviewsData)) {
-          setReviews(reviewsData);
-        }
-      } catch (err) {
-        console.error("Failed to load listing:", err);
-      } finally {
-        setIsLoading(false);
+      if (listingData?.product_id || listingData?.id) {
+        setListing(mapListing(listingData));
       }
-    };
 
-    fetchData();
+      if (Array.isArray(reviewsData)) {
+        setReviews(reviewsData);
+      }
+    } catch (err) {
+      console.error("Failed to load listing:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProductData();
   }, [id]);
 
   const handleAddToCart = () => {
@@ -101,11 +98,8 @@ export function ProductDetail() {
     }
   };
 
-  const handleReviewSubmitted = () => {
-    // Reload reviews after new one is submitted
-    if (id) {
-      api.getReviews(id).then(setReviews).catch(console.error);
-    }
+  const handleReviewsChanged = () => {
+    loadProductData().catch(console.error);
   };
 
   if (isLoading) {
@@ -203,7 +197,8 @@ export function ProductDetail() {
           listingId={id || ""}
           reviews={reviews}
           isLoggedIn={!!user}
-          onReviewSubmitted={handleReviewSubmitted}
+          currentUser={user}
+          onReviewsChanged={handleReviewsChanged}
         />
 
         <ProductChatWidget
