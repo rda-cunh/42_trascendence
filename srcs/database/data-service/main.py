@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import pymysql
-from routes import public, products, orders, auth, users, chat, follow, admin
+from routes import public, products, orders, auth, users, chat, follow, admin, notifications
 from prometheus_fastapi_instrumentator import Instrumentator
 
 app = FastAPI(title='Marketplace DB Gateway',
@@ -38,6 +38,7 @@ app.include_router(auth.router)
 app.include_router(chat.router)
 app.include_router(follow.router)
 app.include_router(admin.router)
+app.include_router(notifications.router)
 
 @app.get('/health', tags=['System'])
 def health():

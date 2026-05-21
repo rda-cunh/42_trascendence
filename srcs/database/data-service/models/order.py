@@ -16,8 +16,7 @@ class OrderItemCreate(BaseModel):
 	qty:		int
 
 class OrderCreate(BaseModel):
-	buyer_id:			int
-	buyer_address_id:	int
+	user_id:			int
 	notes:				Optional[str] = None
 	items:				list[OrderItemCreate]
 
@@ -39,7 +38,6 @@ class OrderResponse(BaseModel):
 	id:			int
 	code:		str
 	buyer_id:	int
-	buyer_address_id:	int
 	status:		OrderStatus
 	subtotal:	Decimal
 	total:		Decimal
