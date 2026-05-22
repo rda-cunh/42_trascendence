@@ -161,7 +161,6 @@ CREATE TABLE `orders` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `code` varchar(30) NOT NULL,
   `buyer_id` bigint unsigned NOT NULL,
-  `buyer_address_id` bigint unsigned DEFAULT NULL,
   `status` enum('Pending','Paid','Done','Cancelled','Refunded') NOT NULL DEFAULT 'Pending',
   `subtotal` decimal(12,2) NOT NULL,
   `total` decimal(12,2) NOT NULL,
@@ -171,8 +170,6 @@ CREATE TABLE `orders` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_order_code` (`code`),
   KEY `idx_order_buyer` (`buyer_id`),
-  KEY `fk_order_address` (`buyer_address_id`),
-  CONSTRAINT `fk_order_address` FOREIGN KEY (`buyer_address_id`) REFERENCES `users_address` (`id`),
   CONSTRAINT `fk_order_buyer` FOREIGN KEY (`buyer_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -184,8 +181,8 @@ CREATE TABLE `orders` (
 LOCK TABLES `orders` WRITE;
 /*!40000 ALTER TABLE `orders` DISABLE KEYS */;
 INSERT INTO `orders` VALUES
-(1,'ORD-2024-0001',3,3,'Done',   578.99,578.99,'Description 123.', '2026-03-22 10:00:00','2026-03-22 10:05:00'),
-(2,'ORD-3456-0002',4,4,'Pending',599.90,599.90,NULL,               '2026-03-22 11:00:00','2026-03-22 11:00:00'),
+(1,'ORD-2024-0001',3,'Done',   578.99,578.99,'Description 123.', '2026-03-22 10:00:00','2026-03-22 10:05:00'),
+(2,'ORD-3456-0002',4,'Pending',599.90,599.90,NULL,               '2026-03-22 11:00:00','2026-03-22 11:00:00'),
 (3,'ORD-2026-0003',5,5,'Done',265.89,265.89,'Seed order for admin review testing','2026-03-22 12:00:00','2026-03-22 12:05:00');
 /*!40000 ALTER TABLE `orders` ENABLE KEYS */;
 UNLOCK TABLES;
@@ -381,32 +378,40 @@ INSERT INTO `users` VALUES
 UNLOCK TABLES;
 
 --
--- Table structure for table `users_address`
+-- Table structure for table `notifications`
 --
 
-DROP TABLE IF EXISTS `users_address`;
+DROP TABLE IF EXISTS `notifications`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `users_address` (
+CREATE TABLE `notifications` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-  `users_id` bigint unsigned NOT NULL,
-  `street` varchar(255) NOT NULL,
-  `number` varchar(255) DEFAULT NULL,
-  `city` varchar(255) NOT NULL,
-  `state` varchar(255) NOT NULL,
-  `postal_code` varchar(255) NOT NULL,
-  `country` varchar(255) NOT NULL DEFAULT 'PT',
-  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `receiver_id` bigint unsigned NOT NULL,
+  `actor_id` bigint unsigned DEFAULT NULL,
+  `type` varchar(40) NOT NULL,
+  `product_id` bigint unsigned DEFAULT NULL,
+  `payload` json DEFAULT NULL,
+  `read_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_addresses_users` (`users_id`),
-  CONSTRAINT `fk_addresses_users` FOREIGN KEY (`users_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  KEY `idx_notif_recipient_unread` (`receiver_id`,`read_at`,`created_at`),
+  KEY `idx_notif_recipient_created` (`receiver_id`,`created_at`),
+  KEY `fk_notif_actor` (`actor_id`),
+  KEY `fk_notif_product` (`product_id`),
+  CONSTRAINT `fk_notif_actor` FOREIGN KEY (`actor_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_notif_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_notif_recipient` FOREIGN KEY (`receiver_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `users_address`
+-- Dumping data for table `notifications`
 --
+
+LOCK TABLES `notifications` WRITE;
+/*!40000 ALTER TABLE `notifications` DISABLE KEYS */;
+/*!40000 ALTER TABLE `notifications` ENABLE KEYS */;
+UNLOCK TABLES;
 
 LOCK TABLES `users_address` WRITE;
 /*!40000 ALTER TABLE `users_address` DISABLE KEYS */;
@@ -414,10 +419,10 @@ INSERT INTO `users_address` VALUES
 (1,1,'Rua das Flores',       '12',  'Porto', 'Porto', '4000-001','PT','2026-03-22 09:00:00','2026-03-22 09:00:00'),
 (2,2,'Avenida da Liberdade', '250', 'Lisboa','Lisboa','1250-096','PT','2026-03-22 09:01:00','2026-03-22 09:01:00'),
 (3,3,'Rua de Santa Catarina','88',  'Porto', 'Porto', '4000-447','PT','2026-03-22 09:02:00','2026-03-22 09:02:00'),
-(4,4,'Largo do Carmo',       '3',   'Lisboa','Lisboa','1200-092','PT','2026-03-22 09:03:00','2026-03-22 09:03:00'),
-(5,5,'Rua do Comercio',      '10',  'Lisboa','Lisboa','1100-148','PT','2026-03-22 09:04:00','2026-03-22 09:04:00');
+(4,4,'Largo do Carmo',       '3',   'Lisboa','Lisboa','1200-092','PT','2026-03-22 09:03:00','2026-03-22 09:03:00');
 /*!40000 ALTER TABLE `users_address` ENABLE KEYS */;
 UNLOCK TABLES;
+
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
