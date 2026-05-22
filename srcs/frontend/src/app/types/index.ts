@@ -8,7 +8,7 @@ export interface User {
   phone?: string;
   avatar_url?: string;
   role?: "user" | "seller" | "admin";
-  status?: "active" | "suspended" | "banned";
+  status?: "active" | "suspended" | "banned" | "deactivated";
   created_at?: string;
 }
 

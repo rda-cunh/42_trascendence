@@ -1,39 +1,96 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { Users, Search, MoreHorizontal, CheckCircle, Ban, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-// import { api } from "../../lib/api";
+import { api } from "../../lib/api";
 import { User } from "../../types";
 
+type UserAction = "ban" | "unban" | "delete";
+
 export function UserManagement() {
-  const [_users, _setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
-      // TODO: Add API endpoint for getting all users
-      // For now, show empty state
-      setIsLoading(false);
+      try {
+        const data = await api.getAdminUsers();
+        setUsers(data);
+      } catch (err) {
+        console.error("Failed to load users:", err);
+        toast.error(err instanceof Error ? err.message : "Failed to load users");
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     fetchUsers();
   }, []);
 
-  const filtered = _users
-    .filter((u) => filter === "all" || (u as any).status === filter)
-    .filter(
-      (u) =>
-        u.email.toLowerCase().includes(search.toLowerCase()) ||
-        ((u as any).role || "").toLowerCase().includes(search.toLowerCase())
+  const filtered = users
+    .filter((u) => filter === "all" || u.status === filter)
+    .filter((u) =>
+      [u.name, u.email, u.role, u.status]
+        .filter((value): value is string => Boolean(value))
+        .some((value) => value.toLowerCase().includes(search.toLowerCase()))
     );
 
-  const handleAction = (_id: string, action: string) => {
-    toast.success(`User ${action}d successfully`);
+  const updateUserInState = (updatedUser: User) => {
+    setUsers((current) =>
+      current.map((user) => (user.id === updatedUser.id ? { ...user, ...updatedUser } : user))
+    );
+  };
+
+  const handleAction = async (user: User, action: UserAction) => {
+    if (action === "delete") {
+      const confirmed = window.confirm(
+        `Deactivate ${user.email}? This will prevent the user from logging in.`
+      );
+      if (!confirmed) return;
+    }
+
+    const actionKey = `${user.id}:${action}`;
+    setPendingAction(actionKey);
     setOpenMenu(null);
-    // TODO: Call API to update user
+
+    try {
+      if (action === "ban") {
+        const updatedUser = await api.banUser(user.id);
+        updateUserInState(updatedUser);
+        toast.success("User banned successfully");
+      } else if (action === "unban") {
+        const updatedUser = await api.unbanUser(user.id);
+        updateUserInState(updatedUser);
+        toast.success("User activated successfully");
+      } else {
+        await api.deleteUser(user.id);
+        updateUserInState({ ...user, status: "deactivated" });
+        toast.success("User deactivated successfully");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update user");
+    } finally {
+      setPendingAction(null);
+    }
+  };
+
+  const formatDate = (value?: string) => {
+    if (!value) return "";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString();
+  };
+
+  const getStatusClassName = (status?: User["status"]) => {
+    if (status === "active") {
+      return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
+    }
+    if (status === "banned") {
+      return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+    }
+    return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
   };
 
   if (isLoading) {
@@ -67,7 +124,7 @@ export function UserManagement() {
               />
             </div>
             <div className="flex gap-2">
-              {["all", "active", "suspended"].map((f) => (
+              {["all", "active", "banned", "deactivated"].map((f) => (
                 <button
                   key={f}
                   onClick={() => setFilter(f)}
@@ -83,10 +140,8 @@ export function UserManagement() {
             </div>
           </div>
 
-          {_users.length === 0 ? (
-            <div className="p-12 text-center text-gray-500 dark:text-gray-400">
-              No users found. API endpoint not yet configured.
-            </div>
+          {users.length === 0 ? (
+            <div className="p-12 text-center text-gray-500 dark:text-gray-400">No users found.</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -120,21 +175,19 @@ export function UserManagement() {
                       </td>
                       <td className="px-6 py-4">
                         <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                          {(user as any).role || "user"}
+                          {user.role || "user"}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
-                        {(user as any).joinDate || ""}
+                        {formatDate(user.created_at)}
                       </td>
                       <td className="px-6 py-4">
                         <span
-                          className={`rounded-full px-2 py-1 text-xs font-medium ${
-                            (user as any).status === "active"
-                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                          }`}
+                          className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusClassName(
+                            user.status
+                          )}`}
                         >
-                          {(user as any).status || "active"}
+                          {user.status || "active"}
                         </span>
                       </td>
                       <td className="relative px-6 py-4 text-right">
@@ -148,28 +201,33 @@ export function UserManagement() {
                           <>
                             <div className="fixed inset-0 z-40" onClick={() => setOpenMenu(null)} />
                             <div className="absolute right-6 z-50 mt-1 w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-xl dark:border-gray-800 dark:bg-gray-900">
-                              {(user as any).status !== "active" && (
+                              {user.status === "banned" && (
                                 <button
-                                  onClick={() => handleAction(user.id, "activate")}
+                                  onClick={() => handleAction(user, "unban")}
+                                  disabled={pendingAction === `${user.id}:unban`}
                                   className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
                                 >
                                   <CheckCircle className="h-4 w-4" /> Activate
                                 </button>
                               )}
-                              {(user as any).status !== "suspended" && (
+                              {user.status !== "banned" && user.status !== "deactivated" && (
                                 <button
-                                  onClick={() => handleAction(user.id, "suspend")}
+                                  onClick={() => handleAction(user, "ban")}
+                                  disabled={pendingAction === `${user.id}:ban`}
                                   className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20"
                                 >
-                                  <Ban className="h-4 w-4" /> Suspend
+                                  <Ban className="h-4 w-4" /> Ban
                                 </button>
                               )}
-                              <button
-                                onClick={() => handleAction(user.id, "delete")}
-                                className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                              >
-                                <Trash2 className="h-4 w-4" /> Delete
-                              </button>
+                              {user.status !== "deactivated" && (
+                                <button
+                                  onClick={() => handleAction(user, "delete")}
+                                  disabled={pendingAction === `${user.id}:delete`}
+                                  className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                                >
+                                  <Trash2 className="h-4 w-4" /> Delete
+                                </button>
+                              )}
                             </div>
                           </>
                         )}

@@ -46,8 +46,10 @@ from .views import (
     presence_ping,
     presence_query,
     admin_bans,
+    admin_users,
     manage_admins,
     manage_bans,
+    manage_users,
     grafana_auth,
     follow_action,
     follow_following,
@@ -111,6 +113,8 @@ urlpatterns = [
         path("public/users/<int:user_id>/", public_user_id.as_view()),
 
         # admin paths
+        path("admin/users/<int:user_id>/", manage_users.as_view()),
+        path("admin/users/", admin_users.as_view()),
         path("admin/bans/<int:user_id>/", manage_bans.as_view()),
         path("admin/bans/", admin_bans.as_view()),
         path("admin/manage/<int:user_id>/", manage_admins.as_view()),
