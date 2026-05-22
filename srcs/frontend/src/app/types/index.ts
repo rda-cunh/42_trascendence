@@ -34,6 +34,7 @@ export interface Product {
   location: string;
   seller: string;
   seller_id?: string;
+  status?: string;
   image: string;
   images?: string[];
   postedDate: string;

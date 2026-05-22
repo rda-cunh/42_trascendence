@@ -54,8 +54,9 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
 
           // Then update the online ones
           for (const [id, isOnline] of Object.entries(data)) {
-            if (next[id] !== isOnline) {
-              next[id] = isOnline;
+            const online = Boolean(isOnline);
+            if (next[id] !== online) {
+              next[id] = online;
               changed = true;
             }
           }

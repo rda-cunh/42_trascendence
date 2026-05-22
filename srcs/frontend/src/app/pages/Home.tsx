@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ProductCard } from "../components/ProductCard";
-import { api, mapListing } from "../lib/api";
+import { api, isDeletedListing, mapListing } from "../lib/api";
 import { Search, SlidersHorizontal, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Listing } from "../types";
 import { PRODUCT_CATEGORIES } from "../utils/constants";
@@ -20,17 +20,17 @@ export function Home() {
   const categories = PRODUCT_CATEGORIES;
 
   const isLoading = useAsyncEffect(async ({ isCancelled }) => {
-    const data = await api.getListings();
+    const data = await api.getListings({ status: "Active" });
 
     // Handle both direct array response and paginated response
     const results = Array.isArray(data) ? data : data?.results || [];
 
     if (isCancelled()) return;
 
-    if (results.length > 0) {
-      const apiListings: Listing[] = results.map(mapListing);
-      setListings(apiListings);
-    }
+    const apiListings: Listing[] = results
+      .filter((item: unknown) => !isDeletedListing(item))
+      .map(mapListing);
+    setListings(apiListings);
   }, []);
 
   const filtered = listings
