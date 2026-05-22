@@ -10,7 +10,7 @@ router = APIRouter(prefix='/api/orders', tags=['Orders'])
 def generate_order_code() -> str:
 	return f'ORD-{uuid.uuid4().hex[:8].upper()}'
 
-# Verificar se seller_id != buyer_id
+# Verificar se seller_id != user_id
 # POST /orders
 @router.post('/', response_model=OrderResponse, status_code=201)
 def create_order(order_in: OrderCreate, db=Depends(get_db_dep)):
@@ -37,14 +37,12 @@ def create_order(order_in: OrderCreate, db=Depends(get_db_dep)):
 			'qty':			item.qty,
 			'subtotal':		subtotal
 		})
-		cursor.execute('SELECT id FROM users_address WHERE users_id = %s', (order_in.buyer_id))
-		addressId = cursor.fetchone()[0]
 	cursor.execute(
 		'''
-		INSERT INTO orders (code, buyer_id, buyer_address_id, subtotal, total, notes)
-		VALUES (%s, %s, %s, %s, %s, %s)
+		INSERT INTO orders (code, buyer_id, subtotal, total, notes)
+		VALUES (%s, %s, %s, %s, %s)
 		''',
-		(generate_order_code(), order_in.buyer_id, addressId, total, total, order_in.notes)
+		(generate_order_code(), order_in.user_id, total, total, order_in.notes)
 	)
 	order_id = conn.insert_id()
 
