@@ -10,6 +10,7 @@ class OrderStatus(str, Enum):
 	delivered		= 'Delivered'
 	cancelled		= 'Cancelled'
 	refunded		= 'Refunded'
+	done            = 'Done'
 
 class OrderItemCreate(BaseModel):
 	product_id:	int

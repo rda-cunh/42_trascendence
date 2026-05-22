@@ -89,6 +89,7 @@ const DEFAULT_BILLING = {
   postalCode: "",
   country: "US",
 };
+import { useAuth } from "../contexts/AuthContext";
 
 export function Checkout() {
   const { items, removeItem, total, clear } = useCart();
@@ -234,6 +235,8 @@ export function Checkout() {
     return true;
   };
 
+  const { user } = useAuth();
+
   const handlePlaceOrder = async () => {
     if (items.length === 0) {
       toast.error("Your cart is empty");
@@ -247,6 +250,11 @@ export function Checkout() {
     }
 
     if (!validateCheckout()) return;
+
+    if (!user?.id) {
+      toast.error("You must be signed in to place an order");
+      return;
+    }
 
     setIsProcessing(true);
     try {
@@ -263,13 +271,13 @@ export function Checkout() {
 
       await api.createOrder({
         user_id: buyerId,
+        user_id: Number(user.id),
         items: items.map((i: (typeof items)[number]) => ({
-          listing_id: i.listing.id,
+          product_id: Number(i.listing.id),
           product_id: i.listing.id,
-          quantity: i.quantity,
+          qty: i.quantity,
           qty: i.quantity,
         })),
-        total,
         payment_provider: "stripe",
         stripe_payment_method_id: paymentMethod.id,
         payment_method: {

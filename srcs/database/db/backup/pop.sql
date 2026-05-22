@@ -183,7 +183,7 @@ LOCK TABLES `orders` WRITE;
 INSERT INTO `orders` VALUES
 (1,'ORD-2024-0001',3,'Done',   578.99,578.99,'Description 123.', '2026-03-22 10:00:00','2026-03-22 10:05:00'),
 (2,'ORD-3456-0002',4,'Pending',599.90,599.90,NULL,               '2026-03-22 11:00:00','2026-03-22 11:00:00'),
-(3,'ORD-2026-0003',5,5,'Done',265.89,265.89,'Seed order for admin review testing','2026-03-22 12:00:00','2026-03-22 12:05:00');
+(3,'ORD-2026-0003',5,'Done',265.89,265.89,'Seed order for admin review testing','2026-03-22 12:00:00','2026-03-22 12:05:00');
 /*!40000 ALTER TABLE `orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -413,15 +413,15 @@ LOCK TABLES `notifications` WRITE;
 /*!40000 ALTER TABLE `notifications` ENABLE KEYS */;
 UNLOCK TABLES;
 
-LOCK TABLES `users_address` WRITE;
-/*!40000 ALTER TABLE `users_address` DISABLE KEYS */;
-INSERT INTO `users_address` VALUES
-(1,1,'Rua das Flores',       '12',  'Porto', 'Porto', '4000-001','PT','2026-03-22 09:00:00','2026-03-22 09:00:00'),
-(2,2,'Avenida da Liberdade', '250', 'Lisboa','Lisboa','1250-096','PT','2026-03-22 09:01:00','2026-03-22 09:01:00'),
-(3,3,'Rua de Santa Catarina','88',  'Porto', 'Porto', '4000-447','PT','2026-03-22 09:02:00','2026-03-22 09:02:00'),
-(4,4,'Largo do Carmo',       '3',   'Lisboa','Lisboa','1200-092','PT','2026-03-22 09:03:00','2026-03-22 09:03:00');
-/*!40000 ALTER TABLE `users_address` ENABLE KEYS */;
-UNLOCK TABLES;
+-- LOCK TABLES `users_address` WRITE;
+-- /*!40000 ALTER TABLE `users_address` DISABLE KEYS */;
+-- INSERT INTO `users_address` VALUES
+-- (1,1,'Rua das Flores',       '12',  'Porto', 'Porto', '4000-001','PT','2026-03-22 09:00:00','2026-03-22 09:00:00'),
+-- (2,2,'Avenida da Liberdade', '250', 'Lisboa','Lisboa','1250-096','PT','2026-03-22 09:01:00','2026-03-22 09:01:00'),
+-- (3,3,'Rua de Santa Catarina','88',  'Porto', 'Porto', '4000-447','PT','2026-03-22 09:02:00','2026-03-22 09:02:00'),
+-- (4,4,'Largo do Carmo',       '3',   'Lisboa','Lisboa','1200-092','PT','2026-03-22 09:03:00','2026-03-22 09:03:00');
+-- /*!40000 ALTER TABLE `users_address` ENABLE KEYS */;
+-- UNLOCK TABLES;
 
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
