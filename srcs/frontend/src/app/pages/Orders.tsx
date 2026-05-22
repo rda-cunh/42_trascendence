@@ -44,7 +44,7 @@ export function Orders() {
   const isLoading = useAsyncEffect(async ({ isCancelled }) => {
     if (!user || !token) return;
 
-    const data = await api.getOrders();
+    const data = await api.getOrders(user.id);
 
     if (isCancelled()) return;
 

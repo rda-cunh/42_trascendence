@@ -864,17 +864,16 @@ class order_create(APIView):
 
 
 class order_id(APIView):
-    def get(self, request, id):
+    def get(self, request, order_id):
         return proxy_request("GET", f"/orders/{order_id}/")
 
-    def patch(self, request, id):
-        return proxy_request("PATCH", f"/orders/{order_id}", request.data)
+    def patch(self, request, order_id):
+        return proxy_request("PATCH", f"/orders/{order_id}/", request.data)
 
 
 class order_buyer_id(APIView):
-    def get(self, request, id):
+    def get(self, request, user_id):
         return proxy_request("GET", f"/orders/buyer/{user_id}/")
-
 
 class payment_id(APIView):
     def get(self, request, order_id):

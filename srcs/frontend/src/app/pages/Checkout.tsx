@@ -7,11 +7,14 @@ import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { resolveImageUrl } from "../lib/images";
 import { toast } from "sonner";
 import { Link } from "react-router";
+import { useAuth } from "../contexts/AuthContext";
 
 export function Checkout() {
   const { items, removeItem, total, clear } = useCart();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const { user } = useAuth();
 
   const handlePlaceOrder = async () => {
     if (items.length === 0) {
@@ -19,14 +22,19 @@ export function Checkout() {
       return;
     }
 
+    if (!user?.id) {
+      toast.error("You must be signed in to place an order");
+      return;
+    }
+
     setIsProcessing(true);
     try {
       await api.createOrder({
+        user_id: Number(user.id),
         items: items.map((i: (typeof items)[number]) => ({
-          listing_id: i.listing.id,
-          quantity: i.quantity,
+          product_id: Number(i.listing.id),
+          qty: i.quantity,
         })),
-        total,
       });
 
       clear();

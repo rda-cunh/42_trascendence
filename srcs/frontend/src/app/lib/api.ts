@@ -185,6 +185,40 @@ function mapAdminUser(item: any): User {
   };
 }
 
+function normalizeOrderStatus(status: unknown): string {
+  const value = String(status ?? "").toLowerCase();
+
+  if (value === "pending") return "pending";
+  if (value === "paid") return "processing";
+  if (value === "delivered" || value === "done") return "completed";
+  if (value === "cancelled" || value === "refunded") return "cancelled";
+
+  return value || "pending";
+}
+
+function mapOrderItem(item: any) {
+  return {
+    id: String(item?.id ?? ""),
+    product_id: String(item?.product_id ?? ""),
+    quantity: Number(item?.quantity ?? item?.qty ?? 0),
+    price: Number(item?.price ?? 0),
+    name: item?.name ?? item?.product_name ?? `Item ${item?.id ?? ""}`,
+  };
+}
+
+function mapOrder(item: any) {
+  return {
+    id: String(item?.id ?? ""),
+    user_id: String(item?.buyer_id ?? item?.user_id ?? ""),
+    status: normalizeOrderStatus(item?.status),
+    total: Number(item?.total ?? 0),
+    created_at: item?.created_at ?? "",
+    updated_at: item?.updated_at,
+    items: Array.isArray(item?.items) ? item.items.map(mapOrderItem) : [],
+    shipping_address: item?.shipping_address,
+  };
+}
+
 class ApiClient {
   private token: string | null = null;
   private tokenChangeHandler: ((token: string | null) => void) | null = null;
@@ -373,14 +407,15 @@ class ApiClient {
     return this.request<any>("POST", "/orders/", data);
   }
 
-  getOrders() {
-    return this.request<any>("GET", "/orders/");
+  getOrders(buyerId: string | number) {
+    return this.request<any[]>("GET", `/orders/buyer/${buyerId}/`).then((data) =>
+      Array.isArray(data) ? data.map(mapOrder) : []
+    );
   }
 
   getOrder(id: string) {
-    return this.request<any>("GET", `/orders/${id}/`);
+    return this.request<any>("GET", `/orders/${id}/`).then(mapOrder);
   }
-
   // REVIEWS
   createReview(data: {
     listing_id?: string | number;

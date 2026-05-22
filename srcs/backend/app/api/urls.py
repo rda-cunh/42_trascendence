@@ -39,6 +39,7 @@ from .views import (
     auth_password,
     order_create,
     order_id,
+    order_buyer_id,
     auth_42_redirect,
     auth_42_callback,
     chat_conversations,
@@ -98,6 +99,7 @@ urlpatterns = [
         path("follow/feed/",                         follow_feed.as_view()),
 
         # orders paths
+        path("orders/buyer/<int:user_id>/", order_buyer_id.as_view()),
         path("orders/<int:order_id>/", order_id.as_view()),
         path("orders/", order_create.as_view()),
         path("payment/<int:order_id>/", payment_id.as_view()),
