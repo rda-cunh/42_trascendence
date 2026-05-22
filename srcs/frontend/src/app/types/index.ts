@@ -128,7 +128,7 @@ export interface ApiError {
 
 // ==================== Notification Types ====================
 // Mirrors the data-service's NotificationListResponse (models/notification.py).
-export type NotificationType = "new_listing"; // extend as more types are added
+export type NotificationType = "new_listing" | "listing_updated" | "listing_deleted";
 
 export interface NotificationPayload {
   product_name?: string;

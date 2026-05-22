@@ -16,11 +16,14 @@ import { UserAvatar } from "./UserAvatar";
 
 function getNotificationTitle(n: Notification): string {
   const actor = n.actor_name ?? "Someone";
+  const product = n.product_name ?? n.payload?.product_name ?? "a listing";
   switch (n.type) {
-    case "new_listing": {
-      const product = n.product_name ?? n.payload?.product_name ?? "a new listing";
+    case "new_listing":
       return `${actor} posted ${product}`;
-    }
+    case "listing_updated":
+      return `${actor} updated ${product}`;
+    case "listing_deleted":
+      return `${actor} removed ${product}`;
     default:
       return `${actor} sent you a notification`;
   }
@@ -28,10 +31,13 @@ function getNotificationTitle(n: Notification): string {
 
 function getNotificationSubtitle(n: Notification): string | null {
   switch (n.type) {
-    case "new_listing": {
+    case "new_listing":
+    case "listing_updated": {
       const price = n.product_price ?? n.payload?.product_price;
       return price ? `$${price}` : null;
     }
+    case "listing_deleted":
+      return "Listing removed";
     default:
       return null;
   }
@@ -40,7 +46,11 @@ function getNotificationSubtitle(n: Notification): string | null {
 function getNotificationLink(n: Notification): string | null {
   switch (n.type) {
     case "new_listing":
+    case "listing_updated":
       return n.product_id !== null ? `/product/${n.product_id}` : null;
+    case "listing_deleted":
+      // No link — the product is gone (soft-deleted). Clicking would return 404.
+      return null;
     default:
       return null;
   }

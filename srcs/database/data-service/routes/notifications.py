@@ -64,7 +64,8 @@ def list_notifications(
 	if unread_only:
 		sql += ' AND n.read_at IS NULL'
 
-	sql += ' ORDER BY n.created_at DESC LIMIT %s OFFSET %s'
+	# Tie-break: TIMESTAMP has 1-second resolution, so two notifications inserted in the same second would otherwise come back in arbitrary order.
+	sql += ' ORDER BY n.created_at DESC, n.id DESC LIMIT %s OFFSET %s'
 	params.extend([limit, offset])
 
 	cursor.execute(sql, params)
@@ -178,6 +179,55 @@ def fanout_new_listing(payload: FanoutRequest, db=Depends(get_db_dep)):
 	values = [
 		(follower_id, payload.seller_id, 'new_listing', payload.product_id, notif_payload)
 		for follower_id in receiver_ids
+	]
+	cursor.executemany(
+		'''INSERT INTO notifications (receiver_id, actor_id, type, product_id, payload)
+		   VALUES (%s, %s, %s, %s, %s)''',
+		values
+	)
+	conn.commit()
+
+	return FanoutResponse(receiver_ids=receiver_ids, inserted=cursor.rowcount)
+
+
+# ── internal helper: fanout for listing_updated / listing_deleted ────────────
+# Added ONLY to satisfy the subject requirement "complete notification system
+# for all creation, update, and deletion actions". 
+
+# Does NOT filter by status='Active': listing_deleted fires AFTER the product
+# is soft-deleted (status='Deleted').
+
+def _fanout_listing_event(db, seller_id: int, product_id: int, event_type: str) -> FanoutResponse:
+	conn, cursor = db
+
+	cursor.execute(
+		'SELECT id, name, slug, price FROM products WHERE id = %s',
+		(product_id,)
+	)
+	product = cursor.fetchone()
+	if not product:
+		raise HTTPException(status_code=404, detail='Product not found')
+
+	cursor.execute(
+		'SELECT user_id FROM follows WHERE following_id = %s',
+		(seller_id,)
+	)
+	followers = cursor.fetchall()
+
+	if not followers:
+		return FanoutResponse(receiver_ids=[], inserted=0)
+
+	receiver_ids = [row['user_id'] for row in followers]
+
+	notif_payload = json.dumps({
+		'product_name':  product['name'],
+		'product_slug':  product['slug'],
+		'product_price': str(product['price']),
+	})
+
+	values = [
+		(rid, seller_id, event_type, product_id, notif_payload)
+		for rid in receiver_ids
 	]
 	cursor.executemany(
 		'''INSERT INTO notifications (receiver_id, actor_id, type, product_id, payload)

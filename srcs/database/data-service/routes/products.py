@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from database import get_db_dep
 from models.product import *
 from models.notification import FanoutRequest
-from routes.notifications import fanout_new_listing
+from routes.notifications import fanout_new_listing, _fanout_listing_event
 
 router = APIRouter(prefix='/api/listings', tags=['Products'])
 
@@ -170,6 +170,16 @@ def update_products(product_id: int, product_in: ProductUpdate, db=Depends(get_d
 		values
 	)
 	conn.commit()
+
+	# Fan out 'listing_updated' notifications to the seller's followers.
+	# Added to satisfy the subject requirement of notifications for "all creation,
+	# update, and deletion actions".
+	try:
+		product_row = GetProductInfo(db, product_id)
+		_fanout_listing_event(db, product_row['seller_id'], product_id, 'listing_updated')
+	except Exception as e:
+		print(f'_fanout_listing_event (updated) failed for product {product_id}: {e}')
+
 	product = GetProductInfo(db, product_id)
 	return ProductResponse(**product)
 
@@ -180,7 +190,12 @@ def update_products(product_id: int, product_in: ProductUpdate, db=Depends(get_d
 @router.delete('/{product_id}/', status_code=204)
 def delete_product(product_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
- 
+
+	# Capture the seller_id BEFORE the soft-delete so we know who to fan out from
+	cursor.execute('SELECT seller_id FROM products WHERE id = %s', (product_id,))
+	row = cursor.fetchone()
+	seller_id = row['seller_id'] if row else None
+
 	cursor.execute(
 		"UPDATE products SET status = 'Deleted' WHERE id = %s AND status != 'Deleted'",
 		(product_id,)
@@ -188,6 +203,15 @@ def delete_product(product_id: int, db=Depends(get_db_dep)):
 	if cursor.rowcount == 0:
 		raise HTTPException(status_code=404, detail='Product not found')
 	conn.commit()
+
+	# Fan out 'listing_deleted' notifications to the seller's followers.
+	# Added to satisfy the subject requirement of notifications for "all creation,
+	# update, and deletion actions". 
+	if seller_id is not None:
+		try:
+			_fanout_listing_event(db, seller_id, product_id, 'listing_deleted')
+		except Exception as e:
+			print(f'_fanout_listing_event (deleted) failed for product {product_id}: {e}')
 
 
 # PRODUCT IMAGES
