@@ -15,22 +15,6 @@ CREATE TABLE IF NOT EXISTS users (
   UNIQUE KEY uq_users_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS users_address (
-  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  users_id BIGINT UNSIGNED NOT NULL,
-  street VARCHAR(255) NOT NULL,
-  number VARCHAR(255) NULL DEFAULT NULL,
-  city VARCHAR(255) NOT NULL,
-  state VARCHAR(255) NOT NULL,
-  postal_code VARCHAR(255) NOT NULL,
-  country VARCHAR(255) NOT NULL DEFAULT 'PT',
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (id),
-  KEY idx_addresses_users (users_id),
-  CONSTRAINT fk_addresses_users FOREIGN KEY (users_id) REFERENCES users (id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 CREATE TABLE IF NOT EXISTS products (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   seller_id BIGINT UNSIGNED NOT NULL,
@@ -66,7 +50,6 @@ CREATE TABLE IF NOT EXISTS orders (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   code VARCHAR(30) NOT NULL,
   buyer_id BIGINT UNSIGNED NOT NULL,
-  buyer_address_id BIGINT UNSIGNED NULL DEFAULT NULL,
   status ENUM('Pending', 'Paid', 'Done', 'Cancelled', 'Refunded') NOT NULL DEFAULT 'Pending',
   subtotal DECIMAL(12,2) NOT NULL,
   total DECIMAL(12,2) NOT NULL,
@@ -77,7 +60,6 @@ CREATE TABLE IF NOT EXISTS orders (
   UNIQUE KEY uq_order_code (code),
   KEY idx_order_buyer (buyer_id),
   CONSTRAINT fk_order_buyer FOREIGN KEY (buyer_id) REFERENCES users (id),
-  CONSTRAINT fk_order_address FOREIGN KEY (buyer_address_id) REFERENCES users_address (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS order_items (
@@ -172,6 +154,23 @@ CREATE TABLE IF NOT EXISTS follows (
 	CONSTRAINT chk_no_self_follow CHECK (user_id != following_id),
 	CONSTRAINT fk_follows_follower FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
 	CONSTRAINT fk_follows_following FOREIGN KEY (following_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  receiver_id BIGINT UNSIGNED NOT NULL,
+  actor_id BIGINT UNSIGNED NULL,
+  type VARCHAR(40) NOT NULL,
+  product_id BIGINT UNSIGNED NULL,
+  payload JSON NULL,
+  read_at TIMESTAMP NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_notif_recipient_unread (receiver_id, read_at, created_at),
+  KEY idx_notif_recipient_created (receiver_id, created_at),
+  CONSTRAINT fk_notif_recipient FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_notif_actor FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_notif_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO users (name, email, password_hash, role, status, created_at, updated_at)
