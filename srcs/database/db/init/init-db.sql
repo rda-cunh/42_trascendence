@@ -15,22 +15,6 @@ CREATE TABLE IF NOT EXISTS users (
   UNIQUE KEY uq_users_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS users_address (
-  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  users_id BIGINT UNSIGNED NOT NULL,
-  street VARCHAR(255) NOT NULL,
-  number VARCHAR(255) NULL DEFAULT NULL,
-  city VARCHAR(255) NOT NULL,
-  state VARCHAR(255) NOT NULL,
-  postal_code VARCHAR(255) NOT NULL,
-  country VARCHAR(255) NOT NULL DEFAULT 'PT',
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (id),
-  KEY idx_addresses_users (users_id),
-  CONSTRAINT fk_addresses_users FOREIGN KEY (users_id) REFERENCES users (id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 CREATE TABLE IF NOT EXISTS products (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   seller_id BIGINT UNSIGNED NOT NULL,
@@ -66,7 +50,6 @@ CREATE TABLE IF NOT EXISTS orders (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   code VARCHAR(30) NOT NULL,
   buyer_id BIGINT UNSIGNED NOT NULL,
-  buyer_address_id BIGINT UNSIGNED NULL DEFAULT NULL,
   status ENUM('Pending', 'Paid', 'Done', 'Cancelled', 'Refunded') NOT NULL DEFAULT 'Pending',
   subtotal DECIMAL(12,2) NOT NULL,
   total DECIMAL(12,2) NOT NULL,
@@ -77,7 +60,6 @@ CREATE TABLE IF NOT EXISTS orders (
   UNIQUE KEY uq_order_code (code),
   KEY idx_order_buyer (buyer_id),
   CONSTRAINT fk_order_buyer FOREIGN KEY (buyer_id) REFERENCES users (id),
-  CONSTRAINT fk_order_address FOREIGN KEY (buyer_address_id) REFERENCES users_address (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS order_items (
