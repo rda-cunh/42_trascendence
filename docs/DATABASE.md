@@ -306,8 +306,6 @@ curl -X DELETE "http://data-service:9000/api/listings/{product_id}/images/{image
 ```
 curl -X POST http://data-service:9000/api/orders/ -H "Content-Type: application/json" -d '{
   "buyer_id": 1,
-  "buyer_address_id": 1,
-  "notes": "This is a test",
   "items": [
     {
       "product_id": 2,
@@ -326,11 +324,9 @@ curl -X POST http://data-service:9000/api/orders/ -H "Content-Type: application/
 "id":1,
 "code":"ORD-1172EEFF",
 "buyer_id":1,
-"buyer_address_id":1,
 "status":"Pending",
 "subtotal":"299.70",
 "total":"299.70",
-"notes":"This is a test",
 "created_at":"2026-03-14T16:48:25",
 "items":
 [
@@ -372,11 +368,9 @@ curl "http://data-service:9000/api/orders/{order_id}/"
 "id":1,
 "code":"ORD-1172EEFF",
 "buyer_id":1,
-"buyer_address_id":1,
 "status":"Pending",
 "subtotal":"299.70",
 "total":"299.70",
-"notes":"This is a test",
 "created_at":"2026-03-14T16:48:25",
 "items":
 [
