@@ -151,6 +151,33 @@ function normalizeStatus(status: unknown): User["status"] | undefined {
   return undefined;
 }
 
+function normalizeAdminStatus(status: unknown): User["status"] | undefined {
+  const value = String(status ?? "").toLowerCase();
+  if (
+    value === "active" ||
+    value === "suspended" ||
+    value === "banned" ||
+    value === "deactivated"
+  ) {
+    return value;
+  }
+  if (value === "deleted") return "deactivated";
+  return undefined;
+}
+
+function mapAdminUser(item: any): User {
+  return {
+    id: String(item?.id ?? item?.user_id ?? ""),
+    email: item?.email ?? "",
+    name: item?.name ?? undefined,
+    phone: item?.phone ?? undefined,
+    avatar_url: item?.avatar_url ?? item?.avatarUrl ?? undefined,
+    role: normalizeRole(item?.role),
+    status: normalizeAdminStatus(item?.status),
+    created_at: item?.created_at ?? undefined,
+  };
+}
+
 class ApiClient {
   private token: string | null = null;
   private tokenChangeHandler: ((token: string | null) => void) | null = null;
@@ -308,6 +335,28 @@ class ApiClient {
     return this.request<any>("DELETE", `/listings/${id}/`, {});
   }
 
+  // ADMIN
+  getAdminUsers(search?: string) {
+    const params = new URLSearchParams({ limit: "200" });
+    if (search?.trim()) params.set("search", search.trim());
+
+    return this.request<any[]>("GET", `/admin/users/?${params.toString()}`).then((data) =>
+      Array.isArray(data) ? data.map(mapAdminUser) : []
+    );
+  }
+
+  banUser(userId: string | number) {
+    return this.request<any>("POST", `/admin/bans/${userId}/`, {}).then(mapAdminUser);
+  }
+
+  unbanUser(userId: string | number) {
+    return this.request<any>("DELETE", `/admin/bans/${userId}/`, {}).then(mapAdminUser);
+  }
+
+  deleteUser(userId: string | number) {
+    return this.request<void>("DELETE", `/admin/users/${userId}/`, {});
+  }
+
   // ORDERS
   createOrder(data: any) {
     return this.request<any>("POST", "/orders/", data);
@@ -340,7 +389,9 @@ class ApiClient {
   async getReviews(listingId: string, page = 1) {
     try {
       const path =
-        page > 1 ? `/listings/${listingId}/reviews/?page=${page}` : `/listings/${listingId}/reviews/`;
+        page > 1
+          ? `/listings/${listingId}/reviews/?page=${page}`
+          : `/listings/${listingId}/reviews/`;
       const data = await this.request<Review[]>("GET", path);
       return Array.isArray(data) ? data : [];
     } catch {
