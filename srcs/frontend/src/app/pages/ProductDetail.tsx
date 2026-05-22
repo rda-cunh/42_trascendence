@@ -7,7 +7,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { ProductInfo } from "../components/ProductInfo";
 import { ReviewSection } from "../components/ReviewSection";
 import { ProductChatWidget } from "../components/ProductChatWidget";
-import { api, mapListing } from "../lib/api";
+import { api, isDeletedListing, mapListing } from "../lib/api";
 import { getListingDescription } from "../lib/shaders";
 import { Listing, Review } from "../types";
 import { toast } from "sonner";
@@ -28,7 +28,9 @@ export function ProductDetail() {
     try {
       const [listingData, reviewsData] = await Promise.all([api.getListing(id), api.getReviews(id)]);
 
-      if (listingData?.product_id || listingData?.id) {
+      if (isDeletedListing(listingData)) {
+        setListing(null);
+      } else if (listingData?.product_id || listingData?.id) {
         setListing(mapListing(listingData));
       }
 

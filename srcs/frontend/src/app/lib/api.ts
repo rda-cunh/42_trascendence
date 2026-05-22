@@ -23,6 +23,12 @@ export interface ListingImageRecord {
   created_at: string;
 }
 
+type ListingStatus = "Draft" | "Active" | "Paused" | "Deleted";
+
+export function isDeletedListing(item: any): boolean {
+  return String(item?.status ?? "").toLowerCase() === "deleted";
+}
+
 function pickFirstErrorValue(value: unknown): string | null {
   if (typeof value === "string") {
     const trimmed = value.trim();
@@ -111,6 +117,7 @@ export function mapListing(item: any): Listing {
     location: "Digital Download",
     seller: sellerName,
     seller_id: item?.seller_id ? String(item.seller_id) : undefined,
+    status: item?.status,
     images: normalizedImages,
     image: resolveImageUrl(item?.image ?? item?.image_url ?? firstImage, FALLBACK_LISTING_IMAGE),
     postedDate: createdAt
@@ -309,8 +316,12 @@ class ApiClient {
   }
 
   // LISTINGS
-  getListings() {
-    return this.request<any>("GET", "/listings/");
+  getListings(filters?: { status?: ListingStatus }) {
+    const params = new URLSearchParams();
+    if (filters?.status) params.set("status", filters.status);
+
+    const query = params.toString();
+    return this.request<any>("GET", `/listings/${query ? `?${query}` : ""}`);
   }
 
   getListing(id: string) {
