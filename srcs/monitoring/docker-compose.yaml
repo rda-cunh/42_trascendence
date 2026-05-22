@@ -202,8 +202,8 @@ services:
     build:
       context: ./nginx-exporter-gateway
       args:
-        NGINX_PROMETHEUS_EXPORTER_VERSION: 1.4.2
-        ALPINE_VERSION: 3.20
+        NGINX_PROMETHEUS_EXPORTER_VERSION: "1.4.2"
+        ALPINE_VERSION: "3.20"
     container_name: nginx-exporter-gateway
     environment:
       - CA_CRT_NAME=${CA_CRT_NAME:-ca.crt}
@@ -239,8 +239,8 @@ services:
     build:
       context: ./nginx-exporter-frontend
       args:
-        NGINX_PROMETHEUS_EXPORTER_VERSION: 1.4.2
-        ALPINE_VERSION: 3.20
+        NGINX_PROMETHEUS_EXPORTER_VERSION: "1.4.2"
+        ALPINE_VERSION: "3.20"
     container_name: nginx-exporter-frontend
     environment:
       - CA_CRT_NAME=${CA_CRT_NAME:-ca.crt}
