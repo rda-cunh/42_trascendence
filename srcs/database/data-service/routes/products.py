@@ -1,8 +1,42 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from database import get_db_dep
 from models.product import *
+from models.notification import FanoutRequest
+from routes.notifications import fanout_new_listing, _fanout_listing_event
+import re
+import unicodedata
 
 router = APIRouter(prefix='/api/listings', tags=['Products'])
+
+def generate_slug(name: str) -> str:
+	name = name.lower().strip()
+
+	name = unicodedata.normalize('NFKD', name)
+	name = name.encode('ascii', 'ignore').decode('ascii')
+
+	name = re.sub(r'[^a-z0-9\s-]', '', name)
+
+	name = re.sub(r'[\s_-]+', '-', name)
+
+	name = name.strip('-')
+
+	return name
+
+def unique_slug(cursor, base_slug):
+	slug = base_slug
+	counter = 1
+
+	while True:
+		cursor.execute(
+			'SELECT id FROM products WHERE slug = %s',
+			(slug,)
+		)
+
+		if not cursor.fetchone():
+			return slug
+
+		slug = f'{base_slug}-{counter}'
+		counter += 1
 
 # TO DO IMPROVE
 # Retornar aqui uma flag bool, se é owner ou não
@@ -14,7 +48,7 @@ def GetProductInfo(db, product_id:	int):
 		(product_id,)
 	)
 	product = cursor.fetchone()
-	if not product:
+	if not product or product['status'] == 'Deleted':
 		raise HTTPException(status_code=404, detail='Product not found')
 	
 	cursor.execute(
@@ -60,23 +94,29 @@ def _recalc_listing_rating(cursor, product_id: int) -> None:
 def	create_product(product_in: ProductCreate, db=Depends(get_db_dep)):
 	conn, cursor = db
 
-	cursor.execute('SELECT id FROM products WHERE slug = %s', (product_in.slug,))
-	if cursor.fetchone():
-		raise HTTPException(status_code=409, detail='Slug already in use')
+	slug = unique_slug(cursor, generate_slug(product_in.name))
 	
 	cursor.execute(
 		'''
 		INSERT INTO products (seller_id, name, slug, description, price)
 		VALUES (%s, %s, %s, %s, %s)
 		''',
-		(product_in.user_id, product_in.name, product_in.slug, product_in.description, product_in.price)
+		(product_in.user_id, product_in.name, slug, product_in.description, product_in.price)
 	)
 	new_id = conn.insert_id()
 
-	if product_in.images:
+	if product_in.images:/
 		values = [(new_id, img, idx) for idx, img in enumerate(product_in.images)]
 		cursor.executemany('''INSERT INTO product_images (product_id, image_hash, display_order) VALUES (%s, %s, %s)''', values)
 	conn.commit()
+
+	# Fan out 'new_listing' notifications to the seller's followers.
+	# Wrapped so a notifications failure never rolls back the product creation.
+	try:
+		fanout_new_listing(FanoutRequest(seller_id=product_in.user_id, product_id=new_id), db)
+	except Exception as e:
+		print(f'fanout_new_listing failed for product {new_id}: {e}')
+
 	product = GetProductInfo(db, new_id)
 	return ProductResponse(**product)
 
@@ -160,6 +200,16 @@ def update_products(product_id: int, product_in: ProductUpdate, db=Depends(get_d
 		values
 	)
 	conn.commit()
+
+	# Fan out 'listing_updated' notifications to the seller's followers.
+	# Added to satisfy the subject requirement of notifications for "all creation,
+	# update, and deletion actions".
+	try:
+		product_row = GetProductInfo(db, product_id)
+		_fanout_listing_event(db, product_row['seller_id'], product_id, 'listing_updated')
+	except Exception as e:/
+		print(f'_fanout_listing_event (updated) failed for product {product_id}: {e}')
+
 	product = GetProductInfo(db, product_id)
 	return ProductResponse(**product)
 
@@ -170,7 +220,12 @@ def update_products(product_id: int, product_in: ProductUpdate, db=Depends(get_d
 @router.delete('/{product_id}/', status_code=204)
 def delete_product(product_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
- 
+
+	# Capture the seller_id BEFORE the soft-delete so we know who to fan out from
+	cursor.execute('SELECT seller_id FROM products WHERE id = %s', (product_id,))
+	row = cursor.fetchone()
+	seller_id = row['seller_id'] if row else None
+
 	cursor.execute(
 		"UPDATE products SET status = 'Deleted' WHERE id = %s AND status != 'Deleted'",
 		(product_id,)
@@ -178,6 +233,15 @@ def delete_product(product_id: int, db=Depends(get_db_dep)):
 	if cursor.rowcount == 0:
 		raise HTTPException(status_code=404, detail='Product not found')
 	conn.commit()
+
+	# Fan out 'listing_deleted' notifications to the seller's followers.
+	# Added to satisfy the subject requirement of notifications for "all creation,
+	# update, and deletion actions". 
+	if seller_id is not None:
+		try:
+			_fanout_listing_event(db, seller_id, product_id, 'listing_deleted')
+		except Exception as e:
+			print(f'_fanout_listing_event (deleted) failed for product {product_id}: {e}')
 
 
 # PRODUCT IMAGES

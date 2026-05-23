@@ -143,10 +143,7 @@ LOCK TABLES `order_items` WRITE;
 INSERT INTO `order_items` VALUES
 (1,1,1,1,'Product 1', 349.99,1,349.99),
 (2,1,2,1,'Product 2', 229.00,1,229.00),
-(3,2,3,2,'Product 3', 599.90,1,599.90),
-(4,3,1,1,'Product 1',77.99,1,77.99),
-(5,3,2,1,'Product 2',88.00,1,88.00),
-(6,3,3,2,'Product 3',99.90,1,99.90);
+(3,2,3,2,'Product 3', 599.90,1,599.90);
 /*!40000 ALTER TABLE `order_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -332,7 +329,8 @@ LOCK TABLES `products` WRITE;
 INSERT INTO `products` VALUES
 (1,1,'Product 1',  'slug-to-product-1',  'This is a big product.' ,77.99,'Active',NULL,0,'2026-03-22 09:10:00','2026-03-22 09:10:00'),
 (2,1,'Product 2',  'slug-to-product-2',  'This is a pink product.',88.00,'Active',NULL,0,'2026-03-22 09:11:00','2026-03-22 09:11:00'),
-(3,2,'Product 3',  'slug-to-product-3',  'This is a nice product.',99.90,'Active',NULL,0,'2026-03-22 09:12:00','2026-03-22 09:12:00');
+(3,2,'Product 3',  'slug-to-product-3',  'This is a nice product.',99.90,'Active',NULL,0,'2026-03-22 09:12:00','2026-03-22 09:12:00'),
+(4,2,'Product 4',  'slug-to-product-4',  'This is a nice product.',99.90,'Deleted',NULL,0,'2026-03-22 09:12:00','2026-03-22 09:12:00');
 /*!40000 ALTER TABLE `products` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -413,15 +411,41 @@ LOCK TABLES `notifications` WRITE;
 /*!40000 ALTER TABLE `notifications` ENABLE KEYS */;
 UNLOCK TABLES;
 
--- LOCK TABLES `users_address` WRITE;
--- /*!40000 ALTER TABLE `users_address` DISABLE KEYS */;
--- INSERT INTO `users_address` VALUES
--- (1,1,'Rua das Flores',       '12',  'Porto', 'Porto', '4000-001','PT','2026-03-22 09:00:00','2026-03-22 09:00:00'),
--- (2,2,'Avenida da Liberdade', '250', 'Lisboa','Lisboa','1250-096','PT','2026-03-22 09:01:00','2026-03-22 09:01:00'),
--- (3,3,'Rua de Santa Catarina','88',  'Porto', 'Porto', '4000-447','PT','2026-03-22 09:02:00','2026-03-22 09:02:00'),
--- (4,4,'Largo do Carmo',       '3',   'Lisboa','Lisboa','1200-092','PT','2026-03-22 09:03:00','2026-03-22 09:03:00');
--- /*!40000 ALTER TABLE `users_address` ENABLE KEYS */;
--- UNLOCK TABLES;
+--
+-- Table structure for table `notifications`
+--
+
+DROP TABLE IF EXISTS `notifications`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `notifications` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `receiver_id` bigint unsigned NOT NULL,
+  `actor_id` bigint unsigned DEFAULT NULL,
+  `type` varchar(40) NOT NULL,
+  `product_id` bigint unsigned DEFAULT NULL,
+  `payload` json DEFAULT NULL,
+  `read_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_notif_recipient_unread` (`receiver_id`,`read_at`,`created_at`),
+  KEY `idx_notif_recipient_created` (`receiver_id`,`created_at`),
+  KEY `fk_notif_actor` (`actor_id`),
+  KEY `fk_notif_product` (`product_id`),
+  CONSTRAINT `fk_notif_actor` FOREIGN KEY (`actor_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_notif_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_notif_recipient` FOREIGN KEY (`receiver_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `notifications`
+--
+
+LOCK TABLES `notifications` WRITE;
+/*!40000 ALTER TABLE `notifications` DISABLE KEYS */;
+/*!40000 ALTER TABLE `notifications` ENABLE KEYS */;
+UNLOCK TABLES;
 
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
