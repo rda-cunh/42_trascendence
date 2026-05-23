@@ -16,15 +16,21 @@ import { Chat } from "./pages/Chat";
 import { AdminDashboard } from "./pages/Admin/Dashboard";
 import { UserManagement } from "./pages/Admin/UserManagement";
 import { ListingModeration } from "./pages/Admin/ListingModeration";
+import { PrivacyPolicy } from "./pages/PrivacyPolicy";
+import { TermsOfService } from "./pages/TermsOfService";
 import { Header } from "./components/Header";
+import { Footer } from "./components/Footer";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { RoleGuard } from "./components/RoleGuard";
 
 function Layout() {
   return (
-    <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
+    <div className="flex min-h-screen flex-col bg-gray-50 transition-colors dark:bg-gray-950">
       <Header />
-      <Outlet />
+      <main className="flex-1">
+        <Outlet />
+      </main>
+      <Footer />
     </div>
   );
 }
@@ -58,6 +64,8 @@ export const router = createBrowserRouter([
       { path: "register", element: <Register /> },
       { path: "product/:id", element: <ProductDetail /> },
       { path: "seller/:sellerId", element: <SellerProfile /> },
+      { path: "privacy", element: <PrivacyPolicy /> },
+      { path: "terms", element: <TermsOfService /> },
       {
         path: "sell",
         element: (
