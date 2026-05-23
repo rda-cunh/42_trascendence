@@ -108,7 +108,7 @@ class listingIdPatch(serializers.Serializer):
     )
 
 # /api/listings
-class OrderPostSerializer(serializers.Serializer):
+class OrderCreate(serializers.Serializer):
     item_id = serializers.intergerField(min_value=1)
 
 # /api/users/{id}

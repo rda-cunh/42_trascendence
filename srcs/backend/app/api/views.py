@@ -889,13 +889,7 @@ class order_create(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return proxy_request("POST", "/orders/", request.data)
-
-    def post(self, request):
-        # this API should have JWT_STRING and list of items [id] and quantatity
-        # should also have billing address and name
-        # Stripe thingy
-        serializer = OrderPostSerializer(data=request.data)
+        serializer = serializers.orderCreate(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
             session = stripe.checkout.Session.create(
@@ -926,6 +920,24 @@ class order_create(APIView):
                 status=status.HTTP_201_CREATED,
         )
 
+    def post(self, request, session_id: str):
+        try:
+            session = stripe.checkout.Session.retrieve(session_id)
+        except stripe.error.InvalidRequestError:
+            return Response({"detail": "Unknown session."},
+                            status=status.HTTP_404_NOT_FOUND)
+        except stripe.error.StripeError:
+            return Response({"detail": "Payment provider error."},
+                            status=status.HTTP_502_BAD_GATEWAY)
+        buyer_id_in_session = (session.metadata or {}).get("buyer_id")
+        if buyer_id_in_session != str(request.user.id):
+            return Response({"detail": "Forbidden"},
+                            status=status.HTTP_403_FORBIDDEN)
+        paid = session.payment_status == "paid"
+        if not paid:
+            return Response({"detail": "Payment failed."},
+                            status=status.HTTP_403_FORBIDDEN)
+        return proxy_request("POST", "/orders/", request.data)
 
 class order_id(APIView):
     def get(self, request, id):
