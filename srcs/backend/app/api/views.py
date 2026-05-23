@@ -17,12 +17,18 @@ from . import presence as presence_store
 import requests
 import secrets
 import json
+import stripe
 
 # TODO LISTING ID PATCH
 # TODO LISTING ID DELETE
 # TODO LISTING GET
 # TODO ORDER GET, POST
 # TODO ORDER ID GET, PATCH
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
+
+def to_cents(amount) -> int:
+    return int(round(float(amount) * 100))
 
 # admin check for non-admin exclusive behaviours
 def is_admin(request):
@@ -832,16 +838,42 @@ class seller_product(APIView):
 # orders API
 
 class order_create(APIView):
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # This API should have JWT_STRING, ?page=num&status=created
-        # return a list or old orders
         return proxy_request("GET", "/orders/")
 
     def post(self, request):
         # this API should have JWT_STRING and list of items [id] and quantatity
         # should also have billing address and name
-        return proxy_request("POST", "/orders/", request.data)
+        # Stripe thingy
+        serializer = OrderPostSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            session = stripe.checkout.Session.create(
+                    mode="payment",
+                    payment_method_types=["card"],
+                    line_items=[{
+                        "price_data": {
+                            "currency": "usd",
+                            "product_data": {"name": item["name"]},
+                            "unit_amount": to_cents(item["price"]),
+                            },
+                        "quantity": 1,
+                        }],
+                    success_url=(
+                        f"{settings.FRONTEND_SUCESS_URL}"
+                        f"?session_id={{CHECKOUT_SESSION_ID}}"
+                    ),
+                    cancel_url=settings.FRONTEND_CANCEL_URL,
+                    metadata={
+                        "buyer_id": request.user.id
+                    },
+            )
+        except stripe.error.StripeError:
+            return Response({"detail": "Stripe checkout Session failed"},
+                            status=status.HTTP_502_BAD_GATEWAY)
+        return proxy_request("POST", "/orders/", serializer.validated_data)
 
 
 class order_id(APIView):
