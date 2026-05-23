@@ -905,14 +905,13 @@ class order_create(APIView):
                     "product_data": {"name": item["name"]},
                     "unit_amount": to_cents(item["price"]),
                     },
-                "quantity": 1,
+                "quantity": item["quantity"],
                 })
         try:
             session = stripe.checkout.Session.create(
                     mode="payment",
                     payment_method_types=["card"],
-                    line_items=[{
-                        }],
+                    line_items=line_items,
                     success_url=(
                         f"{settings.FRONTEND_SUCESS_URL}"
                         f"?session_id={{CHECKOUT_SESSION_ID}}"
