@@ -889,36 +889,46 @@ class order_create(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        serializer = serializers.orderCreate(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        items = request.data.get("items", [])
+        if not items:
+            return Response({"details": "Cart is empty"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        line_items = []
+        for item in items:
+            product_id = item["product_id"]
+            listing = proxy_request("GET", f"/listings/{product_id}")
+
+            line_items.append({
+                "price_data": {
+                    "currency": "usd",
+                    "product_data": {"name": item["name"]},
+                    "unit_amount": to_cents(item["price"]),
+                    },
+                "quantity": 1,
+                })
         try:
             session = stripe.checkout.Session.create(
                     mode="payment",
                     payment_method_types=["card"],
                     line_items=[{
-                        "price_data": {
-                            "currency": "usd",
-                            "product_data": {"name": item["name"]},
-                            "unit_amount": to_cents(item["price"]),
-                            },
-                        "quantity": 1,
                         }],
                     success_url=(
                         f"{settings.FRONTEND_SUCESS_URL}"
                         f"?session_id={{CHECKOUT_SESSION_ID}}"
-                    ),
+                        ),
                     cancel_url=settings.FRONTEND_CANCEL_URL,
                     metadata={
                         "buyer_id": request.user.id
-                    },
-            )
+                        },
+                    )
         except stripe.error.StripeError:
             return Response({"detail": "Stripe checkout Session failed"},
                             status=status.HTTP_502_BAD_GATEWAY)
         return Response(
                 {"checkout_url": session.url, "session_id": session.id},
                 status=status.HTTP_201_CREATED,
-        )
+                )
 
     def post(self, request, session_id: str):
         try:
