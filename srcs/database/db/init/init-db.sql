@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS orders (
   PRIMARY KEY (id),
   UNIQUE KEY uq_order_code (code),
   KEY idx_order_buyer (buyer_id),
-  CONSTRAINT fk_order_buyer FOREIGN KEY (buyer_id) REFERENCES users (id),
+  CONSTRAINT fk_order_buyer FOREIGN KEY (buyer_id) REFERENCES users (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS order_items (

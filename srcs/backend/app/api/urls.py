@@ -25,6 +25,7 @@ from .views import (
     seller_id,
     listings_image_id,
     listings_image,
+	listing_image_full,
     listings_review,
     user_list,
     public_user_list,
@@ -51,6 +52,7 @@ from .views import (
     admin_bans,
     manage_admins,
     manage_bans,
+	admin_dashboard,
     grafana_auth,
     follow_action,
     follow_following,
@@ -66,6 +68,7 @@ urlpatterns = [
         path("listings/", listing_full.as_view()),
         path("listings/seller/<int:product_id>/", seller_product.as_view()),
         path("listings/seller/<int:user_id>/", seller_id.as_view()),
+        path("listings/images/", listing_image_full.as_view()),
         path("listings/<int:product_id>/images/<int:image_id>/", listings_image_id.as_view()),
         path("listings/<int:product_id>/images/", listings_image.as_view()),
         path("listings/<int:product_id>/review/", listings_review.as_view()),
@@ -122,5 +125,6 @@ urlpatterns = [
         path("admin/bans/",                         admin_bans.as_view()),
         path("admin/manage/<int:user_id>/",         manage_admins.as_view()),
         path("admin/grafana/",                      grafana_auth.as_view()),
+        path("admin/dashboard/",                    admin_dashboard.as_view()),
 
 ]
