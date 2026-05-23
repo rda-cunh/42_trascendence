@@ -69,6 +69,15 @@ class FollowActionSerializer(serializers.Serializer):
     """POST /api/follow/  and  DELETE /api/follow/  — target user to follow or unfollow."""
     following_id = serializers.IntegerField(min_value=1)
 
+# -- NOTIFICATION SERIALIZERS --
+
+class NotificationReadSerializer(serializers.Serializer):
+    ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        min_length=1,
+        max_length=100,
+    )
+
 # -- LISTINGS SERIALIZERS --
 
 # /api/listings/{id}

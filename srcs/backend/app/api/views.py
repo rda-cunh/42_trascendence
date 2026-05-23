@@ -733,6 +733,54 @@ class follow_feed(APIView):
     def get(self, request):
         return proxy_request("GET", f"/follow/feed/{request.user.id}/")
 
+# --- NOTIFICATIONS ---
+
+class notification_list(APIView):
+    """GET list of notifications for the current user. Supports ?limit, ?offset, ?unread_only=true."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        allowed = ("limit", "offset", "unread_only")
+        params = {k: request.query_params[k]
+                  for k in allowed if k in request.query_params}
+        return proxy_request(
+            "GET",
+            f"/notifications/{request.user.id}/",
+            params=params,
+        )
+
+class notification_unread_count(APIView):
+    """GET the unread count. Backed by an index on (recipient_id, read_at)."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return proxy_request(
+            "GET",
+            f"/notifications/{request.user.id}/unread-count/",
+        )
+
+class notification_mark_read(APIView):
+    """POST {ids: [int]} — mark specific notifications as read. Data-service should ignore ids that don't belong to the current user."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = serializers.NotificationReadSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return proxy_request(
+            "POST",
+            f"/notifications/{request.user.id}/read/",
+            data={"ids": serializer.validated_data["ids"]},
+        )
+
+class notification_mark_all_read(APIView):
+    """POST no body — mark every unread notification for the current user as read."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        return proxy_request(
+            "POST",
+            f"/notifications/{request.user.id}/read-all/",
+        )
 
 # Product listings API
 
@@ -841,7 +889,7 @@ class order_create(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return proxy_request("GET", "/orders/")
+        return proxy_request("POST", "/orders/", request.data)
 
     def post(self, request):
         # this API should have JWT_STRING and list of items [id] and quantatity
@@ -873,7 +921,10 @@ class order_create(APIView):
         except stripe.error.StripeError:
             return Response({"detail": "Stripe checkout Session failed"},
                             status=status.HTTP_502_BAD_GATEWAY)
-        return proxy_request("POST", "/orders/", serializer.validated_data)
+        return Response(
+                {"checkout_url": session.url, "session_id": session.id},
+                status=status.HTTP_201_CREATED,
+        )
 
 
 class order_id(APIView):

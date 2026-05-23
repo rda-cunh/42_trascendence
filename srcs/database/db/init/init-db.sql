@@ -174,5 +174,5 @@ CREATE TABLE IF NOT EXISTS notifications (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO users (name, email, password_hash, role, status, created_at, updated_at)
-SELECT 'System Administrator', 'admin@admin.com', SHA2('12345678', 256), 'Admin', 'Active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+SELECT 'System Administrator', 'admin@admin.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225', 'Admin', 'Active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 WHERE NOT EXISTS ( SELECT 1 FROM users WHERE email = 'admin@admin.com');
