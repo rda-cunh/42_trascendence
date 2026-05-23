@@ -89,7 +89,6 @@ const DEFAULT_BILLING = {
   postalCode: "",
   country: "US",
 };
-import { useAuth } from "../contexts/AuthContext";
 
 export function Checkout() {
   const { items, removeItem, total, clear } = useCart();
@@ -235,8 +234,6 @@ export function Checkout() {
     return true;
   };
 
-  const { user } = useAuth();
-
   const handlePlaceOrder = async () => {
     if (items.length === 0) {
       toast.error("Your cart is empty");
@@ -271,11 +268,8 @@ export function Checkout() {
 
       await api.createOrder({
         user_id: buyerId,
-        user_id: Number(user.id),
         items: items.map((i: (typeof items)[number]) => ({
           product_id: Number(i.listing.id),
-          product_id: i.listing.id,
-          qty: i.quantity,
           qty: i.quantity,
         })),
         payment_provider: "stripe",
