@@ -17,15 +17,21 @@ import { Chat } from "./pages/Chat";
 import { AdminDashboard } from "./pages/Admin/Dashboard";
 import { UserManagement } from "./pages/Admin/UserManagement";
 import { ListingModeration } from "./pages/Admin/ListingModeration";
+import { PrivacyPolicy } from "./pages/PrivacyPolicy";
+import { TermsOfService } from "./pages/TermsOfService";
 import { Header } from "./components/Header";
+import { Footer } from "./components/Footer";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { RoleGuard } from "./components/RoleGuard";
 
 function Layout() {
   return (
-    <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
+    <div className="flex min-h-screen flex-col bg-gray-50 transition-colors dark:bg-gray-950">
       <Header />
-      <Outlet />
+      <main className="flex-1">
+        <Outlet />
+      </main>
+      <Footer />
     </div>
   );
 }
@@ -74,6 +80,94 @@ export const router = createBrowserRouter([
       { path: "admin", element: withAdminAccess(<AdminDashboard />) },
       { path: "admin/users", element: withAdminAccess(<UserManagement />) },
       { path: "admin/listings", element: withAdminAccess(<ListingModeration />) },
+      { path: "privacy", element: <PrivacyPolicy /> },
+      { path: "terms", element: <TermsOfService /> },
+      {
+        path: "sell",
+        element: (
+          <ProtectedRoute>
+            <SellItem />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "listing/:id/edit",
+        element: (
+          <ProtectedRoute>
+            <EditListing />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "checkout",
+        element: (
+          <ProtectedRoute>
+            <Checkout />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "profile",
+        element: (
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "orders",
+        element: (
+          <ProtectedRoute>
+            <Orders />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "orders/:id",
+        element: (
+          <ProtectedRoute>
+            <OrderDetail />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "chat",
+        element: (
+          <ProtectedRoute>
+            <Chat />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "admin",
+        element: (
+          <ProtectedRoute>
+            <RoleGuard role="admin">
+              <AdminDashboard />
+            </RoleGuard>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "admin/users",
+        element: (
+          <ProtectedRoute>
+            <RoleGuard role="admin">
+              <UserManagement />
+            </RoleGuard>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "admin/listings",
+        element: (
+          <ProtectedRoute>
+            <RoleGuard role="admin">
+              <ListingModeration />
+            </RoleGuard>
+          </ProtectedRoute>
+        ),
+      },
       { path: "*", element: <NotFound /> },
     ],
   },

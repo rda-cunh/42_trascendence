@@ -10,19 +10,19 @@ These tables summarize the current module strategy for the project based on prog
 | [**User Major 1 – Standard user management and authentication**](#user-major-1--standard-user-management-and-authentication) | 2 | Features missing | **Raphael** + Ricardo + Erick | TO DO: upload avatar; add user as friends and online status; profile page **Keep.** |
 | [**User Major 2 – Advanced permission system**](#user-major-2--advanced-permission-system) | 2 | Features Missing | **Raphael** + Leonardo Maes | TO DO: view, edit and delete users; diffent views based on role. **Keep.** |
 | [**Web Minor 9 – Advanced search**](#web-minor-9--advanced-search) | 1 | Frontend Missing | **Leonardo** + Rapahel + Erik | Cheap point because much of the backend work exists already. **Keep.** |
-| [**User Minor 2 – Remote authentication with OAuth 2.0**](#user-minor-2--remote-authentication-with-oauth-20) | 1 | **Completed** | **Ricardo** + Erick | Implemented and working. **Keep.** |
-| [**Web Major 3 – User interaction (chat, profiles, friends)**](#web-major-3--user-interaction-chat-profiles-friends) | 2 | Features missing | **Ricardo** + Erick | TO DO: profile system, friend system. **Keep.** |
+| [**User Minor 2 – Remote authentication with OAuth 2.0**](#user-minor-2--remote-authentication-with-oauth-20) | 1 | **Completed** | ***Keep** |Ricardo** + Erick | Implemented and working. **Keep.** |
+| [**Web Major 3 – User interaction (chat, profiles, friends)**](#web-major-3--user-interaction-chat-profiles-friends) | 2 | **Completed** | **Ricardo** + Erick + Leonardo Maes | Implemented. **Keep.** |
 | [**Web Major 2 – Real-time features**](#web-major-2--real-time-features) | 2 | **Completed** | **Ricardo** | Chat answer all requirements but other features can be added. **Keep** |
-| [**DevOps Monitoring module – Prometheus + Grafana**](#devops-monitoring-module--prometheus--grafana) | 2 | **Completed** | **Leonardo Vichi** | Already in place. Need to check with Leo all requirements are met. **Keep.** |
-| **Total** | **14** |  |  |  |
+| [**DevOps Monitoring module – Prometheus + Grafana**](#devops-monitoring-module--prometheus--grafana) | 2 | **Completed** | **Leonardo Vichi** | Already in place. Need to check with Leo all requirements are met. ***Keep.**
+| [**Web Minor 4 – Notification system**](#web-minor-4--notification-system) | 1 | **Completed** | **Ricardo** | Implemented but without real time (not requested in subject). ***Keep.** |
+| **Total** | **15** |  |  |  |
 
 ## Best choices to add
 
 | Module | Points | Current status | Module lead (person names) | Notes / Decisions |
 |---|---:|---|---|---|
 | [**Web Major 4 – Public API**](#web-major-4--public-api) | 2 | Endpoints already prepared to support it | [TBD: Raphael + Leonardo Vichi] | Good marketplace fit and easier to justify than microservices. **High priority add.** |
-| [**Web Minor 4 – Notification system**](#web-minor-4--notification-system) | 1 | Not started | [TBD: Raphael + Ricardo] | Useful for a marketplace, but best as a backup if easy to derive from backend events. **Backup candidate.** |
-| **Total if all chosen** | **8–9** |  |  |  |
+| **Total if all chosen** | **2** |  |  |  |
 
 ## Drop for now
 
