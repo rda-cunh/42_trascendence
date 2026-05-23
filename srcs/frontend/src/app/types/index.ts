@@ -127,14 +127,38 @@ export interface ApiError {
 }
 
 // ==================== Notification Types ====================
+// Mirrors the data-service's NotificationListResponse (models/notification.py).
+export type NotificationType = "new_listing" | "listing_updated" | "listing_deleted";
+
+export interface NotificationPayload {
+  product_name?: string;
+  product_slug?: string;
+  product_price?: string;
+  // extend with extra keys as new notification types appear
+}
+
 export interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  time: string;
-  read: boolean;
-  type: "info" | "success" | "warning" | "error";
-  link?: string;
+  id: number;
+  type: NotificationType | string; // string fallback so unknown future types still parse
+  read_at: string | null;
+  created_at: string;
+  payload: NotificationPayload | null;
+  actor_id: number | null;
+  actor_name: string | null;
+  actor_avatar: string | null;
+  product_id: number | null;
+  product_name: string | null;
+  product_slug: string | null;
+  product_price: string | null;
+  product_cover: string | null;
+}
+
+export interface NotificationUnreadCountResponse {
+  num: number;
+}
+
+export interface NotificationMarkReadResponse {
+  marked: number;
 }
 
 // ==================== Form Types ====================

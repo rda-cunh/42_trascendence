@@ -13,6 +13,41 @@ from http.cookies import SimpleCookie
 _CA_BUNDLE = os.environ.get("REQUESTS_CA_BUNDLE") or os.environ.get("SSL_CERT_FILE")
 _HTTPX_VERIFY = _CA_BUNDLE if _CA_BUNDLE else True
 
+
+# ---- WebSocket auth helpers (shared by all consumers) ---------------------
+# WebSockets cannot set arbitrary headers from the browser, so SimpleJWT's does not run.
+# Each consumer must extract and validate the JWT using a cookie or query string ?token= as a fallback
+# for clients that cannot rely on cookies.
+
+def extract_token_from_cookie(scope):
+    headers = dict(scope.get("headers", []))
+    raw_cookie = headers.get(b"cookie")
+    if not raw_cookie:
+        return None
+    try:
+        cookie = SimpleCookie()
+        cookie.load(raw_cookie.decode("utf-8"))
+        access_cookie = cookie.get("access_token")
+        return access_cookie.value if access_cookie else None
+    except Exception:
+        return None
+
+def extract_token_from_query_string(scope):
+    raw_query_string = scope.get("query_string", b"").decode("utf-8")
+    parsed = parse_qs(raw_query_string)
+    token_list = parsed.get("token", [])
+    return token_list[0] if token_list else None
+
+def extract_access_token(scope):
+    return extract_token_from_cookie(scope) or extract_token_from_query_string(scope)
+
+def validate_jwt_and_get_user_id(token):
+    try:
+        access_token = AccessToken(token)
+        return int(access_token["user_id"])
+    except (TokenError, KeyError, ValueError):
+        return None
+
 async def proxy_chat_request_async(method, endpoint, data=None, params=None):
     """ helper function to proxy requests from the ChatConsumer to the data-service for chat """
 
@@ -39,13 +74,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.conversation_id = self.scope["url_route"]["kwargs"]["conversation_id"]
         self.group_name = f"chat_{self.conversation_id}"
 
-        token = self._extract_access_token()
+        token = extract_access_token(self.scope)
         if not token:
             await self.close(code=4001)
             return
 
         # get user id
-        user_id = self._validate_jwt_and_get_user_id(token)
+        user_id = validate_jwt_and_get_user_id(token)
         if not user_id:
             await self.close(code=4001)
             return
@@ -131,46 +166,60 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "message": event["message"],
         }))
 
-    def _extract_access_token(self):
-        """
-        Preferred auth source is the HttpOnly access_token cookie.
-        Keep query-string fallback temporarily so existing clients do not break
-        during migration.
-        """
-        return self._extract_token_from_cookie() or self._extract_token_from_query_string()
-
-    def _extract_token_from_cookie(self):
-        headers = dict(self.scope.get("headers", []))
-        raw_cookie = headers.get(b"cookie")
-        if not raw_cookie:
-            return None
-
-        try:
-            cookie = SimpleCookie()
-            cookie.load(raw_cookie.decode("utf-8"))
-            access_cookie = cookie.get("access_token")
-            return access_cookie.value if access_cookie else None
-        except Exception:
-            return None
-
-    def _extract_token_from_query_string(self):
-        """ channels showd the query string in scope['query_string'] as bytes and is decoded and parsed like a normal URL query string """
-        raw_query_string = self.scope.get("query_string", b"").decode("utf-8")
-        parsed = parse_qs(raw_query_string)
-        token_list = parsed.get("token", [])
-        return token_list[0] if token_list else None
-
-    def _validate_jwt_and_get_user_id(self, token):
-        """ validate JWT and return Django-shadow user id """
-        try:
-            access_token = AccessToken(token)   # accessToken decodes token, validates signature and expiration, and makes the payload available
-            return int(access_token["user_id"])
-        except (TokenError, KeyError, ValueError):
-            return None
-
     async def _user_can_access_conversation(self, conversation_id, user_id):
         """ asking the data-service if user belongs to conversation - only buyer or seller """
         status_code, conversation = await proxy_chat_request_async("GET", f"/chat/conversations/by-id/{conversation_id}/")
         if status_code != 200:
             return False
         return user_id in {conversation.get("buyer_id"), conversation.get("seller_id")}
+
+
+class NotificationConsumer(AsyncWebsocketConsumer):
+    """
+    Per-user notification stream.
+
+    Lifecycle:
+      - connect: authenticate via the access_token cookie (or ?token=), join group "user_{user_id}".
+      - disconnect: leave the group.
+      - receive: not implemented — server pushes only.
+
+    Live pushes are triggered by group_send from /api/internal/notify/, which 
+    is called by the data-service after the fanout INSERT. Events have the
+    shape {"type": "notification.new", "data": {...}}; Channels dispatches
+    "notification.new" to self.notification_new below.
+    """
+
+    async def connect(self):
+        token = extract_access_token(self.scope)
+        if not token:
+            await self.close(code=4001)
+            return
+
+        user_id = validate_jwt_and_get_user_id(token)
+        if not user_id:
+            await self.close(code=4001)
+            return
+
+        self.user_id = user_id
+        self.group_name = f"user_{self.user_id}"
+
+        # group_add MUST happen before accept(): otherwise a push from another
+        # worker between accept() and group_add() would silently miss this socket.
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, _close_code):
+        # hasattr guard covers the case where we rejected in connect() before
+        # assigning self.group_name (otherwise this raises AttributeError).
+        if hasattr(self, "group_name"):
+            await self.channel_layer.group_discard(self.group_name, self.channel_name)
+
+    async def notification_new(self, event):
+        """
+        Handler for group_send({"type": "notification.new", "data": {...}}).
+        Channels translates the dotted type into this method name.
+        """
+        await self.send(text_data=json.dumps({
+            "type": "notification.new",
+            "data": event["data"],
+        }))
