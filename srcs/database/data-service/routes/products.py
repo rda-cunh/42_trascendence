@@ -3,8 +3,40 @@ from database import get_db_dep
 from models.product import *
 from models.notification import FanoutRequest
 from routes.notifications import fanout_new_listing, _fanout_listing_event
+import re
+import unicodedata
 
 router = APIRouter(prefix='/api/listings', tags=['Products'])
+
+def generate_slug(name: str) -> str:
+	name = name.lower().strip()
+
+	name = unicodedata.normalize('NFKD', name)
+	name = name.encode('ascii', 'ignore').decode('ascii')
+
+	name = re.sub(r'[^a-z0-9\s-]', '', name)
+
+	name = re.sub(r'[\s_-]+', '-', name)
+
+	name = name.strip('-')
+
+	return name
+
+def unique_slug(cursor, base_slug):
+	slug = base_slug
+	counter = 1
+
+	while True:
+		cursor.execute(
+			'SELECT id FROM products WHERE slug = %s',
+			(slug,)
+		)
+
+		if not cursor.fetchone():
+			return slug
+
+		slug = f'{base_slug}-{counter}'
+		counter += 1
 
 # TO DO IMPROVE
 # Retornar aqui uma flag bool, se é owner ou não
@@ -16,7 +48,7 @@ def GetProductInfo(db, product_id:	int):
 		(product_id,)
 	)
 	product = cursor.fetchone()
-	if not product:
+	if not product or product['status'] == 'Deleted':
 		raise HTTPException(status_code=404, detail='Product not found')
 	
 	cursor.execute(
@@ -62,20 +94,18 @@ def _recalc_listing_rating(cursor, product_id: int) -> None:
 def	create_product(product_in: ProductCreate, db=Depends(get_db_dep)):
 	conn, cursor = db
 
-	cursor.execute('SELECT id FROM products WHERE slug = %s', (product_in.slug,))
-	if cursor.fetchone():
-		raise HTTPException(status_code=409, detail='Slug already in use')
+	slug = unique_slug(cursor, generate_slug(product_in.name))
 	
 	cursor.execute(
 		'''
 		INSERT INTO products (seller_id, name, slug, description, price)
 		VALUES (%s, %s, %s, %s, %s)
 		''',
-		(product_in.user_id, product_in.name, product_in.slug, product_in.description, product_in.price)
+		(product_in.user_id, product_in.name, slug, product_in.description, product_in.price)
 	)
 	new_id = conn.insert_id()
 
-	if product_in.images:
+	if product_in.images:/
 		values = [(new_id, img, idx) for idx, img in enumerate(product_in.images)]
 		cursor.executemany('''INSERT INTO product_images (product_id, image_hash, display_order) VALUES (%s, %s, %s)''', values)
 	conn.commit()
@@ -177,7 +207,7 @@ def update_products(product_id: int, product_in: ProductUpdate, db=Depends(get_d
 	try:
 		product_row = GetProductInfo(db, product_id)
 		_fanout_listing_event(db, product_row['seller_id'], product_id, 'listing_updated')
-	except Exception as e:
+	except Exception as e:/
 		print(f'_fanout_listing_event (updated) failed for product {product_id}: {e}')
 
 	product = GetProductInfo(db, product_id)

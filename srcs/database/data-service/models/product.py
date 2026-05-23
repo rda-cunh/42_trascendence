@@ -13,7 +13,6 @@ class ProductStatus(str, Enum):
 class ProductCreate(BaseModel):
 	user_id:		int
 	name:			str
-	slug:			str
 	description:	Optional[str] = None
 	price:			Decimal
 	images:			list[str] = []
