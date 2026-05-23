@@ -121,12 +121,12 @@ urlpatterns = [
         # public paths
         path("public/listings/<int:product_id>/",   public_listing_id.as_view()),
         path("public/listings/",                    public_listing_full.as_view()),
-        path("public/users/",                       public_user_list.as_view()),
-        path("public/users/<int:user_id>/",         public_user_id.as_view()),
+        path("public/users/", public_user_list.as_view()),
+    path("public/users/<int:user_id>/", public_user_id.as_view()),
 
-        # admin paths
-        path("admin/users/<int:user_id>/",          manage_users.as_view()),
-        path("admin/users/",                        admin_users.as_view()),
+    # admin paths
+    path("admin/users/<int:user_id>/", manage_users.as_view()),
+    path("admin/users/", admin_users.as_view()),
         path("admin/bans/<int:user_id>/",           manage_bans.as_view()),
         path("admin/bans/",                         admin_bans.as_view()),
         path("admin/manage/<int:user_id>/",         manage_admins.as_view()),

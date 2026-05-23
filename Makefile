@@ -174,6 +174,7 @@ clean: stop
 
 fclean: stop
 	@$(EXEC) "$(PRE_CMD) set -a; . .env; set +a; docker compose --env-file .env -f $(COMPOSE_FILE) down -v --rmi all --remove-orphans"
+	@$(EXEC) "docker builder prune -af"
 
 purge: fclean uninstall-docker remove-files ssh-wipe
 

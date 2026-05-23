@@ -105,7 +105,7 @@ def	create_product(product_in: ProductCreate, db=Depends(get_db_dep)):
 	)
 	new_id = conn.insert_id()
 
-	if product_in.images:/
+	if product_in.images:
 		values = [(new_id, img, idx) for idx, img in enumerate(product_in.images)]
 		cursor.executemany('''INSERT INTO product_images (product_id, image_hash, display_order) VALUES (%s, %s, %s)''', values)
 	conn.commit()
@@ -207,7 +207,7 @@ def update_products(product_id: int, product_in: ProductUpdate, db=Depends(get_d
 	try:
 		product_row = GetProductInfo(db, product_id)
 		_fanout_listing_event(db, product_row['seller_id'], product_id, 'listing_updated')
-	except Exception as e:/
+	except Exception as e:
 		print(f'_fanout_listing_event (updated) failed for product {product_id}: {e}')
 
 	product = GetProductInfo(db, product_id)
