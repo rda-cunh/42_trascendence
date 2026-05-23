@@ -1,8 +1,40 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from database import get_db_dep
 from models.product import *
+import re
+import unicodedata
 
 router = APIRouter(prefix='/api/listings', tags=['Products'])
+
+def generate_slug(name: str) -> str:
+	name = name.lower().strip()
+
+	name = unicodedata.normalize('NFKD', name)
+	name = name.encode('ascii', 'ignore').decode('ascii')
+
+	name = re.sub(r'[^a-z0-9\s-]', '', name)
+
+	name = re.sub(r'[\s_-]+', '-', name)
+
+	name = name.strip('-')
+
+	return name
+
+def unique_slug(cursor, base_slug):
+	slug = base_slug
+	counter = 1
+
+	while True:
+		cursor.execute(
+			'SELECT id FROM products WHERE slug = %s',
+			(slug,)
+		)
+
+		if not cursor.fetchone():
+			return slug
+
+		slug = f'{base_slug}-{counter}'
+		counter += 1
 
 # TO DO IMPROVE
 # Retornar aqui uma flag bool, se é owner ou não
@@ -14,7 +46,7 @@ def GetProductInfo(db, product_id:	int):
 		(product_id,)
 	)
 	product = cursor.fetchone()
-	if not product:
+	if not product or product['status'] == 'Deleted':
 		raise HTTPException(status_code=404, detail='Product not found')
 	
 	cursor.execute(
@@ -60,16 +92,14 @@ def _recalc_listing_rating(cursor, product_id: int) -> None:
 def	create_product(product_in: ProductCreate, db=Depends(get_db_dep)):
 	conn, cursor = db
 
-	cursor.execute('SELECT id FROM products WHERE slug = %s', (product_in.slug,))
-	if cursor.fetchone():
-		raise HTTPException(status_code=409, detail='Slug already in use')
+	slug = unique_slug(cursor, generate_slug(product_in.name))
 	
 	cursor.execute(
 		'''
 		INSERT INTO products (seller_id, name, slug, description, price)
 		VALUES (%s, %s, %s, %s, %s)
 		''',
-		(product_in.user_id, product_in.name, product_in.slug, product_in.description, product_in.price)
+		(product_in.user_id, product_in.name, slug, product_in.description, product_in.price)
 	)
 	new_id = conn.insert_id()
 

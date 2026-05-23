@@ -328,7 +328,8 @@ LOCK TABLES `products` WRITE;
 INSERT INTO `products` VALUES
 (1,1,'Product 1',  'slug-to-product-1',  'This is a big product.' ,77.99,'Active',NULL,0,'2026-03-22 09:10:00','2026-03-22 09:10:00'),
 (2,1,'Product 2',  'slug-to-product-2',  'This is a pink product.',88.00,'Active',NULL,0,'2026-03-22 09:11:00','2026-03-22 09:11:00'),
-(3,2,'Product 3',  'slug-to-product-3',  'This is a nice product.',99.90,'Active',NULL,0,'2026-03-22 09:12:00','2026-03-22 09:12:00');
+(3,2,'Product 3',  'slug-to-product-3',  'This is a nice product.',99.90,'Active',NULL,0,'2026-03-22 09:12:00','2026-03-22 09:12:00'),
+(4,2,'Product 4',  'slug-to-product-4',  'This is a nice product.',99.90,'Deleted',NULL,0,'2026-03-22 09:12:00','2026-03-22 09:12:00');
 /*!40000 ALTER TABLE `products` ENABLE KEYS */;
 UNLOCK TABLES;
 
