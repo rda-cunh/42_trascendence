@@ -14,7 +14,7 @@ def GetProductInfo(db, product_id:	int):
 		(product_id,)
 	)
 	product = cursor.fetchone()
-	if not product:
+	if not product or product['status'] == 'Deleted':
 		raise HTTPException(status_code=404, detail='Product not found')
 	
 	cursor.execute(
