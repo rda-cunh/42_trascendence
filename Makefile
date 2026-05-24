@@ -1,13 +1,19 @@
 # =====================================================================================================
-# TRANSCENDENCE DEPLOYMENT TOOL
+# 										DEPLOYMENT TOOL
 # =====================================================================================================
 # USAGE:
 #   make              - Full deployment (Setup deps -> Sync files -> Run)
 #   make dev          - Full deployment and immediately attach to logs
+#   make restart      - Restart the containers
+#   make restart dev  - Restart the containers and attach to logs
 #   make stop         - Stop the containers
 #   make status       - Check Docker stats on the target (Local or Remote)
 #   make logs         - Attach to logs without redeploying (Specify SERVICE=service_name to filter)
-#   make re           - Rebuild and redeploy (Same as fclean + all)
+#                         e.g. 'make logs SERVICE=web' to view only the 'web' service logs
+#   make clean        - Stop and remove containers, networks, and volumes (Keep images)
+#   make fclean       - Stop and remove containers, networks, volumes, images and builder cache
+#   make re           - Rebuild and redeploy (Same as clean + all)
+#   make fre          - Force rebuild and redeploy (Same as fclean + all)
 #   make setup-docker - Install Docker on the target machine (Requires root)
 #   make ssh-setup    - Setup SSH keys for remote server access using ssh-copy-id
 #                         (Requires root password and 'PermitRootLogin yes' on target)
@@ -15,13 +21,26 @@
 #   make purge        - Dangerous: Removes Docker, files, and SSH keys on target
 # =====================================================================================================
 
+
+# =====================================================================================================
+# 									   ENVIRONMENT SETUP
+# =====================================================================================================
+#
+# PROJECT_NAME: Name of the project
+# COMPOSE_FILE: Path to the docker-compose file (Default: srcs/docker-compose.yaml)
+# SERVER: Target server for deployment (Default: local)
+# PROJECT_MAKEFILE: Optional project-specific Makefile that can override or extend base targets
+# =====================================================================================================
+
+
 include .env
 
-PROJECT_MAKEFILE := srcs/project.mk
 COMPOSE_FILE ?= srcs/docker-compose.yaml
 PROJECT_NAME ?= server
-SSL_PROVIDED = $(if $(SSL_CERT),ssl,)
+SERVER ?=
+PROJECT_MAKEFILE ?= srcs/project.mk
 LOAD_ENV = set -a; . .env; set +a;
+.DEFAULT_GOAL := all
 
 ifeq ($(strip $(SERVER)),)
     EXEC = bash -c
@@ -34,15 +53,14 @@ else
     PRE_CMD = cd /tmp/$(PROJECT_NAME) &&
 endif
 
-ifneq ($(wildcard $(PROJECT_MAKEFILE)),)
-    include $(PROJECT_MAKEFILE)
-endif
-
-.DEFAULT_GOAL := all
 
 all: run
 
 dev: all logs
+
+restart: stop run
+
+restart dev: restart logs
 
 re: clean all
 
@@ -111,14 +129,14 @@ remove-files:
   		$(EXEC) "rm -rf /tmp/$(PROJECT_NAME)"; \
 	fi
 
-run: check-docker ssh-check sync-files
+run: ssh-check check-docker sync-files
 	@$(EXEC) "$(PRE_CMD) $(LOAD_ENV) docker compose --env-file .env -f $(COMPOSE_FILE) up -d"
 
 logs: check-docker
 	@$(EXEC) "$(PRE_CMD) $(LOAD_ENV) docker compose --env-file .env -f $(COMPOSE_FILE) logs -f $(SERVICE) || true"
 
 status: check-docker
-	@$(EXEC) "$(PRE_CMD) $(LOAD_ENV)\
+	@$(EXEC) "$(PRE_CMD) $(LOAD_ENV) \
 		printf '\n=== CONTAINERS ===\n' && docker compose --env-file .env -f $(COMPOSE_FILE) ps -a; \
 		printf '\n=== IMAGES ===\n' && docker images 2>/dev/null || true; \
 		printf '\n=== VOLUMES ===\n' && docker volume ls 2>/dev/null || true; \
@@ -152,3 +170,7 @@ fclean: stop
 purge: fclean uninstall-docker remove-files ssh-wipe
 
 .PHONY: all re fre check-root check-docker ssh-check ssh-setup setup-docker sync-files remove-files run logs status stop uninstall-docker ssh-wipe fclean purge
+
+ifneq ($(wildcard $(PROJECT_MAKEFILE)),)
+    include $(PROJECT_MAKEFILE)
+endif
