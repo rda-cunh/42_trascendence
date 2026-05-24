@@ -62,6 +62,7 @@ from .views import (
     follow_followers,
     follow_counts,
     follow_feed,
+    create_checkout,
 )
 
 urlpatterns = [
@@ -113,6 +114,7 @@ urlpatterns = [
         path("orders/<int:order_id>/",              order_id.as_view()),
         path("orders/",                             order_create.as_view()),
         path("payment/<int:order_id>/",             payment_id.as_view()),
+        path("orders/create-checkout/",             create_checkout.as_view()),
 
         # user paths
         path("users/",                              user_list.as_view()),

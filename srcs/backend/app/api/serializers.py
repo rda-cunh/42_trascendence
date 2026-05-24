@@ -109,5 +109,4 @@ class listingIdPatch(serializers.Serializer):
 
 # /api/listings
 
-
 # /api/users/{id}

@@ -23,3 +23,7 @@ class DashboardInfo(BaseModel):
 	orders_trend:		list[int]
 	revenue_overview:	list[int]
 	months:				list[str]
+
+class AdminUserInfo(UserInfo):
+	role:		str
+	status:		str
