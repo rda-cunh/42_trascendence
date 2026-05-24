@@ -1,57 +1,26 @@
-/* eslint-disable react-refresh/only-export-components */
 import type { ReactNode } from "react";
-import { createBrowserRouter, Link, Outlet } from "react-router";
-import { Home } from "./pages/Home";
-import { ProductDetail } from "./pages/ProductDetail";
-import { SellerProfile } from "./pages/SellerProfile";
-import { SellItem } from "./pages/SellItem";
-import { Login } from "./pages/Login";
-import { Register } from "./pages/Register";
-import { OAuthCallback } from "./pages/OAuthCallback";
-import { Profile } from "./pages/Profile";
-import { Orders } from "./pages/Orders";
-import { OrderDetail } from "./pages/OrderDetail";
-import { Checkout } from "./pages/Checkout";
-import { EditListing } from "./pages/EditListing";
-import { Chat } from "./pages/Chat";
-import { AdminDashboard } from "./pages/Admin/Dashboard";
-import { UserManagement } from "./pages/Admin/UserManagement";
-import { ListingModeration } from "./pages/Admin/ListingModeration";
-import { PrivacyPolicy } from "./pages/PrivacyPolicy";
-import { TermsOfService } from "./pages/TermsOfService";
-import { Header } from "./components/Header";
-import { Footer } from "./components/Footer";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-import { RoleGuard } from "./components/RoleGuard";
-
-function Layout() {
-  return (
-    <div className="flex min-h-screen flex-col bg-gray-50 transition-colors dark:bg-gray-950">
-      <Header />
-      <main className="flex-1 app-container py-6">
-        <Outlet />
-      </main>
-      <Footer />
-    </div>
-  );
-}
-
-function NotFound() {
-  return (
-    <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="text-center">
-        <h1 className="mb-4 text-6xl font-bold text-gray-900 dark:text-white">404</h1>
-        <p className="mb-6 text-gray-600 dark:text-gray-400">Page not found</p>
-        <Link
-          to="/"
-          className="rounded-lg bg-purple-600 px-6 py-3 text-white transition-colors hover:bg-purple-700"
-        >
-          Go Home
-        </Link>
-      </div>
-    </div>
-  );
-}
+import { createBrowserRouter } from "react-router";
+import { ProtectedRoute } from "@/app/core/components/ProtectedRoute";
+import { RoleGuard } from "@/app/core/components/RoleGuard";
+import { AdminDashboard } from "@/app/features/admin/pages/Dashboard";
+import { ListingModeration } from "@/app/features/admin/pages/ListingModeration";
+import { UserManagement } from "@/app/features/admin/pages/UserManagement";
+import { Login } from "@/app/features/auth/pages/Login";
+import { OAuthCallback } from "@/app/features/auth/pages/OAuthCallback";
+import { Register } from "@/app/features/auth/pages/Register";
+import { Chat } from "@/app/features/chat/pages/Chat";
+import { Checkout } from "@/app/features/checkout/pages/Checkout";
+import { EditListing } from "@/app/features/listings/pages/EditListing";
+import { SellItem } from "@/app/features/listings/pages/SellItem";
+import { Home } from "@/app/features/products/pages/Home";
+import { ProductDetail } from "@/app/features/products/pages/ProductDetail";
+import { SellerProfile } from "@/app/features/products/pages/SellerProfile";
+import { OrderDetail } from "@/app/features/profile/pages/OrderDetail";
+import { Orders } from "@/app/features/profile/pages/Orders";
+import { Profile } from "@/app/features/profile/pages/Profile";
+import { Layout, NotFound } from "@/app/shared/layout/Layout";
+import { PrivacyPolicy } from "@/app/shared/pages/PrivacyPolicy";
+import { TermsOfService } from "@/app/shared/pages/TermsOfService";
 
 const withAuth = (element: ReactNode) => <ProtectedRoute>{element}</ProtectedRoute>;
 
@@ -82,92 +51,6 @@ export const router = createBrowserRouter([
       { path: "admin/listings", element: withAdminAccess(<ListingModeration />) },
       { path: "privacy", element: <PrivacyPolicy /> },
       { path: "terms", element: <TermsOfService /> },
-      {
-        path: "sell",
-        element: (
-          <ProtectedRoute>
-            <SellItem />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "listing/:id/edit",
-        element: (
-          <ProtectedRoute>
-            <EditListing />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "checkout",
-        element: (
-          <ProtectedRoute>
-            <Checkout />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "profile",
-        element: (
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "orders",
-        element: (
-          <ProtectedRoute>
-            <Orders />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "orders/:id",
-        element: (
-          <ProtectedRoute>
-            <OrderDetail />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "chat",
-        element: (
-          <ProtectedRoute>
-            <Chat />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "admin",
-        element: (
-          <ProtectedRoute>
-            <RoleGuard role="admin">
-              <AdminDashboard />
-            </RoleGuard>
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "admin/users",
-        element: (
-          <ProtectedRoute>
-            <RoleGuard role="admin">
-              <UserManagement />
-            </RoleGuard>
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "admin/listings",
-        element: (
-          <ProtectedRoute>
-            <RoleGuard role="admin">
-              <ListingModeration />
-            </RoleGuard>
-          </ProtectedRoute>
-        ),
-      },
       { path: "*", element: <NotFound /> },
     ],
   },
