@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ProductCard } from "../components/ProductCard";
-import { api, mapListing } from "../lib/api";
+import { api, isDeletedListing, mapListing } from "../lib/api";
 import { Search, SlidersHorizontal, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Listing } from "../types";
+import { PRODUCT_CATEGORIES } from "../utils/constants";
+import { useAsyncEffect } from "../hooks/useAsyncEffect";
 
 export function Home() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -11,43 +13,24 @@ export function Home() {
   const [maxPrice, setMaxPrice] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [listings, setListings] = useState<Listing[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const perPage = 12;
 
-  const categories = [
-    "All",
-    "3D Models",
-    "2D Assets",
-    "Shaders",
-    "Textures",
-    "VFX",
-    "Audio",
-    "UI/UX",
-  ];
+  const categories = PRODUCT_CATEGORIES;
 
-  useEffect(() => {
-    const fetchListings = async () => {
-      try {
-        const data = await api.getListings();
+  const isLoading = useAsyncEffect(async ({ isCancelled }) => {
+    const data = await api.getListings({ status: "Active" });
 
-        // Handle both direct array response and paginated response
-        const results = Array.isArray(data) ? data : data?.results || [];
+    // Handle both direct array response and paginated response
+    const results = Array.isArray(data) ? data : data?.results || [];
 
-        if (results.length > 0) {
-          const apiListings: Listing[] = results.map(mapListing);
-          setListings(apiListings);
-        }
-      } catch (err) {
-        console.error("Failed to load listings:", err);
-        // Show empty state
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    if (isCancelled()) return;
 
-    fetchListings();
+    const apiListings: Listing[] = results
+      .filter((item: unknown) => !isDeletedListing(item))
+      .map(mapListing);
+    setListings(apiListings);
   }, []);
 
   const filtered = listings

@@ -8,7 +8,7 @@ export interface User {
   phone?: string;
   avatar_url?: string;
   role?: "user" | "seller" | "admin";
-  status?: "active" | "suspended" | "banned";
+  status?: "active" | "suspended" | "banned" | "deactivated";
   created_at?: string;
 }
 
@@ -34,6 +34,7 @@ export interface Product {
   location: string;
   seller: string;
   seller_id?: string;
+  status?: string;
   image: string;
   images?: string[];
   postedDate: string;
@@ -42,6 +43,7 @@ export interface Product {
   tags?: string[];
   downloads?: number;
   rating?: number;
+  review_count?: number;
   shader?: ShaderMetadata;
 }
 
@@ -88,15 +90,16 @@ export type OrderStatus = "pending" | "processing" | "shipped" | "completed" | "
 // ==================== Review Types ====================
 export interface Review {
   id: string;
-  product_id?: string;
-  user_id?: string;
-  user?: string; // username/name for display
-  user_name?: string;
+  product_id: string;
+  reviewer_id: string;
   rating: 1 | 2 | 3 | 4 | 5;
-  text?: string;
-  comment?: string;
-  date?: string;
-  created_at?: string;
+  title?: string | null;
+  body?: string | null;
+  status?: string;
+  created_at: string;
+  updated_at?: string;
+  reviewer_name: string;
+  reviewer_avatar?: string | null;
 }
 
 // ==================== Cart Types ====================

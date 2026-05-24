@@ -7,7 +7,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { ProductInfo } from "../components/ProductInfo";
 import { ReviewSection } from "../components/ReviewSection";
 import { ProductChatWidget } from "../components/ProductChatWidget";
-import { api, mapListing } from "../lib/api";
+import { api, isDeletedListing, mapListing } from "../lib/api";
 import { getListingDescription } from "../lib/shaders";
 import { Listing, Review } from "../types";
 import { toast } from "sonner";
@@ -22,31 +22,30 @@ export function ProductDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [chatOpen, setChatOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!id) return;
+  const loadProductData = async () => {
+    if (!id) return;
 
-      try {
-        const [listingData, reviewsData] = await Promise.all([
-          api.getListing(id),
-          api.getReviews(id),
-        ]);
+    try {
+      const [listingData, reviewsData] = await Promise.all([api.getListing(id), api.getReviews(id)]);
 
-        if (listingData?.product_id || listingData?.id) {
-          setListing(mapListing(listingData));
-        }
-
-        if (Array.isArray(reviewsData)) {
-          setReviews(reviewsData);
-        }
-      } catch (err) {
-        console.error("Failed to load listing:", err);
-      } finally {
-        setIsLoading(false);
+      if (isDeletedListing(listingData)) {
+        setListing(null);
+      } else if (listingData?.product_id || listingData?.id) {
+        setListing(mapListing(listingData));
       }
-    };
 
-    fetchData();
+      if (Array.isArray(reviewsData)) {
+        setReviews(reviewsData);
+      }
+    } catch (err) {
+      console.error("Failed to load listing:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProductData();
   }, [id]);
 
   const handleAddToCart = () => {
@@ -101,11 +100,8 @@ export function ProductDetail() {
     }
   };
 
-  const handleReviewSubmitted = () => {
-    // Reload reviews after new one is submitted
-    if (id) {
-      api.getReviews(id).then(setReviews).catch(console.error);
-    }
+  const handleReviewsChanged = () => {
+    loadProductData().catch(console.error);
   };
 
   if (isLoading) {
@@ -132,8 +128,8 @@ export function ProductDetail() {
     );
   }
 
-  const avgRating =
-    reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0;
+  const avgRating = listing?.rating ?? 0;
+  const reviewCount = listing?.review_count ?? reviews.length;
   const description = getListingDescription(listing);
 
   return (
@@ -154,7 +150,7 @@ export function ProductDetail() {
 
           {/* Details */}
           <div className="space-y-6">
-            <ProductInfo listing={listing} averageRating={avgRating} reviewCount={reviews.length} />
+            <ProductInfo listing={listing} averageRating={avgRating} reviewCount={reviewCount} />
 
             <div className="flex gap-3">
               {user && listing.seller_id && String(user.id) === String(listing.seller_id) ? (
@@ -203,7 +199,8 @@ export function ProductDetail() {
           listingId={id || ""}
           reviews={reviews}
           isLoggedIn={!!user}
-          onReviewSubmitted={handleReviewSubmitted}
+          currentUser={user}
+          onReviewsChanged={handleReviewsChanged}
         />
 
         <ProductChatWidget

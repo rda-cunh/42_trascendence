@@ -23,7 +23,8 @@ export function ListingPreview({
     [listing.images]
   );
   const primaryImage = previewImages[0] ?? listing.image;
-  const canRenderShader = Boolean(listing.shader?.code);
+  const shaderCode = listing.shader?.code ?? "";
+  const canRenderShader = shaderCode.length > 0;
   const canShowImages = previewImages.length > 0;
   const [mode, setMode] = useState<PreviewMode>(canShowImages ? "images" : "render");
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -41,7 +42,7 @@ export function ListingPreview({
 
     return (
       <ShaderPreview
-        fragmentShader={listing.shader.code}
+        fragmentShader={shaderCode}
         label={`${listing.title} shader preview`}
         className={className}
       />
@@ -101,7 +102,7 @@ export function ListingPreview({
       <div className="relative min-h-[22rem] flex-1 overflow-hidden bg-gray-100 dark:bg-gray-950">
         {mode === "render" && canRenderShader ? (
           <ShaderPreview
-            fragmentShader={listing.shader.code}
+            fragmentShader={shaderCode}
             label={`${listing.title} shader preview`}
             className="h-full w-full"
           />

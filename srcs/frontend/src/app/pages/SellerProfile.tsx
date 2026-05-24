@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useParams, useNavigate } from "react-router";
 import { ArrowLeft, UserPlus, UserCheck } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
@@ -7,6 +7,7 @@ import { api, mapListing } from "../lib/api";
 import { Listing } from "../types";
 import { toast } from "sonner";
 import { UserAvatar } from "../components/UserAvatar";
+import { useAsyncEffect } from "../hooks/useAsyncEffect";
 
 interface SellerData {
   id: string;
@@ -23,40 +24,42 @@ export function SellerProfile() {
   const { user } = useAuth();
   const [seller, setSeller] = useState<SellerData | null>(null);
   const [products, setProducts] = useState<Listing[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isFollowPending, setIsFollowPending] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
 
-  useEffect(() => {
-    const fetchSellerData = async () => {
+  const isLoading = useAsyncEffect(
+    async ({ isCancelled }) => {
       if (!sellerId) return;
 
-      try {
-        const sellerData = await api.getPublicUserProfile(sellerId);
-        const listings = Array.isArray(sellerData?.listings) ? sellerData.listings : [];
-        setSeller({
-          id: String(sellerData?.id ?? sellerId),
-          name: sellerData?.name ?? "Unknown seller",
-          email: sellerData?.email ?? "",
-          phone: sellerData?.phone,
-          avatar_url: sellerData?.avatar_url,
-          listings,
-        });
-        setProducts(listings.map(mapListing));
+      const sellerData = await api.getPublicUserProfile(sellerId);
+      const listings = Array.isArray(sellerData?.listings) ? sellerData.listings : [];
 
-        const sellerNumericId = Number(sellerId);
-        if (!Number.isNaN(sellerNumericId)) {
-          const counts = await api.getFollowerCount(sellerNumericId).catch(() => null);
-          if (counts) {
-            setFollowersCount(counts.followers ?? 0);
-            setFollowingCount(counts.following ?? 0);
-          }
+      if (isCancelled()) return;
 
-          if (user?.id && user.id !== sellerId) {
-            const following = await api.getFollowing(Number(user.id)).catch(() => null);
-            const followedUsers = Array.isArray(following) ? following : (following?.results ?? []);
+      setSeller({
+        id: String(sellerData?.id ?? sellerId),
+        name: sellerData?.name ?? "Unknown seller",
+        email: sellerData?.email ?? "",
+        phone: sellerData?.phone,
+        avatar_url: sellerData?.avatar_url,
+        listings,
+      });
+      setProducts(listings.map(mapListing));
+
+      const sellerNumericId = Number(sellerId);
+      if (!Number.isNaN(sellerNumericId)) {
+        const counts = await api.getFollowerCount(sellerNumericId).catch(() => null);
+        if (counts && !isCancelled()) {
+          setFollowersCount(counts.followers ?? 0);
+          setFollowingCount(counts.following ?? 0);
+        }
+
+        if (user?.id && user.id !== sellerId) {
+          const following = await api.getFollowing(Number(user.id)).catch(() => null);
+          const followedUsers = Array.isArray(following) ? following : (following?.results ?? []);
+          if (!isCancelled()) {
             setIsFollowing(
               followedUsers.some((entry: { user_id?: number | string; id?: number | string }) => {
                 const entryId = String(entry.user_id ?? entry.id ?? "");
@@ -65,16 +68,16 @@ export function SellerProfile() {
             );
           }
         }
-      } catch (err) {
-        console.error("Failed to load seller profile:", err);
-        toast.error("Failed to load seller profile");
-      } finally {
-        setIsLoading(false);
       }
-    };
-
-    fetchSellerData();
-  }, [sellerId, user?.id]);
+    },
+    [sellerId, user?.id],
+    {
+      onError: (error) => {
+        console.error("Failed to load seller profile:", error);
+        toast.error("Failed to load seller profile");
+      },
+    }
+  );
 
   if (isLoading) {
     return (

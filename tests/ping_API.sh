@@ -55,13 +55,13 @@ run_test 0 "listings/1/images/1/" "image_id_get"
 
 # listings/{product_id}/review/
 
-run_test 2 "listings/1/review/" "id_product_review_post"
-run_test 0 "listings/1/review/" "id_product_review_get"
+run_test 2 "listings/1/reviews/" "id_product_review_post"
+run_test 0 "listings/1/reviews/" "id_product_review_get"
 
 # listings/{product_id}/review/{review_id}/
 
-run_test 1 "listings/1/review/1/" "review_id_delete"
-run_test 3 "listings/1/review/1/" "review_id_patch"
+run_test 1 "listings/1/reviews/1/" "review_id_delete"
+run_test 3 "listings/1/reviews/1/" "review_id_patch"
 
 # orders/
 

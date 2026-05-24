@@ -179,7 +179,8 @@ LOCK TABLES `orders` WRITE;
 /*!40000 ALTER TABLE `orders` DISABLE KEYS */;
 INSERT INTO `orders` VALUES
 (1,'ORD-2024-0001',3,'Done',   578.99,578.99,'Description 123.', '2026-03-22 10:00:00','2026-03-22 10:05:00'),
-(2,'ORD-3456-0002',4,'Pending',599.90,599.90,NULL,               '2026-03-22 11:00:00','2026-03-22 11:00:00');
+(2,'ORD-3456-0002',4,'Pending',599.90,599.90,NULL,               '2026-03-22 11:00:00','2026-03-22 11:00:00'),
+(3,'ORD-2026-0003',5,'Done',265.89,265.89,'Seed order for admin review testing','2026-03-22 12:00:00','2026-03-22 12:05:00');
 /*!40000 ALTER TABLE `orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -367,7 +368,7 @@ INSERT INTO `users` VALUES
 (2,'Seller 2','seller2@email.com','15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 002','User','Active','avatar.png','2026-03-22 09:01:00','2026-03-22 09:01:00'),
 (3,'Buyer 1', 'buyer1@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 003','User','Active','avatar.png', '2026-03-22 09:02:00','2026-03-22 09:02:00'),
 (4,'Buyer 2', 'buyer2@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 004','User','Active','avatar.png', '2026-03-22 09:03:00','2026-03-22 09:03:00'),
-(5,'System Administrator', 'adm@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 004','Admin','Active','avatar.png', '2026-03-22 09:03:00','2026-03-22 09:03:00'),
+(5,'System Administrator', 'admin@admin.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 004','Admin','Active','avatar.png', '2026-03-22 09:03:00','2026-03-22 09:03:00'),
 (6,'Banned 1', 'Banned1@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 003','User','Banned','avatar.png', '2026-03-22 09:02:00','2026-03-22 09:02:00'),
 (7,'Banned 2', 'Banned2@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 003','User','Banned','avatar.png', '2026-03-22 09:02:00','2026-03-22 09:02:00'),
 (8,'Banned 3', 'Banned3@email.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225','+351 912 000 003','User','Banned','avatar.png', '2026-03-22 09:02:00','2026-03-22 09:02:00');

@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createBrowserRouter, Outlet } from "react-router";
+import type { ReactNode } from "react";
+import { createBrowserRouter, Link, Outlet } from "react-router";
 import { Home } from "./pages/Home";
 import { ProductDetail } from "./pages/ProductDetail";
 import { SellerProfile } from "./pages/SellerProfile";
@@ -41,16 +42,21 @@ function NotFound() {
       <div className="text-center">
         <h1 className="mb-4 text-6xl font-bold text-gray-900 dark:text-white">404</h1>
         <p className="mb-6 text-gray-600 dark:text-gray-400">Page not found</p>
-        <a
-          href="/"
+        <Link
+          to="/"
           className="rounded-lg bg-purple-600 px-6 py-3 text-white transition-colors hover:bg-purple-700"
         >
           Go Home
-        </a>
+        </Link>
       </div>
     </div>
   );
 }
+
+const withAuth = (element: ReactNode) => <ProtectedRoute>{element}</ProtectedRoute>;
+
+const withAdminAccess = (element: ReactNode) =>
+  withAuth(<RoleGuard role="admin">{element}</RoleGuard>);
 
 export const router = createBrowserRouter([
   {
@@ -64,6 +70,16 @@ export const router = createBrowserRouter([
       { path: "register", element: <Register /> },
       { path: "product/:id", element: <ProductDetail /> },
       { path: "seller/:sellerId", element: <SellerProfile /> },
+      { path: "sell", element: withAuth(<SellItem />) },
+      { path: "listing/:id/edit", element: withAuth(<EditListing />) },
+      { path: "checkout", element: withAuth(<Checkout />) },
+      { path: "profile", element: withAuth(<Profile />) },
+      { path: "orders", element: withAuth(<Orders />) },
+      { path: "orders/:id", element: withAuth(<OrderDetail />) },
+      { path: "chat", element: withAuth(<Chat />) },
+      { path: "admin", element: withAdminAccess(<AdminDashboard />) },
+      { path: "admin/users", element: withAdminAccess(<UserManagement />) },
+      { path: "admin/listings", element: withAdminAccess(<ListingModeration />) },
       { path: "privacy", element: <PrivacyPolicy /> },
       { path: "terms", element: <TermsOfService /> },
       {
