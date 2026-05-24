@@ -233,6 +233,8 @@ We claim **14 mandatory points** plus **1 bonus point**, all listed below. Each 
 - **Profiles** — public profile page per user (`/seller/:id`) with avatar, listing portfolio, follower/following counts, reviews, and a follow button.
 - **Friends** — implemented as a **follow** graph (`follows` table) with endpoints under `/api/follow/` (action, following list, followers list, counts, personalised feed).
 
+**Design note — follow graph instead of symmetric friendship.** We deliberately modelled the "friends" requirement as a **directional, many-to-many follow graph** rather than a symmetric, two-sided friendship. Both options cost roughly the same to implement (a single association table either way; the symmetric variant only adds a confirmation handshake), but a one-directional follow is a much better fit for a marketplace: buyers typically want to track sellers whose listings interest them without requiring the seller to accept and reciprocate, mirroring the pattern users already know from platforms like Etsy or eBay's *favourite seller*. As a side benefit, the same graph powers a personalised activity feed (`/api/follow/feed/`) without any extra modelling. We still expose `add` and `remove` actions and a "following" list, which is what the subject text actually requires.
+
 **Subject requirements**
 - A basic chat system (send/receive messages between users).
 - A profile system (view user information).
@@ -309,6 +311,8 @@ We claim **14 mandatory points** plus **1 bonus point**, all listed below. Each 
 ### Web Minor — Notification system *(bonus)*
 
 **Justification.** Per the subject's Bonus part (Chapter VII), modules beyond the required 14 points are eligible as bonus. We implemented a complete notification pipeline for listing creation, updates, and deletion. Notifications are persisted in the `notifications` table with a typed `payload`, and the frontend exposes a bell icon with an unread badge, a dropdown list, and mark-as-read / mark-all-read controls (`/api/notifications/*`).
+
+**Design note — scope of "update" and "deletion" events.** The subject's wording mandates notifications for *creation, update, and deletion* actions, and we cover all three to be fully compliant. In a real marketplace, however, the genuinely useful event is the **creation** of a listing by a seller a user follows — that is what feeds the personalised activity stream. Notifying every interested user on every **update** (a price tweak, a description edit) or **deletion** (a listing taken down) would quickly produce notification fatigue and is rarely what users actually want; production marketplaces filter these aggressively (only price drops, only saved/favourited listings, etc.). We chose to keep the update/delete notifications in scope because the subject requires them and because they make the bonus claim defensible during evaluation, but we acknowledge this as a compliance-driven decision rather than a product-driven one.
 
 **Subject requirements**
 - A complete notification system for all creation, update, and deletion actions.
