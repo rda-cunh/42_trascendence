@@ -964,8 +964,8 @@ class order_create(APIView):
         except stripe.error.InvalidRequestError:
             return Response({"detail": "Unknown session."},
                             status=status.HTTP_404_NOT_FOUND)
-        except stripe.error.StripeError:
-            return Response({"detail": "Payment provider error."},
+        except stripe.error.StripeError as e:
+            return Response({"detail": "Payment provider error.", "error": str(e)},
                             status=status.HTTP_502_BAD_GATEWAY)
         buyer_id_in_session = (session.metadata or {}).get("buyer_id")
         if buyer_id_in_session != str(request.user.id):
