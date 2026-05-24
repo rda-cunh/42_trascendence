@@ -7,8 +7,11 @@ import { api } from "../lib/api";
 import {
   buildShaderDescription,
   DEFAULT_FRAGMENT_SHADER,
-  slugifyShaderTitle,
 } from "../lib/shaders";
+import {
+  getShaderListingSlug,
+  getShaderListingValidationError,
+} from "../lib/shaderListingForm";
 import { toast } from "sonner";
 import { useImageUpload, ImageUploadResult } from "../hooks/useImageUpload";
 
@@ -53,33 +56,26 @@ export function SellItem() {
     setUploadedImages((prev) => prev.filter((image) => image.filename !== filename));
   };
 
-  const slug = useMemo(() => slugifyShaderTitle(formData.title), [formData.title]);
+  const slug = useMemo(() => getShaderListingSlug(formData.title), [formData.title]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
+    const validationError = getShaderListingValidationError({
+      title: formData.title,
+      price: formData.price,
+      code: formData.code,
+      slug,
+    });
+
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
     const trimmedTitle = formData.title.trim();
-    if (trimmedTitle.length < 3) {
-      toast.error("Title must be at least 3 characters long");
-      return;
-    }
-
-    if (!slug || slug.length < 3) {
-      toast.error("Title must contain letters or numbers to generate a valid slug");
-      return;
-    }
-
     const price = Number.parseFloat(formData.price);
-    if (!Number.isFinite(price) || price <= 0) {
-      toast.error("Price must be higher than zero");
-      return;
-    }
-
-    if (!formData.code.includes("void main")) {
-      toast.error("Shader source must include a void main function");
-      return;
-    }
 
     setIsLoading(true);
 

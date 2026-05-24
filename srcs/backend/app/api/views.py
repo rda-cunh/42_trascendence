@@ -29,7 +29,7 @@ def is_admin(request):
     token = request.auth
     if token is None:
         return False
-    return token['role'] == 'admin'
+    return token['role'] == 'Admin'
 
 # utility to convert non-JSON-serializable values (like Decimal) into strings for safe JSON responses
 def make_json_safe(value):
@@ -843,6 +843,27 @@ class listings_review(APIView):
     def patch(self, request, product_id, review_id):
         return proxy_request("PATCH", f"/listings/{product_id}/review/{review_id}/")
 
+class listings_reviews(APIView):
+    def get(self, request, product_id, review_id=None):
+        if review_id is not None:
+            return proxy_request("GET", f"/listings/{product_id}/reviews/{review_id}/")
+        return proxy_request("GET", f"/listings/{product_id}/reviews/", params=request.query_params)
+
+    def post(self, request, product_id):
+        payload = dict(request.data)
+        if request.user and request.user.is_authenticated:
+            payload["reviewer_id"] = request.user.id
+        return proxy_request("POST", f"/listings/{product_id}/reviews/", data=payload)
+
+    def patch(self, request, product_id, review_id):
+        return proxy_request(
+            "PATCH",
+            f"/listings/{product_id}/reviews/{review_id}/",
+            data=request.data,
+        )
+
+    def delete(self, request, product_id, review_id):
+        return proxy_request("DELETE", f"/listings/{product_id}/reviews/{review_id}/")
 
 class seller_id(APIView):
     def get(self, request, user_id):
@@ -893,17 +914,16 @@ class order_create(APIView):
 
 
 class order_id(APIView):
-    def get(self, request, id):
+    def get(self, request, order_id):
         return proxy_request("GET", f"/orders/{order_id}/")
 
-    def patch(self, request, id):
-        return proxy_request("PATCH", f"/orders/{order_id}", request.data)
+    def patch(self, request, order_id):
+        return proxy_request("PATCH", f"/orders/{order_id}/", request.data)
 
 
 class order_buyer_id(APIView):
-    def get(self, request, id):
+    def get(self, request, user_id):
         return proxy_request("GET", f"/orders/buyer/{user_id}/")
-
 
 class payment_id(APIView):
     def get(self, request, order_id):
@@ -964,6 +984,18 @@ class public_listing_full(APIView):
 
 # ADMIN API
 
+class admin_users(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        return proxy_request("GET", "/admin/users/", params=request.query_params)
+
+class manage_users(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def delete(self, request, user_id):
+        return proxy_request("DELETE", f"/admin/users/{user_id}/")
+
 # return list of banned users
 class admin_bans(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
@@ -981,7 +1013,7 @@ class manage_bans(APIView):
         return proxy_request("POST", f"/admin/bans/{user_id}/")
 
     # unban funcionality
-    def delete(self, request, id):
+    def delete(self, request, user_id):
         return proxy_request("DELETE", f"/admin/bans/{user_id}/")
 
 class manage_admins(APIView):

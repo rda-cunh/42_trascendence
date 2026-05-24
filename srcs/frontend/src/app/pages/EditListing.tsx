@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import {
   ArrowLeft,
@@ -19,9 +19,13 @@ import {
   buildShaderDescription,
   DEFAULT_FRAGMENT_SHADER,
   parseShaderDescription,
-  slugifyShaderTitle,
 } from "../lib/shaders";
+import {
+  getShaderListingSlug,
+  getShaderListingValidationError,
+} from "../lib/shaderListingForm";
 import { useImageUpload, ImageUploadResult } from "../hooks/useImageUpload";
+import { useAsyncEffect } from "../hooks/useAsyncEffect";
 
 type EditableImage = {
   id: number | null;
@@ -35,7 +39,6 @@ export function EditListing() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -66,63 +69,61 @@ export function EditListing() {
     errorContext: "image",
   });
 
-  const slug = useMemo(() => slugifyShaderTitle(formData.title), [formData.title]);
+  const slug = useMemo(() => getShaderListingSlug(formData.title), [formData.title]);
 
-  useEffect(() => {
-    const loadListing = async () => {
+  const isLoading = useAsyncEffect(
+    async ({ isCancelled }) => {
       if (!id) return;
 
-      setIsLoading(true);
+      const listing = await api.getListing(id);
+      const shader = parseShaderDescription(listing?.description);
+
+      if (isCancelled()) return;
+
+      setFormData({
+        title: listing?.name ?? "",
+        notes: shader?.notes ?? "",
+        price: listing?.price != null ? String(listing.price) : "",
+        code: shader?.code ?? DEFAULT_FRAGMENT_SHADER,
+      });
+
+      const fallbackImages = Array.isArray(listing?.images)
+        ? listing.images.map((filename: string, index: number) => ({
+            id: null,
+            filename,
+            previewUrl: `/images/${filename}`,
+            displayOrder: index,
+            isNew: false,
+          }))
+        : [];
+
+      setImages(fallbackImages);
+      setOriginalImages(fallbackImages);
 
       try {
-        const listing = await api.getListing(id);
-        const shader = parseShaderDescription(listing?.description);
+        const listingImages = await api.getListingImages(id);
+        const imageRecords = Array.isArray(listingImages) ? listingImages : [];
+        const hydratedImages = imageRecords.map((image: ListingImageRecord) => ({
+          id: image.id,
+          filename: image.image_hash,
+          previewUrl: `/images/${image.image_hash}`,
+          displayOrder: image.display_order,
+          isNew: false,
+        }));
 
-        setFormData({
-          title: listing?.name ?? "",
-          notes: shader?.notes ?? "",
-          price: listing?.price != null ? String(listing.price) : "",
-          code: shader?.code ?? DEFAULT_FRAGMENT_SHADER,
-        });
-
-        const fallbackImages = Array.isArray(listing?.images)
-          ? listing.images.map((filename: string, index: number) => ({
-              id: null,
-              filename,
-              previewUrl: `/images/${filename}`,
-              displayOrder: index,
-              isNew: false,
-            }))
-          : [];
-
-        setImages(fallbackImages);
-        setOriginalImages(fallbackImages);
-
-        try {
-          const listingImages = await api.getListingImages(id);
-          const imageRecords = Array.isArray(listingImages) ? listingImages : [];
-          const hydratedImages = imageRecords.map((image: ListingImageRecord) => ({
-            id: image.id,
-            filename: image.image_hash,
-            previewUrl: `/images/${image.image_hash}`,
-            displayOrder: image.display_order,
-            isNew: false,
-          }));
-
-          setImages(hydratedImages);
-          setOriginalImages(hydratedImages);
-        } catch {
-          toast.error("Listing loaded, but image metadata could not be loaded.");
-        }
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to load listing");
-      } finally {
-        setIsLoading(false);
+        setImages(hydratedImages);
+        setOriginalImages(hydratedImages);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to load listing images");
       }
-    };
-
-    void loadListing();
-  }, [id]);
+    },
+    [id],
+    {
+      onError: (error: unknown) => {
+        toast.error(error instanceof Error ? error.message : "Failed to load listing");
+      },
+    }
+  );
 
   const handleRemoveImage = (filename: string) => {
     setImages((prev) =>
@@ -140,27 +141,20 @@ export function EditListing() {
 
     if (!id) return;
 
+    const validationError = getShaderListingValidationError({
+      title: formData.title,
+      price: formData.price,
+      code: formData.code,
+      slug,
+    });
+
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
     const trimmedTitle = formData.title.trim();
-    if (trimmedTitle.length < 3) {
-      toast.error("Title must be at least 3 characters long");
-      return;
-    }
-
-    if (!slug || slug.length < 3) {
-      toast.error("Title must contain letters or numbers to generate a valid slug");
-      return;
-    }
-
     const price = Number.parseFloat(formData.price);
-    if (!Number.isFinite(price) || price <= 0) {
-      toast.error("Price must be higher than zero");
-      return;
-    }
-
-    if (!formData.code.includes("void main")) {
-      toast.error("Shader source must include a void main function");
-      return;
-    }
 
     setIsSaving(true);
 

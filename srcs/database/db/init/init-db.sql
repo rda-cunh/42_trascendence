@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS orders (
   PRIMARY KEY (id),
   UNIQUE KEY uq_order_code (code),
   KEY idx_order_buyer (buyer_id),
-  CONSTRAINT fk_order_buyer FOREIGN KEY (buyer_id) REFERENCES users (id),
+  CONSTRAINT fk_order_buyer FOREIGN KEY (buyer_id) REFERENCES users (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS order_items (
@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS product_reviews (
   body TEXT NULL DEFAULT NULL,
   status ENUM('Pending', 'Approved', 'Rejected', 'Deleted') NOT NULL DEFAULT 'Approved',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uq_review_per_item (order_items_id),
   KEY idx_review_product (product_id),

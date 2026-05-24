@@ -14,3 +14,5 @@ volumes:
   prometheus_data:
   grafana_data:
   image_data:
+  frontend_node_modules:
+  redis_data:

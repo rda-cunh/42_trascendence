@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Listing, User } from "../types";
+import { Listing, User, Review } from "../types";
 import { FALLBACK_LISTING_IMAGE, resolveImageUrl } from "./images";
 import { parseShaderDescription } from "./shaders";
 
@@ -21,6 +21,12 @@ export interface ListingImageRecord {
   image_hash: string;
   display_order: number;
   created_at: string;
+}
+
+type ListingStatus = "Draft" | "Active" | "Paused" | "Deleted";
+
+export function isDeletedListing(item: any): boolean {
+  return String(item?.status ?? "").toLowerCase() === "deleted";
 }
 
 function pickFirstErrorValue(value: unknown): string | null {
@@ -111,6 +117,7 @@ export function mapListing(item: any): Listing {
     location: "Digital Download",
     seller: sellerName,
     seller_id: item?.seller_id ? String(item.seller_id) : undefined,
+    status: item?.status,
     images: normalizedImages,
     image: resolveImageUrl(item?.image ?? item?.image_url ?? firstImage, FALLBACK_LISTING_IMAGE),
     postedDate: createdAt
@@ -118,6 +125,8 @@ export function mapListing(item: any): Listing {
       : new Date().toISOString().split("T")[0],
     fileFormat: shader ? "GLSL" : (item?.fileFormat ?? item?.file_format),
     engine: shader ? "Three.js" : item?.engine,
+    rating: item?.avg_rating != null ? Number(item.avg_rating) : undefined,
+    review_count: item?.review_count != null ? Number(item.review_count) : 0,
     shader: shader ?? undefined,
   };
 }
@@ -147,6 +156,67 @@ function normalizeStatus(status: unknown): User["status"] | undefined {
   if (value === "active" || value === "suspended" || value === "banned") return value;
   if (value === "deactivated" || value === "deleted") return "banned";
   return undefined;
+}
+
+function normalizeAdminStatus(status: unknown): User["status"] | undefined {
+  const value = String(status ?? "").toLowerCase();
+  if (
+    value === "active" ||
+    value === "suspended" ||
+    value === "banned" ||
+    value === "deactivated"
+  ) {
+    return value;
+  }
+  if (value === "deleted") return "deactivated";
+  return undefined;
+}
+
+function mapAdminUser(item: any): User {
+  return {
+    id: String(item?.id ?? item?.user_id ?? ""),
+    email: item?.email ?? "",
+    name: item?.name ?? undefined,
+    phone: item?.phone ?? undefined,
+    avatar_url: item?.avatar_url ?? item?.avatarUrl ?? undefined,
+    role: normalizeRole(item?.role),
+    status: normalizeAdminStatus(item?.status),
+    created_at: item?.created_at ?? undefined,
+  };
+}
+
+function normalizeOrderStatus(status: unknown): string {
+  const value = String(status ?? "").toLowerCase();
+
+  if (value === "pending") return "pending";
+  if (value === "paid") return "processing";
+  if (value === "delivered" || value === "done") return "completed";
+  if (value === "cancelled" || value === "refunded") return "cancelled";
+
+  return value || "pending";
+}
+
+function mapOrderItem(item: any) {
+  return {
+    id: String(item?.id ?? ""),
+    product_id: String(item?.product_id ?? ""),
+    quantity: Number(item?.quantity ?? item?.qty ?? 0),
+    price: Number(item?.price ?? 0),
+    name: item?.name ?? item?.product_name ?? `Item ${item?.id ?? ""}`,
+  };
+}
+
+function mapOrder(item: any) {
+  return {
+    id: String(item?.id ?? ""),
+    user_id: String(item?.buyer_id ?? item?.user_id ?? ""),
+    status: normalizeOrderStatus(item?.status),
+    total: Number(item?.total ?? 0),
+    created_at: item?.created_at ?? "",
+    updated_at: item?.updated_at,
+    items: Array.isArray(item?.items) ? item.items.map(mapOrderItem) : [],
+    shipping_address: item?.shipping_address,
+  };
 }
 
 class ApiClient {
@@ -280,8 +350,12 @@ class ApiClient {
   }
 
   // LISTINGS
-  getListings() {
-    return this.request<any>("GET", "/listings/");
+  getListings(filters?: { status?: ListingStatus }) {
+    const params = new URLSearchParams();
+    if (filters?.status) params.set("status", filters.status);
+
+    const query = params.toString();
+    return this.request<any>("GET", `/listings/${query ? `?${query}` : ""}`);
   }
 
   getListing(id: string) {
@@ -306,35 +380,85 @@ class ApiClient {
     return this.request<any>("DELETE", `/listings/${id}/`, {});
   }
 
+  // ADMIN
+  getAdminUsers(search?: string) {
+    const params = new URLSearchParams({ limit: "200" });
+    if (search?.trim()) params.set("search", search.trim());
+
+    return this.request<any[]>("GET", `/admin/users/?${params.toString()}`).then((data) =>
+      Array.isArray(data) ? data.map(mapAdminUser) : []
+    );
+  }
+
+  banUser(userId: string | number) {
+    return this.request<any>("POST", `/admin/bans/${userId}/`, {}).then(mapAdminUser);
+  }
+
+  unbanUser(userId: string | number) {
+    return this.request<any>("DELETE", `/admin/bans/${userId}/`, {}).then(mapAdminUser);
+  }
+
+  deleteUser(userId: string | number) {
+    return this.request<void>("DELETE", `/admin/users/${userId}/`, {});
+  }
+
   // ORDERS
   createOrder(data: any) {
     return this.request<any>("POST", "/orders/", data);
   }
 
-  getOrders() {
-    return this.request<any>("GET", "/orders/");
-  }
-
-  getOrder(id: string) {
-    return this.request<any>("GET", `/orders/${id}/`);
-  }
-
-  // REVIEWS
-  createReview(data: any) {
-    return this.request<any>(
-      "POST",
-      `/listings/${data.listing_id ?? data.product_id}/review/`,
-      data
+  getOrders(buyerId: string | number) {
+    return this.request<any[]>("GET", `/orders/buyer/${buyerId}/`).then((data) =>
+      Array.isArray(data) ? data.map(mapOrder) : []
     );
   }
 
-  async getReviews(listingId: string) {
+  getOrder(id: string) {
+    return this.request<any>("GET", `/orders/${id}/`).then(mapOrder);
+  }
+  // REVIEWS
+  createReview(data: {
+    listing_id?: string | number;
+    product_id?: string | number;
+    rating: number;
+    title?: string;
+    body?: string;
+  }) {
+    const productId = data.listing_id ?? data.product_id;
+    return this.request<Review>("POST", `/listings/${productId}/reviews/`, {
+      rating: data.rating,
+      ...(data.title !== undefined ? { title: data.title.trim() } : {}),
+      ...(data.body?.trim() ? { body: data.body.trim() } : {}),
+    });
+  }
+
+  async getReviews(listingId: string, page = 1) {
     try {
-      const data = await this.request<any>("GET", `/listings/${listingId}/review/`);
-      return Array.isArray(data) ? data : data?.results || [];
+      const path =
+        page > 1
+          ? `/listings/${listingId}/reviews/?page=${page}`
+          : `/listings/${listingId}/reviews/`;
+      const data = await this.request<Review[]>("GET", path);
+      return Array.isArray(data) ? data : [];
     } catch {
       return [];
     }
+  }
+
+  getReview(listingId: string, reviewId: string) {
+    return this.request<Review>("GET", `/listings/${listingId}/reviews/${reviewId}/`);
+  }
+
+  updateReview(
+    listingId: string,
+    reviewId: string,
+    data: { rating?: number; title?: string; body?: string }
+  ) {
+    return this.request<Review>("PATCH", `/listings/${listingId}/reviews/${reviewId}/`, data);
+  }
+
+  deleteReview(listingId: string, reviewId: string) {
+    return this.request<void>("DELETE", `/listings/${listingId}/reviews/${reviewId}/`);
   }
 
   // IMAGES

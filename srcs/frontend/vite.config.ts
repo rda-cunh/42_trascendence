@@ -27,6 +27,11 @@ export default defineConfig({
     alias: { '@': path.resolve(__dirname, './src') },
   },
   assetsInclude: ['**/*.svg', '**/*.csv'],
+  optimizeDeps: {
+    esbuildOptions: {
+      sourcemap: false, // fix for Source map error: deps/chunk-NXESFFTV.js?v=978d5caa
+    },
+  },
   server: {
     host: true,
     port: 5173,

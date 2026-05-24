@@ -12,4 +12,8 @@ class UserInfo(BaseModel):
 	phone:		Optional[str] = None
 	created_at:	datetime
 	updated_at:	datetime
+
+class AdminUserInfo(UserInfo):
+	role:		str
+	status:		str
 	
