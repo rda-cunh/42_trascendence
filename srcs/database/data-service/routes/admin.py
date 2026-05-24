@@ -148,3 +148,74 @@ def unadmin_user(user_id: int, db=Depends(get_db_dep)):
 	updated_user = cursor.fetchone()
 
 	return updated_user
+
+@router.get('/dashboard/', response_model=DashboardInfo)
+def get_dashboard(db=Depends(get_db_dep)):
+	conn, cursor = db
+
+	result = {}
+
+	# Total revenue
+	cursor.execute("""SELECT COALESCE(SUM(total), 0) AS total_revenue FROM orders WHERE status = 'Done'""")
+	result['total_revenue'] = int(cursor.fetchone()['total_revenue'])
+
+	# Total users
+	cursor.execute("""SELECT COUNT(*) AS total_users FROM users WHERE status = 'Active'""")
+	result['total_users'] = cursor.fetchone()['total_users']
+
+	# Total orders
+	cursor.execute("""SELECT COUNT(*) AS total_orders FROM orders WHERE status = 'Done'""")
+	result['total_orders'] = cursor.fetchone()['total_orders']
+
+	# Active listings
+	cursor.execute("""SELECT COUNT(*) AS active_listings FROM products WHERE status = 'Active'""")
+	result['active_listings'] = cursor.fetchone()['active_listings']
+
+	cursor.execute("""
+		SELECT
+			DATE_FORMAT(created_at, '%Y-%m') AS month,
+			COALESCE(SUM(total), 0) AS revenue,
+			COUNT(*) AS orders_count
+		FROM orders
+		WHERE status = 'Done'
+		  AND created_at >= DATE_FORMAT(DATE_SUB(NOW(), INTERVAL 5 MONTH), '%Y-%m-01')
+		GROUP BY month
+		ORDER BY month
+	""")
+
+	rows = cursor.fetchall()
+
+	revenue_map = {}
+	orders_map = {}
+
+	for row in rows:
+		revenue_map[row['month']] = int(row['revenue'])
+		orders_map[row['month']] = row['orders_count']
+
+	revenue_overview = []
+	orders_trend = []
+	months = []
+
+	now = datetime.now()
+
+	for i in range(5, -1, -1):
+		month_date = now - relativedelta(months=i)
+
+		month_key = month_date.strftime('%Y-%m')
+		month_label = month_date.strftime('%b')
+
+		months.append(month_label)
+
+		revenue_overview.append(
+			revenue_map.get(month_key, 0)
+		)
+
+		orders_trend.append(
+			orders_map.get(month_key, 0)
+		)
+
+	result['months'] = months
+	result['revenue_overview'] = revenue_overview
+	result['orders_trend'] = orders_trend
+
+	return DashboardInfo(**result)

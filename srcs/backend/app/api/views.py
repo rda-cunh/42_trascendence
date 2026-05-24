@@ -818,6 +818,9 @@ class listings_image(APIView):
             raise PermissionDenied("You do not have permission to edit this product.")
         return proxy_request("POST", f"/listings/{product_id}/images/", request.data)
 
+class listing_image_full(APIView):
+    def get(self, request):
+        return proxy_request("GET", f"/listings/images/")
 
 class listings_image_id(APIView):
     def get(self, request, product_id, image_id):
@@ -1030,5 +1033,11 @@ class list_admins(APIView):
 
     def get(self, request):
         return proxy_request("GET", f"/admin/manage/")
+
+class admin_dashboard(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        return proxy_request("GET", f"/admin/dashboard/")
 
 # graphana
