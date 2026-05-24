@@ -76,7 +76,7 @@ urlpatterns = [
         path("listings/images/",                    listing_image_full.as_view()),
         path("listings/<int:product_id>/images/<int:image_id>/", listings_image_id.as_view()),
         path("listings/<int:product_id>/images/",   listings_image.as_view()),
-        path("listings/<int:product_id>/review/",   listings_review.as_view()),
+        path("listings/<int:product_id>/reviews/",  listings_review.as_view()),
         path("listings/<int:product_id>/review/<int:review_id>/", listings_review.as_view()),
         
         # auth paths [everything under /api/auth]
