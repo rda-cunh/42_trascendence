@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import redirect as django_redirect
 from urllib.parse import urlencode
 from .permissions import IsAdminRole
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 from . import serializers
 from . import presence as presence_store
@@ -28,7 +28,7 @@ import stripe
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 def to_cents(amount) -> int:
-    return int(round(float(amount) * 100))
+    return int(Decimal(str(amount)) * 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
 
 # admin check for non-admin exclusive behaviours
 def is_admin(request):
@@ -920,15 +920,18 @@ class create_checkout(APIView):
         line_items = []
         for item in items:
             product_id = item["product_id"]
+            quantity = int(item["quantity"])
             listing = proxy_request("GET", f"/listings/{product_id}")
-
+            if not listing:
+                return Response({"detail": "Each item needs product_id and quantity"},
+                                status=status.HTTP_400_BAD_REQUEST)
             line_items.append({
                 "price_data": {
                     "currency": "usd",
-                    "product_data": {"name": item["name"]},
-                    "unit_amount": to_cents(item["price"]),
+                    "product_data": {"name": listing["name"]},
+                    "unit_amount": to_cents(listing["price"]),
                     },
-                "quantity": item["quantity"],
+                "quantity": quantity,
                 })
         try:
             session = stripe.checkout.Session.create(
@@ -936,7 +939,7 @@ class create_checkout(APIView):
                     payment_method_types=["card"],
                     line_items=line_items,
                     success_url=(
-                        f"{settings.FRONTEND_SUCESS_URL}"
+                        f"{settings.FRONTEND_SUCCESS_URL}"
                         f"?session_id={{CHECKOUT_SESSION_ID}}"
                         ),
                     cancel_url=settings.FRONTEND_CANCEL_URL,
@@ -957,7 +960,7 @@ class order_create(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return proxy_request("GET", f"/orders/")
+        return proxy_request("GET", f"/orders/{request.user.id}/")
 
     def post(self, request, session_id: str):
         try:
