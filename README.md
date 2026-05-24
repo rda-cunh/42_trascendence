@@ -148,30 +148,30 @@ The database is **MySQL 8** and is initialised by [`srcs/database/db/init/init-d
 
 ## Features List
 
-| Domain | Feature | Module |
-|---|---|---|
-| Auth | Email + password registration and login with hashed/salted passwords (DRF + simplejwt) | User Major 1 / mandatory |
-| Auth | 42 OAuth 2.0 login with redirect + callback handlers | User Minor 2 |
-| Auth | JWT access + refresh token rotation | mandatory |
-| Profile | Profile page with editable fields, password change, account deletion | User Major 1 |
-| Profile | Avatar upload (custom image service) with default fallback avatar | User Major 1 |
-| Profile | Online-status badge driven by the presence service | User Major 1 / Web Major 2 |
-| Social | Follow / unfollow other users, followers/following counts, follow feed | User Major 1 (as "friends") |
-| Listings | Create, edit, pause, delete listings; per-listing image gallery | mandatory |
-| Listings | Public listing pages with reviews and seller info | mandatory |
-| Reviews | Star-based product reviews tied to a confirmed order item | mandatory |
-| Search | Listing search with text query, sort, and pagination | Web Minor 9 |
-| Chat | 1-to-1 chat per listing, persisted in MySQL, fetched via REST | Web Major 3 |
-| Chat | Live messaging via Django Channels WebSocket consumer | Web Major 2 |
-| Presence | Heartbeat-based online/offline status published to all clients | Web Major 2 |
-| Notifications | In-app notifications for listing create/update/delete with unread counter, mark-as-read, mark-all-read | **Web Minor 4 (bonus)** |
-| Admin | Admin dashboard with ban/unban users and promote/demote admins | User Major 2 |
-| Admin | Listing moderation page | User Major 2 |
-| Admin | Role-gated routes (`RoleGuard`) and role-aware menu rendering | User Major 2 |
-| Public API | Public read endpoints for users and listings | mandatory |
-| Ops | HTTPS-only access via Nginx gateway + in-cluster PKI | mandatory |
-| Ops | Prometheus + Grafana with cAdvisor, node/mysqld/nginx exporters and provisioned dashboards | DevOps Major |
-| Legal | Privacy Policy and Terms of Service pages linked from the footer | mandatory |
+| Domain | Feature | Module | Owner(s) |
+|---|---|---|---|
+| Auth | Email + password registration and login with hashed/salted passwords (DRF + simplejwt) | User Major 1 / mandatory | Raphael, Ricardo, Erik |
+| Auth | 42 OAuth 2.0 login with redirect + callback handlers | User Minor 2 | Ricardo, Erik, Leonardo Vichi |
+| Auth | JWT access + refresh token rotation | mandatory | Raphael, Ricardo |
+| Profile | Profile page with editable fields, password change, account deletion | User Major 1 | Raphael, Ricardo, Erik |
+| Profile | Avatar upload (custom image service) with default fallback avatar | User Major 1 | Raphael, Ricardo, Erik |
+| Profile | Online-status badge driven by the presence service | User Major 1 / Web Major 2 | Ricardo, Erik, Leonardo Maes |
+| Social | Follow / unfollow other users, followers/following counts, follow feed | User Major 1 (as "friends") | Raphael, Ricardo, Erik |
+| Listings | Create, edit, pause, delete listings; per-listing image gallery | mandatory | Raphael, Leonardo Maes |
+| Listings | Public listing pages with reviews and seller info | mandatory | Erik |
+| Reviews | Star-based product reviews tied to a confirmed order item | mandatory | Leonardo Maes |
+| Search | Listing search with text query, sort, and pagination | Web Minor 9 | Leonardo Maes, Raphael, Erik |
+| Chat | 1-to-1 chat per listing, persisted in MySQL, fetched via REST | Web Major 3 | Ricardo, Raphael, Erik, Leonardo Maes |
+| Chat | Live messaging via Django Channels WebSocket consumer | Web Major 2 | Ricardo, Erik, Leonardo Maes |
+| Presence | Heartbeat-based online/offline status published to all clients | Web Major 2 | Ricardo, Erik, Leonardo Maes |
+| Notifications | In-app notifications for listing create/update/delete with unread counter, mark-as-read, mark-all-read | **Web Minor 4 (bonus)** | Ricardo |
+| Admin | Admin dashboard with ban/unban users and promote/demote admins | User Major 2 | Raphael, Leonardo Maes |
+| Admin | Listing moderation page | User Major 2 | Raphael, Leonardo Maes |
+| Admin | Role-gated routes (`RoleGuard`) and role-aware menu rendering | User Major 2 | Raphael, Leonardo Maes |
+| Public API | Public read endpoints for users and listings | mandatory | Raphael |
+| Ops | HTTPS-only access via Nginx gateway + in-cluster PKI | mandatory | Leonardo Vichi |
+| Ops | Prometheus + Grafana with cAdvisor, node/mysqld/nginx exporters and provisioned dashboards | DevOps Major | Leonardo Vichi |
+| Legal | Privacy Policy and Terms of Service pages linked from the footer | mandatory | Ricardo |
 
 ## Modules
 
@@ -208,6 +208,8 @@ We claim **14 mandatory points** plus **1 bonus point**, all listed below. Each 
 - Use a frontend framework (React, Vue, Angular, Svelte, etc.).
 - Use a backend framework (Express, NestJS, Django, Flask, Ruby on Rails, etc.).
 
+**Owners.** All team members contributed to the foundation; ongoing maintenance: Erik (frontend), Raphael/Ricardo (Django backend), Leonardo Maes (data-service).
+
 ---
 
 ### Web Major — Real-time features
@@ -218,6 +220,8 @@ We claim **14 mandatory points** plus **1 bonus point**, all listed below. Each 
 - Real-time updates across clients.
 - Handle connection / disconnection gracefully.
 - Efficient message broadcasting.
+
+**Owner.** Ricardo, Erik, Leonardo Maes.
 
 ---
 
@@ -234,6 +238,8 @@ We claim **14 mandatory points** plus **1 bonus point**, all listed below. Each 
 - A profile system (view user information).
 - A friends system (add/remove friends, see friends list).
 
+**Owners.** Ricardo, Raphael, Erik, Leonardo Maes.
+
 ---
 
 ### User Major — Standard user management and authentication
@@ -246,6 +252,8 @@ We claim **14 mandatory points** plus **1 bonus point**, all listed below. Each 
 - Users can add other users as friends and see their online status. *(`/api/follow/*` endpoints + presence-driven status dot.)*
 - Users have a profile page displaying their information. *(`/profile` for self, `/seller/:id` for others.)*
 
+**Owners.** Raphael, Ricardo, Erik.
+
 ---
 
 ### User Major — Advanced permission system
@@ -256,6 +264,8 @@ We claim **14 mandatory points** plus **1 bonus point**, all listed below. Each 
 - View, edit, and delete users (CRUD). *(`/api/users/`, `/api/users/{id}/`, plus admin endpoints `/api/admin/bans/`, `/api/admin/manage/`.)*
 - Roles management (admin, user, guest, moderator, etc.). *(Database enum `role` + status enum; promote/demote endpoints.)*
 - Different views and actions based on user role. *(React `RoleGuard` and `/admin/*` routes; conditional menu items in `Header`.)*
+
+**Owners.** Raphael, Leonardo Maes.
 
 ---
 
@@ -270,6 +280,8 @@ We claim **14 mandatory points** plus **1 bonus point**, all listed below. Each 
 - Set up alerting rules.
 - Secure access to Grafana.
 
+**Owner.** Leonardo Vichi.
+
 ---
 
 ### Web Minor — Advanced search
@@ -278,6 +290,8 @@ We claim **14 mandatory points** plus **1 bonus point**, all listed below. Each 
 
 **Subject requirements**
 - Implement advanced search functionality with filters, sorting, and pagination.
+
+**Owners.** Leonardo Maes, Raphael, Erik.
 
 ---
 
@@ -288,6 +302,8 @@ We claim **14 mandatory points** plus **1 bonus point**, all listed below. Each 
 **Subject requirements**
 - Implement remote authentication with OAuth 2.0 (Google, GitHub, 42, etc.).
 
+**Owners.** Ricardo, Erik, Leonardo Vichi.
+
 ---
 
 ### Web Minor — Notification system *(bonus)*
@@ -297,12 +313,14 @@ We claim **14 mandatory points** plus **1 bonus point**, all listed below. Each 
 **Subject requirements**
 - A complete notification system for all creation, update, and deletion actions.
 
+**Owner.** Ricardo.
+
 ---
 
 ## Individual Contributions
 
-- **Ricardo Mendes — rda-cunh** (PO / Full-Stack). Owned product backlog and release planning. Implemented the real-time chat consumer and presence service (Web Major), the notification fan-out and frontend bell (bonus), the 42 OAuth flow, and the follow ("friends") graph. *Challenges & solutions: TODO — fill before submission.*
-- **Raphael Vieira — rapcampo** (PM / Backend). Coordinated sprints and reviews. Implemented the authentication endpoints (register / login / refresh / profile / password), the admin/permissions layer (ban management, role promotion, role guards), and contributed to listings/orders endpoints. *Challenges & solutions: TODO.*
-- **Leonardo Vichi — lvichi** (Tech Lead / DevOps). Defined the container topology and gateway model. Owns the `Makefile`, the Docker Compose layout, the Nginx + PKI gateway, and the full Prometheus + Grafana monitoring stack with exporters and provisioned dashboards. *Challenges & solutions: TODO.*
-- **Erik Lustosa — ecarvalh** (Frontend Lead). Owns the React app structure, the design system on top of Radix UI + Tailwind, and the integration of every backend feature into the UI (chat window, profile page, admin pages, OAuth callback). *Challenges & solutions: TODO.*
-- **Leonardo Maes — lmaes** (Data Engineer). Designed the MySQL schema and the internal data service (FastAPI + raw SQL), contributed the listings / reviews / search query layer, and supported the admin/permissions backend. *Challenges & solutions: TODO.*
+- **Ricardo Mendes — rda-cunh** (PO / Full-Stack). Owned product backlog and release planning. Implemented the real-time chat consumer and presence service (Web Major), the notification fan-out and frontend bell (bonus), the 42 OAuth flow, and the follow ("friends") graph. Also helped implement JWT authentication.
+- **Raphael Vieira — rapcampo** (PM / Backend). Coordinated sprints and reviews. Implemented the authentication endpoints (register / login / refresh / profile / password), the admin/permissions layer (ban management, role promotion, role guards), and contributed to listings/orders endpoints.
+- **Leonardo Vichi — lvichi** (Tech Lead / DevOps). Defined the container topology and gateway model. Owns the `Makefile`, the Docker Compose layout, the Nginx + PKI gateway, and the full Prometheus + Grafana monitoring stack with exporters and provisioned dashboards.
+- **Erik Lustosa — ecarvalh** (Frontend Lead). Owns the React app structure, the design system on top of Radix UI + Tailwind, and the integration of every backend feature into the UI (chat window, profile page, admin pages, OAuth callback).
+- **Leonardo Maes — lmaes** (Data Engineer). Designed the MySQL schema and the internal data service (FastAPI + raw SQL), contributed the listings / reviews / search query layer, and supported the admin/permissions backend.
