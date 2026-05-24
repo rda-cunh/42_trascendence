@@ -65,9 +65,14 @@ services:
     environment:
       INT_CRT_NAME: ${INT_CRT_NAME:-internal.crt}
       INT_KEY_NAME: ${INT_KEY_NAME:-internal.key}
+      CA_CRT_NAME: ${CA_CRT_NAME:-ca.crt}
       MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-5}
       ALLOWED_EXTENSIONS: ${ALLOWED_EXTENSIONS:-jpg,jpeg,png,gif,webp}
       STORAGE_PATH: ${STORAGE_PATH:-/data/images}
+      CLEANUP_INTERVAL_SECONDS: ${CLEANUP_INTERVAL_SECONDS:-300}
+      CLEANUP_MIN_AGE_SECONDS: ${CLEANUP_MIN_AGE_SECONDS:-3600}
+      BACKEND_LISTING_IMAGES_URL: ${BACKEND_LISTING_IMAGES_URL:-https://backend:8000/api/listings/images/}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
     volumes:
       - certs_data:/certs:ro
       - image_data:/data/images
@@ -75,11 +80,11 @@ services:
     depends_on:
       pki-init:
         condition: service_completed_successfully
+    working_dir: /app
     entrypoint: []
     command: >
       sh -c "
-      pip install -q fastapi uvicorn python-multipart pillow &&
-      cd /app &&
+      pip install --no-cache-dir -r requirements.txt &&
       exec uvicorn main:app
       --host 0.0.0.0
       --port 8000

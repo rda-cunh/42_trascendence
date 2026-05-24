@@ -46,8 +46,6 @@ services:
     container_name: grafana
     environment:
       - GF_SERVER_ROOT=https://127.0.0.1/metrics/
-      #- GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
-      #- GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
       - GF_AUTH_PROXY_ENABLED=true
       - GF_AUTH_PROXY_HEADER_NAME=X-WEBAUTH-USER
       - GF_AUTH_PROXY_HEADER_PROPERTY=email
@@ -83,6 +81,8 @@ services:
         condition: service_started
       pki-init:
         condition: service_completed_successfully
+      data-service:
+        condition: service_started
 
   mysqld-exporter:
     image: prom/mysqld-exporter:v0.19.0
@@ -129,7 +129,7 @@ services:
     build:
       context: ./cadvisor
       args:
-        CADVISOR_VERSION: 0.56.2
+        CADVISOR_VERSION: "0.56.2"
     container_name: cadvisor
     init: true
     environment:
