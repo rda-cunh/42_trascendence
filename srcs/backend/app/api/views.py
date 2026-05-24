@@ -885,10 +885,9 @@ class seller_product(APIView):
 
 # orders API
 
-class order_create(APIView):
+class create_checkout(APIView):
     permission_classes = [IsAuthenticated]
-
-    def get(self, request):
+    def post(self, request):
         items = request.data.get("items", [])
         if not items:
             return Response({"details": "Cart is empty"},
@@ -928,6 +927,13 @@ class order_create(APIView):
                 {"checkout_url": session.url, "session_id": session.id},
                 status=status.HTTP_201_CREATED,
                 )
+
+
+class order_create(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return proxy_request("GET", f"/orders/")
 
     def post(self, request, session_id: str):
         try:
