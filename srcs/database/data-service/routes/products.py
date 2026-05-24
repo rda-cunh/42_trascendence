@@ -89,6 +89,13 @@ def _recalc_listing_rating(cursor, product_id: int) -> None:
 		(product_id, product_id, product_id)
 	)
 
+@router.get('/images/', response_model=list[ProductImagesResponse])
+def	get_all_images(db=Depends(get_db_dep)):
+	conn, cursor = db
+	cursor.execute("SELECT pi.id, pi.product_id, pi.image_hash, pi.display_order, pi.created_at FROM product_images pi JOIN products p ON p.id = pi.product_id WHERE p.status != 'Deleted'")
+	rows = cursor.fetchall()
+	return [ProductImagesResponse(**row) for row in rows]
+
 # POST /listings
 @router.post('/', response_model=ProductResponse, status_code=201)
 def	create_product(product_in: ProductCreate, db=Depends(get_db_dep)):
@@ -245,7 +252,6 @@ def delete_product(product_id: int, db=Depends(get_db_dep)):
 
 
 # PRODUCT IMAGES
-
 @router.post('/{product_id}/images/', response_model=ProductImagesResponse, status_code=201)
 def	create_product_image(product_id: int, image_in: ProductImages, db=Depends(get_db_dep)):
 	conn, cursor = db

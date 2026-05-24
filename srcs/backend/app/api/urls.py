@@ -25,6 +25,7 @@ from .views import (
     seller_id,
     listings_image_id,
     listings_image,
+	listing_image_full,
     listings_review,
     listings_reviews,
     user_list,
@@ -55,6 +56,7 @@ from .views import (
     manage_admins,
     manage_bans,
     manage_users,
+	admin_dashboard,
     grafana_auth,
     follow_action,
     follow_following,
@@ -66,17 +68,16 @@ from .views import (
 urlpatterns = [
         
         # listing paths
-        path("listings/<int:product_id>/",                          listing_id.as_view()),
-        path("listings/",                                           listing_full.as_view()),
-        path("listings/seller/<int:product_id>/",                   seller_product.as_view()),
-        path("listings/seller/<int:user_id>/",                      seller_id.as_view()),
-        path("listings/<int:product_id>/images/<int:image_id>/",    listings_image_id.as_view()),
-        path("listings/<int:product_id>/images/",                   listings_image.as_view()),
-        path("listings/<int:product_id>/review/",                   listings_review.as_view()),
-        path("listings/<int:product_id>/review/<int:review_id>/",   listings_review.as_view()),
-        path("listings/<int:product_id>/reviews/",                  listings_reviews.as_view()),
-        path("listings/<int:product_id>/reviews/<int:review_id>/",  listings_reviews.as_view()),
-
+        path("listings/<int:product_id>/",          listing_id.as_view()),
+        path("listings/",                           listing_full.as_view()),
+        path("listings/seller/<int:product_id>/",   seller_product.as_view()),
+        path("listings/seller/<int:user_id>/",      seller_id.as_view()),
+        path("listings/images/",                    listing_image_full.as_view()),
+        path("listings/<int:product_id>/images/<int:image_id>/", listings_image_id.as_view()),
+        path("listings/<int:product_id>/images/",   listings_image.as_view()),
+        path("listings/<int:product_id>/review/",   listings_review.as_view()),
+        path("listings/<int:product_id>/review/<int:review_id>/", listings_review.as_view()),
+        
         # auth paths [everything under /api/auth]
         path("auth/register/",                      auth_register.as_view()),
         path("auth/login/",                         auth_login.as_view()),
@@ -121,16 +122,17 @@ urlpatterns = [
         # public paths
         path("public/listings/<int:product_id>/",   public_listing_id.as_view()),
         path("public/listings/",                    public_listing_full.as_view()),
-        path("public/users/", public_user_list.as_view()),
-    path("public/users/<int:user_id>/", public_user_id.as_view()),
+        path("public/users/",                       public_user_list.as_view()),
+        path("public/users/<int:user_id>/",         public_user_id.as_view()),
 
     # admin paths
-    path("admin/users/<int:user_id>/", manage_users.as_view()),
-    path("admin/users/", admin_users.as_view()),
+        path("admin/users/<int:user_id>/",          manage_users.as_view()),
+        path("admin/users/",                        admin_users.as_view()),
         path("admin/bans/<int:user_id>/",           manage_bans.as_view()),
         path("admin/bans/",                         admin_bans.as_view()),
         path("admin/manage/<int:user_id>/",         manage_admins.as_view()),
         path("admin/grafana/",                      grafana_auth.as_view()),
+        path("admin/dashboard/",                    admin_dashboard.as_view()),
 
 
 ]
