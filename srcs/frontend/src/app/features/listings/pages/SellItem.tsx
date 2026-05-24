@@ -5,7 +5,10 @@ import { useAuth } from "@/app/core/contexts/AuthContext";
 import { ShaderPreview } from "@/app/features/products/components/ShaderPreview";
 import { api } from "@/app/core/lib/api";
 import { buildShaderDescription, DEFAULT_FRAGMENT_SHADER } from "@/app/core/lib/shaders";
-import { getShaderListingSlug, getShaderListingValidationError } from "@/app/core/lib/shaderListingForm";
+import {
+  getShaderListingSlug,
+  getShaderListingValidationError,
+} from "@/app/core/lib/shaderListingForm";
 import { toast } from "sonner";
 import { useImageUpload, ImageUploadResult } from "../hooks/useImageUpload";
 

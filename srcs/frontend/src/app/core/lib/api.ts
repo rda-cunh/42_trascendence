@@ -1,12 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Review } from "@/app/core/types";
 import { API_URL, HttpClient } from "./http";
-import {
-  getAccessToken,
-  mapAdminUser,
-  mapOrder,
-  normalizeProfileResponse,
-} from "./mappers";
+import { getAccessToken, mapAdminUser, mapOrder, normalizeProfileResponse } from "./mappers";
 
 export type { ApiError } from "./http";
 export {

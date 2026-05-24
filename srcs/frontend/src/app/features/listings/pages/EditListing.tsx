@@ -20,7 +20,10 @@ import {
   DEFAULT_FRAGMENT_SHADER,
   parseShaderDescription,
 } from "@/app/core/lib/shaders";
-import { getShaderListingSlug, getShaderListingValidationError } from "@/app/core/lib/shaderListingForm";
+import {
+  getShaderListingSlug,
+  getShaderListingValidationError,
+} from "@/app/core/lib/shaderListingForm";
 import { useImageUpload, ImageUploadResult } from "../hooks/useImageUpload";
 import { useAsyncEffect } from "@/app/core/hooks/useAsyncEffect";
 

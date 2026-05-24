@@ -150,11 +150,7 @@ function normalizeOrderStatus(status: unknown): OrderStatus {
   if (value === "delivered" || value === "done") return "completed";
   if (value === "cancelled" || value === "refunded") return "cancelled";
 
-  if (
-    value === "processing" ||
-    value === "completed" ||
-    value === "shipped"
-  ) {
+  if (value === "processing" || value === "completed" || value === "shipped") {
     return value;
   }
 
