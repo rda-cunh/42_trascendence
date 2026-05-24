@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import redirect as django_redirect
 from urllib.parse import urlencode
 from .permissions import IsAdminRole
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 
 from . import serializers
 from . import presence as presence_store
@@ -28,7 +28,12 @@ import stripe
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 def to_cents(amount) -> int:
-    return int(Decimal(str(amount)) * 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+    try:
+        return int(
+                (Decimal(str(amount)) * 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+                )
+    except (InvalidOperation, TypeError, ValueError) as e:
+        raise ValueError(f"to_cents got unparseable amount: {amount!r}") from e
 
 # admin check for non-admin exclusive behaviours
 def is_admin(request):
@@ -909,17 +914,17 @@ class create_checkout(APIView):
 
         line_items = []
         for item in items:
-            product_id = item["product_id"]
+            product_id = item["id"]
             quantity = int(item["quantity"])
-            listing = proxy_request("GET", f"/listings/{product_id}")
+            listing = proxy_request("GET", f"/listings/{product_id}/")
             if not listing:
                 return Response({"detail": "Each item needs product_id and quantity"},
                                 status=status.HTTP_400_BAD_REQUEST)
             line_items.append({
                 "price_data": {
                     "currency": "usd",
-                    "product_data": {"name": listing["name"]},
-                    "unit_amount": to_cents(listing["price"]),
+                    "product_data": {"name": listing.data["name"]},
+                    "unit_amount": to_cents(listing.data["price"]),
                     },
                 "quantity": quantity,
                 })
@@ -929,16 +934,17 @@ class create_checkout(APIView):
                     payment_method_types=["card"],
                     line_items=line_items,
                     success_url=(
-                        f"{settings.FRONTEND_SUCCESS_URL}"
+                        f"{settings.STRIPE_SUCCESS_REDIRECT}"
                         f"?session_id={{CHECKOUT_SESSION_ID}}"
                         ),
-                    cancel_url=settings.FRONTEND_CANCEL_URL,
+                    cancel_url=settings.STRIPE_FAIL_REDIRECT,
                     metadata={
-                        "buyer_id": request.user.id
+                        "buyer_id": str(request.user.id)
                         },
                     )
-        except stripe.error.StripeError:
-            return Response({"detail": "Stripe checkout Session failed"},
+        except stripe.error.StripeError as e:
+            return Response({"detail": "Stripe checkout Session failed",
+                             "error": str(e)},
                             status=status.HTTP_502_BAD_GATEWAY)
         return Response(
                 {"checkout_url": session.url, "session_id": session.id},

@@ -223,4 +223,5 @@ OAUTH_FAILURE_REDIRECT = os.getenv("OAUTH_FAILURE_REDIRECT", "https://127.0.0.1/
 
 # Stripe integration
 STRIPE_SECRET_KEY      = os.getenv("STRIPE_SECRET_KEY")
-STRIPE_SUCESS_REDIRECT = os.getenv("STRIPE_SUCCESS_REDIRECT")
+STRIPE_SUCCESS_REDIRECT = os.getenv("STRIPE_SUCCESS_REDIRECT", "https://127.0.0.1/checkout/success")
+STRIPE_FAIL_REDIRECT   = os.getenv("STRIPE_FAIL_REDIRECT", "https://127.0.0.1/checkout/fail")
