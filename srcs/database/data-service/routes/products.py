@@ -89,12 +89,34 @@ def _recalc_listing_rating(cursor, product_id: int) -> None:
 		(product_id, product_id, product_id)
 	)
 
-@router.get('/images/', response_model=list[ProductImagesResponse])
+@router.get('/images/', response_model=list[str])
 def	get_all_images(db=Depends(get_db_dep)):
 	conn, cursor = db
-	cursor.execute("SELECT pi.id, pi.product_id, pi.image_hash, pi.display_order, pi.created_at FROM product_images pi JOIN products p ON p.id = pi.product_id WHERE p.status != 'Deleted'")
-	rows = cursor.fetchall()
-	return [ProductImagesResponse(**row) for row in rows]
+
+	cursor.execute("""
+		SELECT pi.image_hash
+		FROM product_images pi
+		JOIN products p ON p.id = pi.product_id
+		WHERE p.status != 'Deleted'
+		ORDER BY pi.created_at
+	""")
+	product_rows = cursor.fetchall()
+
+	cursor.execute("""
+		SELECT avatar_url
+		FROM users
+		WHERE avatar_url IS NOT NULL
+		  AND avatar_url != ''
+		ORDER BY id
+	""")
+	avatar_rows = cursor.fetchall()
+
+	images = [row['image_hash'] for row in product_rows]
+
+	for row in avatar_rows:
+		images.append(row['avatar_url'].removeprefix('/images/'))
+
+	return images
 
 # POST /listings
 @router.post('/', response_model=ProductResponse, status_code=201)
