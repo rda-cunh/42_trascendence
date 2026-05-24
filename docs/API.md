@@ -189,6 +189,14 @@ This endpoint is for basic user visualization for the social aspect of the marke
 
 These endpoints are for creating and editing orders
 
+#### /api/orders/create-checkout/
+
+- **Allowed methods**:POST
+
+- POST: Creates a new stripe checkout session url for redirection
+  - post(self, request)
+  - **return**: on success, returns a stripe session url and a stripe session id.
+
 #### /api/orders/
 
 - **Allowed methods**: GET, POST
@@ -197,8 +205,8 @@ These endpoints are for creating and editing orders
   - get(self, request, jwt_string)
   - **return**: on success, returns a list of past orders by the user
 
-- POST: Creates a new order for delivery
-  - post(self, request, jwt_string, billing_info)
+- POST: verifies stripe checkout session results and forwards the purchase to db or refuses accordingly
+  - post(self, request, session_id)
   - **return**: on success, returns confirmation of order being processed by stripe
 
 #### /api/orders/{id}/
