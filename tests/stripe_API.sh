@@ -5,16 +5,27 @@ set -uo pipefail
 mkdir -p stripe_tests
 
 : "${STRIPE_SECRET_KEY:?STRIPE_SECRET_KEY must be exported}"
-#STRIPE_SECRET_KEY=""
 
 CURL="curl --show-error --silent --insecure -X"
+METHOD=("GET" "DELETE" "POST" "PATCH")
 HEADER="Content-Type: application/json"
 DOMAIN="https://127.0.0.1/api/"
 STRIPE_API="https://api.stripe.com/v1/"
 DIR="stripe_tests/"
+USER1='{"name": "Rda-cunh", "email": "rda@email.com", "password": "securepass1", "phone": "+351123456789"}'
+
+run_test(){
+	local endpoint=$2
+	local output_file=$3
+	local method=${METHOD[$1]}
+	local body=${4:-null}
+	echo -e "\e[1;31m/api/${endpoint} - ${method}\e[0m"
+	${CURL} ${method} ${DOMAIN}${endpoint} -H "${HEADER}" -d "${body}" > "${DIR}${output_file}.json"
+	sleep .4
+}
 
 USER_LOGIN='{"email":"rda@email.com","password":"securepass1"}'
-CART='{"items":[{"product_id":1,"quantity":2},{"product_id":2,"quantity":3}]}'
+CART='{"items":[{"id":1,"quantity":2},{"id":2,"quantity":3}]}'
 
 run_login_test(){
     local output_file=$1
@@ -66,6 +77,7 @@ json_get(){
 }
 
 # 1. login as a regular user
+run_test 2 "auth/register/" "auth_register_1" "${USER1}"
 run_login_test "user_login" "${USER_LOGIN}"
 USER_TOKEN=$(json_get "${DIR}user_login.json" "access")
 
