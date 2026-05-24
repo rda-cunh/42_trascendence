@@ -41,19 +41,22 @@ export function Orders() {
   const { user, token } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
 
-  const isLoading = useAsyncEffect(async ({ isCancelled }) => {
-    if (!user || !token) return;
+  const isLoading = useAsyncEffect(
+    async ({ isCancelled }) => {
+      if (!user || !token) return;
 
-    const data = await api.getOrders(user.id);
+      const data = await api.getOrders(user.id);
 
-    if (isCancelled()) return;
+      if (isCancelled()) return;
 
-    if (data?.results) {
-      setOrders(data.results);
-    } else if (Array.isArray(data)) {
-      setOrders(data);
-    }
-  }, [user, token]);
+      if (data?.results) {
+        setOrders(data.results);
+      } else if (Array.isArray(data)) {
+        setOrders(data);
+      }
+    },
+    [user, token]
+  );
 
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString("en-US", {

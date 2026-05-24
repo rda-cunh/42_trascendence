@@ -14,11 +14,11 @@ export function PrivacyPolicy() {
             1. Introduction
           </h2>
           <p>
-            This Privacy Policy describes how GameAsset Hub (&ldquo;we&rdquo;,
-            &ldquo;our&rdquo;, &ldquo;us&rdquo;) collects, uses, and protects information you
-            provide when using our platform. GameAsset Hub is a student project developed as
-            part of the 42 school curriculum (ft_transcendence). It is intended for
-            educational and demonstration purposes only.
+            This Privacy Policy describes how GameAsset Hub (&ldquo;we&rdquo;, &ldquo;our&rdquo;,
+            &ldquo;us&rdquo;) collects, uses, and protects information you provide when using our
+            platform. GameAsset Hub is a student project developed as part of the 42 school
+            curriculum (ft_transcendence). It is intended for educational and demonstration purposes
+            only.
           </p>
         </section>
 
@@ -28,20 +28,20 @@ export function PrivacyPolicy() {
           </h2>
           <ul className="list-disc space-y-1 pl-6">
             <li>
-              <strong>Account information:</strong> email address, display name, password
-              (stored hashed and salted), and optional avatar.
+              <strong>Account information:</strong> email address, display name, password (stored
+              hashed and salted), and optional avatar.
             </li>
             <li>
-              <strong>Profile and listing data:</strong> items you publish for sale,
-              descriptions, prices, images, and categories.
+              <strong>Profile and listing data:</strong> items you publish for sale, descriptions,
+              prices, images, and categories.
             </li>
             <li>
-              <strong>Transactional data:</strong> orders, purchases, reviews, and chat
-              messages exchanged with other users.
+              <strong>Transactional data:</strong> orders, purchases, reviews, and chat messages
+              exchanged with other users.
             </li>
             <li>
-              <strong>Technical data:</strong> session identifiers and minimal logs required
-              for security and to operate the service.
+              <strong>Technical data:</strong> session identifiers and minimal logs required for
+              security and to operate the service.
             </li>
           </ul>
         </section>
@@ -63,10 +63,10 @@ export function PrivacyPolicy() {
             4. Data Storage and Security
           </h2>
           <p>
-            Data is stored on servers controlled by the project team. Passwords are hashed
-            and never stored in plain text. All communication between your browser and our
-            backend uses HTTPS. While we take reasonable precautions, no system is fully
-            secure; do not submit sensitive personal data you do not want exposed.
+            Data is stored on servers controlled by the project team. Passwords are hashed and never
+            stored in plain text. All communication between your browser and our backend uses HTTPS.
+            While we take reasonable precautions, no system is fully secure; do not submit sensitive
+            personal data you do not want exposed.
           </p>
         </section>
 
@@ -75,10 +75,10 @@ export function PrivacyPolicy() {
             5. Sharing of Information
           </h2>
           <p>
-            We do not sell your personal data. Information you choose to make public (such as
-            your display name, avatar, listings, and reviews) is visible to other users. We
-            do not share data with third parties except as required to operate the service
-            (for example, OAuth providers if you sign in with them).
+            We do not sell your personal data. Information you choose to make public (such as your
+            display name, avatar, listings, and reviews) is visible to other users. We do not share
+            data with third parties except as required to operate the service (for example, OAuth
+            providers if you sign in with them).
           </p>
         </section>
 
@@ -88,8 +88,8 @@ export function PrivacyPolicy() {
           </h2>
           <p>
             You can update or delete your profile information at any time from your account
-            settings. To request full deletion of your account and associated data, contact
-            the project team.
+            settings. To request full deletion of your account and associated data, contact the
+            project team.
           </p>
         </section>
 
@@ -98,9 +98,9 @@ export function PrivacyPolicy() {
             7. Cookies and Local Storage
           </h2>
           <p>
-            We use cookies and browser local storage strictly to keep you signed in and to
-            remember basic preferences such as your theme. No third-party tracking or
-            advertising cookies are used.
+            We use cookies and browser local storage strictly to keep you signed in and to remember
+            basic preferences such as your theme. No third-party tracking or advertising cookies are
+            used.
           </p>
         </section>
 
@@ -109,18 +109,16 @@ export function PrivacyPolicy() {
             8. Changes to This Policy
           </h2>
           <p>
-            We may update this Privacy Policy as the project evolves. The &ldquo;Last
-            updated&rdquo; date at the top reflects the most recent revision.
+            We may update this Privacy Policy as the project evolves. The &ldquo;Last updated&rdquo;
+            date at the top reflects the most recent revision.
           </p>
         </section>
 
         <section>
-          <h2 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
-            9. Contact
-          </h2>
+          <h2 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">9. Contact</h2>
           <p>
-            For any question related to this Privacy Policy, please contact the project team
-            through the repository associated with this project.
+            For any question related to this Privacy Policy, please contact the project team through
+            the repository associated with this project.
           </p>
         </section>
       </div>

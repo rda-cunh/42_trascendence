@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router";
 import { ArrowLeft, ShoppingCart, CreditCard, MessageCircle } from "lucide-react";
 import { ListingPreview } from "../components/ListingPreview";
@@ -7,6 +7,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { ProductInfo } from "../components/ProductInfo";
 import { ReviewSection } from "../components/ReviewSection";
 import { ProductChatWidget } from "../components/ProductChatWidget";
+import { useAsyncEffect } from "../hooks/useAsyncEffect";
 import { api, isDeletedListing, mapListing } from "../lib/api";
 import { getListingDescription } from "../lib/shaders";
 import { Listing, Review } from "../types";
@@ -19,34 +20,39 @@ export function ProductDetail() {
   const { user } = useAuth();
   const [listing, setListing] = useState<Listing | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [chatOpen, setChatOpen] = useState(false);
 
-  const loadProductData = async () => {
-    if (!id) return;
+  const loadProductData = useCallback(
+    async ({ isCancelled }: { isCancelled: () => boolean }) => {
+      if (!id) return;
 
-    try {
-      const [listingData, reviewsData] = await Promise.all([api.getListing(id), api.getReviews(id)]);
+      try {
+        const [listingData, reviewsData] = await Promise.all([
+          api.getListing(id),
+          api.getReviews(id),
+        ]);
 
-      if (isDeletedListing(listingData)) {
-        setListing(null);
-      } else if (listingData?.product_id || listingData?.id) {
-        setListing(mapListing(listingData));
+        if (isCancelled()) return;
+
+        if (isDeletedListing(listingData)) {
+          setListing(null);
+        } else if (listingData?.product_id || listingData?.id) {
+          setListing(mapListing(listingData));
+        }
+
+        if (Array.isArray(reviewsData)) {
+          setReviews(reviewsData);
+        }
+      } catch (err) {
+        console.error("Failed to load listing:", err);
       }
+    },
+    [id]
+  );
 
-      if (Array.isArray(reviewsData)) {
-        setReviews(reviewsData);
-      }
-    } catch (err) {
-      console.error("Failed to load listing:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadProductData();
-  }, [id]);
+  const isLoading = useAsyncEffect(loadProductData, [loadProductData], {
+    enabled: !!id,
+  });
 
   const handleAddToCart = () => {
     if (!listing) return;
@@ -101,7 +107,7 @@ export function ProductDetail() {
   };
 
   const handleReviewsChanged = () => {
-    loadProductData().catch(console.error);
+    void loadProductData({ isCancelled: () => false });
   };
 
   if (isLoading) {
@@ -155,10 +161,7 @@ export function ProductDetail() {
             <div className="flex gap-3">
               {user && listing.seller_id && String(user.id) === String(listing.seller_id) ? (
                 <>
-                  <Link
-                    to={`/listing/${listing.id}/edit`}
-                    className="btn-primary flex-1 px-6 py-3"
-                  >
+                  <Link to={`/listing/${listing.id}/edit`} className="btn-primary flex-1 px-6 py-3">
                     Edit
                   </Link>
                   <button onClick={handleDelete} className="btn-secondary px-6 py-3">

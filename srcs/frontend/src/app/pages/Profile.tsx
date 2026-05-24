@@ -28,16 +28,19 @@ export function Profile() {
     errorContext: "profile photo",
   });
 
-  const isLoadingProducts = useAsyncEffect(async ({ isCancelled }) => {
-    if (!user?.id) return;
+  const isLoadingProducts = useAsyncEffect(
+    async ({ isCancelled }) => {
+      if (!user?.id) return;
 
-    const profile = await api.getProfile();
-    const listings = Array.isArray(profile?.listings) ? profile.listings : [];
+      const profile = await api.getProfile();
+      const listings = Array.isArray(profile?.listings) ? profile.listings : [];
 
-    if (isCancelled()) return;
+      if (isCancelled()) return;
 
-    setProducts(listings.map(mapListing));
-  }, [user?.id]);
+      setProducts(listings.map(mapListing));
+    },
+    [user?.id]
+  );
 
   const handleSave = async () => {
     try {

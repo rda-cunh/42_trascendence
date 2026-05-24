@@ -20,10 +20,7 @@ import {
   DEFAULT_FRAGMENT_SHADER,
   parseShaderDescription,
 } from "../lib/shaders";
-import {
-  getShaderListingSlug,
-  getShaderListingValidationError,
-} from "../lib/shaderListingForm";
+import { getShaderListingSlug, getShaderListingValidationError } from "../lib/shaderListingForm";
 import { useImageUpload, ImageUploadResult } from "../hooks/useImageUpload";
 import { useAsyncEffect } from "../hooks/useAsyncEffect";
 
@@ -394,7 +391,7 @@ export function EditListing() {
               <button
                 type="button"
                 onClick={() => setActivePreview(null)}
-                className="absolute right-3 top-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
+                className="absolute top-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
               >
                 <X className="h-5 w-5" />
               </button>

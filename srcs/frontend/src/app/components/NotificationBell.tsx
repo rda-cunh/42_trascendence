@@ -104,7 +104,9 @@ export function NotificationBell() {
     };
 
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Toggle the dropdown. When opening, optimistically mark currently-visible

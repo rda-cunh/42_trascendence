@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { MessageCircle, Send, X } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useProductChat } from "../hooks/useProductChat";
@@ -73,13 +73,18 @@ export function ProductChatWidget({
   onOpenChange,
 }: ProductChatWidgetProps) {
   const { user } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [draft, setDraft] = useState("");
 
-  // Sync external control
-  useEffect(() => {
-    if (typeof open === "boolean") setIsOpen(open);
-  }, [open]);
+  const isControlled = typeof open === "boolean";
+  const isOpen = isControlled ? open : internalOpen;
+
+  const setOpen = (next: boolean) => {
+    if (!isControlled) {
+      setInternalOpen(next);
+    }
+    onOpenChange?.(next);
+  };
 
   const currentUserId = Number(user?.id);
   const normalizedListingId =
@@ -137,7 +142,7 @@ export function ProductChatWidget({
 
             <button
               type="button"
-              onClick={() => setIsOpen(false)}
+              onClick={() => setOpen(false)}
               className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
             >
               <X className="h-4 w-4" />
@@ -193,8 +198,7 @@ export function ProductChatWidget({
         type="button"
         onClick={() => {
           const next = !isOpen;
-          setIsOpen(next);
-          onOpenChange?.(next);
+          setOpen(next);
         }}
         className="fixed bottom-4 left-4 z-50 inline-flex h-14 w-14 items-center justify-center rounded-full bg-purple-600 text-white shadow-lg transition-colors hover:bg-purple-700"
         aria-label={isOpen ? "Close product chat" : "Open product chat"}

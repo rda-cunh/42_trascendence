@@ -166,7 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const loginResp = await api.login(data.email, data.password);
         newToken = getAccessToken(loginResp);
-      } catch (err) {
+      } catch {
         clearAuthState();
         throw new Error("Register response did not include a valid access token");
       }

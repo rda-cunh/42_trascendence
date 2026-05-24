@@ -4,14 +4,8 @@ import { Code2, DollarSign, FileText, ImagePlus, Save, Tag, Trash2, Upload, X } 
 import { useAuth } from "../contexts/AuthContext";
 import { ShaderPreview } from "../components/ShaderPreview";
 import { api } from "../lib/api";
-import {
-  buildShaderDescription,
-  DEFAULT_FRAGMENT_SHADER,
-} from "../lib/shaders";
-import {
-  getShaderListingSlug,
-  getShaderListingValidationError,
-} from "../lib/shaderListingForm";
+import { buildShaderDescription, DEFAULT_FRAGMENT_SHADER } from "../lib/shaders";
+import { getShaderListingSlug, getShaderListingValidationError } from "../lib/shaderListingForm";
 import { toast } from "sonner";
 import { useImageUpload, ImageUploadResult } from "../hooks/useImageUpload";
 

@@ -26,24 +26,39 @@ export function ShaderPreview({
     const container = containerRef.current;
     if (!container) return;
 
-    setRenderError(null);
+    let cancelled = false;
+    const reportError = (message: string | null) => {
+      Promise.resolve().then(() => {
+        if (!cancelled) {
+          setRenderError(message);
+        }
+      });
+    };
+
+    reportError(null);
 
     const canvas = document.createElement("canvas");
     const gl =
-      (canvas.getContext && (canvas.getContext("webgl2", { antialias: true }) as WebGLRenderingContext)) ||
-      (canvas.getContext && (canvas.getContext("webgl", { antialias: true }) as WebGLRenderingContext));
+      (canvas.getContext &&
+        (canvas.getContext("webgl2", { antialias: true }) as WebGLRenderingContext)) ||
+      (canvas.getContext &&
+        (canvas.getContext("webgl", { antialias: true }) as WebGLRenderingContext));
 
     if (!gl) {
-      setRenderError("WebGL is not available in this environment.");
-      return;
+      reportError("WebGL is not available in this environment.");
+      return () => {
+        cancelled = true;
+      };
     }
 
     let renderer: THREE.WebGLRenderer;
     try {
       renderer = new THREE.WebGLRenderer({ canvas, context: gl, alpha: true });
     } catch (err) {
-      setRenderError(err instanceof Error ? err.message : "Error creating WebGL renderer");
-      return;
+      reportError(err instanceof Error ? err.message : "Error creating WebGL renderer");
+      return () => {
+        cancelled = true;
+      };
     }
 
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -64,10 +79,12 @@ export function ShaderPreview({
         uniforms,
       });
     } catch (err) {
-      setRenderError(err instanceof Error ? err.message : "Shader compilation failed");
+      reportError(err instanceof Error ? err.message : "Shader compilation failed");
       renderer.dispose();
       renderer.domElement.remove();
-      return;
+      return () => {
+        cancelled = true;
+      };
     }
 
     const mesh = new THREE.Mesh(geometry, material);
@@ -89,7 +106,7 @@ export function ShaderPreview({
       try {
         renderer.render(scene, camera);
       } catch (err) {
-        setRenderError(err instanceof Error ? err.message : "Shader failed to render");
+        reportError(err instanceof Error ? err.message : "Shader failed to render");
         return;
       }
       frameId = requestAnimationFrame(animate);
@@ -102,6 +119,7 @@ export function ShaderPreview({
     animate();
 
     return () => {
+      cancelled = true;
       cancelAnimationFrame(frameId);
       observer.disconnect();
       scene.remove(mesh);

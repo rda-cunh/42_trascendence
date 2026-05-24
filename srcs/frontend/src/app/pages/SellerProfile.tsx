@@ -169,7 +169,11 @@ export function SellerProfile() {
                       : "border border-white bg-white text-purple-700 hover:bg-purple-50"
                   } disabled:cursor-not-allowed disabled:opacity-60`}
                 >
-                  {isFollowing ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+                  {isFollowing ? (
+                    <UserCheck className="h-4 w-4" />
+                  ) : (
+                    <UserPlus className="h-4 w-4" />
+                  )}
                   {isFollowPending ? "Updating..." : isFollowing ? "Following" : "Follow"}
                 </button>
                 <button
@@ -178,7 +182,7 @@ export function SellerProfile() {
                     navigate("/chat");
                     toast.success("Open Messages to start a conversation with this seller");
                   }}
-                  className="inline-flex items-center gap-2 rounded-lg border border-white bg-white text-purple-700 px-4 py-2 hover:bg-purple-50"
+                  className="inline-flex items-center gap-2 rounded-lg border border-white bg-white px-4 py-2 text-purple-700 hover:bg-purple-50"
                 >
                   Chat
                 </button>

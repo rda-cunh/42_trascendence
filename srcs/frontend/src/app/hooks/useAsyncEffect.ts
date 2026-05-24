@@ -17,14 +17,19 @@ export function useAsyncEffect(
   const { enabled = true, onError } = options;
   const [isLoading, setIsLoading] = useState(enabled);
   const effectRef = useRef(effect);
+  const onErrorRef = useRef(onError);
+  const [dependency0, dependency1, dependency2, dependency3, dependency4] = dependencies;
 
   useEffect(() => {
     effectRef.current = effect;
   }, [effect]);
 
   useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+
+  useEffect(() => {
     if (!enabled) {
-      setIsLoading(false);
       return;
     }
 
@@ -39,8 +44,8 @@ export function useAsyncEffect(
         });
       } catch (error) {
         if (!cancelled) {
-          if (onError) {
-            onError(error);
+          if (onErrorRef.current) {
+            onErrorRef.current(error);
           } else {
             console.error("Async effect failed", error);
           }
@@ -57,7 +62,15 @@ export function useAsyncEffect(
     return () => {
       cancelled = true;
     };
-  }, [enabled, ...dependencies]);
+  }, [
+    enabled,
+    dependencies.length,
+    dependency0,
+    dependency1,
+    dependency2,
+    dependency3,
+    dependency4,
+  ]);
 
-  return isLoading;
+  return enabled ? isLoading : false;
 }
