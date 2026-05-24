@@ -835,16 +835,6 @@ class listings_image_id(APIView):
             raise PermissionDenied("You do not have permission to edit this product.")
         return proxy_request("DELETE", f"/listings/{product_id}/images/{image_id}")
 
-class listings_review(APIView):
-    def post(self, request, product_id):
-        return proxy_request("POST", f"/listings/{product_id}/review/")
-
-    def get(self, request, product_id):
-        permission_classes = [AllowAny]
-        return proxy_request("GET", f"/listings/{product_id}/review/")
-
-    def patch(self, request, product_id, review_id):
-        return proxy_request("PATCH", f"/listings/{product_id}/review/{review_id}/")
 
 class listings_reviews(APIView):
     def get(self, request, product_id, review_id=None):

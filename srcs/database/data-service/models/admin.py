@@ -1,8 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
-from decimal import Decimal
 from datetime import datetime
-from enum import Enum
 
 class UserInfo(BaseModel):
 	id:			int
@@ -12,6 +10,10 @@ class UserInfo(BaseModel):
 	phone:		Optional[str] = None
 	created_at:	datetime
 	updated_at:	datetime
+
+class AdminUserInfo(UserInfo):
+	role:		str
+	status:		str
 
 class DashboardInfo(BaseModel):
 	total_revenue:		int
