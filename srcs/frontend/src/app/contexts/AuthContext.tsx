@@ -18,7 +18,30 @@ interface AuthContextType {
   loginWithOAuth: (accessToken: string, oauthUser?: User) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const missingAuthProviderError = "useAuth must be used within AuthProvider";
+
+const fallbackAuthContext: AuthContextType = {
+  user: null,
+  token: null,
+  loading: false,
+  login: async () => {
+    throw new Error(missingAuthProviderError);
+  },
+  register: async () => {
+    throw new Error(missingAuthProviderError);
+  },
+  logout: async () => {
+    throw new Error(missingAuthProviderError);
+  },
+  updateUser: async () => {
+    throw new Error(missingAuthProviderError);
+  },
+  loginWithOAuth: async () => {
+    throw new Error(missingAuthProviderError);
+  },
+};
+
+const AuthContext = createContext<AuthContextType>(fallbackAuthContext);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -261,9 +284,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
-  return context;
+  return useContext(AuthContext);
 }

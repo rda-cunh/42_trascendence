@@ -28,7 +28,7 @@ function Layout() {
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 transition-colors dark:bg-gray-950">
       <Header />
-      <main className="flex-1">
+      <main className="flex-1 app-container py-6">
         <Outlet />
       </main>
       <Footer />
