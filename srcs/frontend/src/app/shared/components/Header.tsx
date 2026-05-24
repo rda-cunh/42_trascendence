@@ -8,6 +8,7 @@ import {
   LogOut,
   MessageCircle,
   Shield,
+  Server,
 } from "lucide-react";
 import { useTheme } from "@/app/core/contexts/ThemeContext";
 import { useAuth } from "@/app/core/contexts/AuthContext";
@@ -80,9 +81,14 @@ export function Header() {
                   </span>
                 </Link>
                 {user.role === "admin" && (
-                  <Link to="/admin" className="btn-icon" title="Admin Panel">
-                    <Shield className="h-5 w-5" />
-                  </Link>
+                  <>
+                    <Link to="/admin" className="btn-icon" title="Admin Panel">
+                      <Shield className="h-5 w-5" />
+                    </Link>
+                    <a href="/metrics/" className="btn-icon" title="Metrics">
+                      <Server className="h-5 w-5" />
+                    </a>
+                  </>
                 )}
                 <button
                   onClick={() => {
