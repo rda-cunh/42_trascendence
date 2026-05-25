@@ -120,9 +120,62 @@ These endpoints are related to the creation, deletion and editing of product lis
   - delete(self, request, jwt_string, product_id)
   - **return**: on success, returns a deletion confirmation
 
+#### /api/listings/seller/{user_id}/
+
+- **Allowed methods**: GET
+
+- GET: A list of products from the specific seller
+  - get(self, request, user_id)
+  - **return**: on success, returns the list of product information
+
+#### /api/listings/seller/{product_id}/
+
+- **Allowed methods**: GET
+
+- GET: Returns a product from that seller
+  - get(self, request, product_id)
+  - **return**: on success, returns the product information
+
+### Review
+
+These endpoints are for creating and editing orders
+
+#### /api/listings/{pruduct_id}/review/
+
+- **Allowed methods**: GET, POST
+
+- GET: Shows list of reviews for the product
+  - get(self, request, product_id)
+  - **return**: on success, returns a list with the reviews for the product
+
+- POST: Creates a new review for product
+  - post(self, request, jwt_string)
+  - **return**: on success, returns the review_id and if succeeded
+  
+
+#### /api/listings/{pruduct_id}/review/{review_id}/
+
+- **Allowed methods**: GET, PATCH
+
+- GET: Shows a specific order information
+  - get(self, request, jwt_string, order_id)
+  - **return**: on success, returns a list with the order information
+  
+- PATCH: Make changes the review for a product
+  - get(self, request, jwt_string, product_id, review_id)
+  - **return**: on success, returns confirmation of the review update
+
 ### Users
 
 This endpoint is for basic user visualization for the social aspect of the marketplace
+
+#### /api/users/
+
+- **Allowed methods**: GET
+
+- GET: Show a list of users
+  - get(self, request, user_id)
+  - **return**: on success, returns a list of users
 
 #### /api/users/{id}/
 
@@ -136,6 +189,14 @@ This endpoint is for basic user visualization for the social aspect of the marke
 
 These endpoints are for creating and editing orders
 
+#### /api/orders/create-checkout/
+
+- **Allowed methods**:POST
+
+- POST: Creates a new stripe checkout session url for redirection
+  - post(self, request)
+  - **return**: on success, returns a stripe session url and a stripe session id.
+
 #### /api/orders/
 
 - **Allowed methods**: GET, POST
@@ -144,8 +205,8 @@ These endpoints are for creating and editing orders
   - get(self, request, jwt_string)
   - **return**: on success, returns a list of past orders by the user
 
-- POST: Creates a new order for delivery
-  - post(self, request, jwt_string, billing_info)
+- POST: verifies stripe checkout session results and forwards the purchase to db or refuses accordingly
+  - post(self, request, session_id)
   - **return**: on success, returns confirmation of order being processed by stripe
 
 #### /api/orders/{id}/
@@ -180,13 +241,13 @@ Auth required: Yes (Bearer header)
 Lists the users that `user_id` follows. Only `Active` users returned, sorted by name ascending. Optional pagination: `?limit=N` or `?limit=N&offset=M`.
 Body: (none)
 Returns: [ { user_id, name, avatar_url, following_since } ]
-Auth required: No
+Auth required: Yes (Bearer header)
 
 #### GET /api/follow/followers/{user_id}/
 Lists the users following `user_id`. Same filtering, sorting, and pagination as `/following/`.
 Body: (none)
 Returns: [ { user_id, name, avatar_url, following_since } ]
-Auth required: No
+Auth required: Yes (Bearer header)
 
 #### GET /api/follow/counts/{user_id}/
 Followers and following counts in a single response. Counts only include `Active` users, so they match the lengths of the list endpoints.
@@ -198,7 +259,49 @@ Auth required: No
 Feed of active product listings posted by every user that `user_id` follows, newest first. Each item carries both the listing and the seller info so the frontend can render a card without extra requests. Optional pagination: `?limit=N` (1–100) or `?limit=N&offset=M`.
 Body: (none)
 Returns: [ { listing: { id, name, slug, price, created_at, image_hash }, user: { user_id, name, avatar_url, following_since } } ]
-Auth required: No
+Auth required: Yes (Bearer header)
+
+### Admin
+
+#### /api/admin/bans/
+
+- **Allowed methods**: GET
+
+- GET: Show a list of banned users
+  - get(self, request)
+  - **return**: on success, returns a list of banned users
+
+#### /api/admin/bans/{user_id}/
+
+- **Allowed methods**: POST, DELETE
+
+- POST: Bans a user 
+  - post(self, request, user_id)
+  - **return**: on success, returns status and a message
+
+- DELETE: Unbans a user
+  - post(self, request, user_id)
+  - **return**: on success, returns the status change
+
+#### /api/admin/manage/
+
+- **Allowed methods**: GET
+
+- GET: Show a list of admins
+  - get(self, request)
+  - **return**: on success, returns a list of current admins
+
+#### /api/admin/bans/{user_id}/
+
+- **Allowed methods**: POST, DELETE
+
+- POST: create a new admin user 
+  - post(self, request, user_id)
+  - **return**: on success, returns status and a message
+
+- DELETE: removes an admin user
+  - post(self, request, user_id)
+  - **return**: on success, returns the status change
 
 ### Presence / Online Status
 
@@ -217,6 +320,38 @@ Body: (none)
 Returns: { "1": true, "2": false, "3": true }
 Auth required: No
 
-## Database APIs
-
 ## Public APIs
+
+#### /api/public/users/
+
+- **Allowed methods**: GET
+
+- GET: Show a list of users
+  - get(self, request, user_id)
+  - **return**: on success, returns a list of users
+
+#### /api/public/users/{id}/
+
+- **Allowed methods**: GET
+
+- GET: Show the individual profile of a user and their products
+  - get(self, request, user_id)
+  - **return**: on success, returns basic user information and a list of their owned products
+
+#### /api/listings/
+
+- **Allowed methods**: GET, POST 
+
+> note: not sure if the sorting should be done on frontend level or backend level in this case
+
+- GET: Show a given number of items and sort type
+  - get(self, request, list_size, sort_type)
+  - **return**: on success, returns a list of products
+
+#### /api/listings/{id}/
+
+- **Allowed methods**: GET, PATCH, DELETE
+
+- GET: returns the information of a specific product
+  - get(self, request, product_id)
+  - **return**: on success, returns the full product information
