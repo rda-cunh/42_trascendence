@@ -95,14 +95,6 @@ No AI-generated code was committed without being read, simplified, and tested by
 - **Code review**: GitHub Pull Requests — at least one reviewer required per significant change.
 - **Containerisation**: every service runs in Docker; the full stack starts with a single `make` command.
 
-### Selected meeting log
-
-| Date | Topic |
-|---|---|
-| 2026-02-04 | Discussion of viable project ideas |
-| 2026-02-12 | Marketplace direction agreed with new member |
-| 2026-02-17 | Final team formed, roles and modules locked in |
-| 2026-02-20 | Repo, README skeleton, and base project structure created |
 
 ## Technical Stack
 
