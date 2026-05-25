@@ -24,3 +24,6 @@ class DashboardInfo(BaseModel):
 	revenue_overview:	list[int]
 	months:				list[str]
 
+class AdminUserInfo(UserInfo):
+	role:		str
+	status:		str

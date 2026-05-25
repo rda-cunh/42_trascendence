@@ -26,7 +26,6 @@ from .views import (
     listings_image_id,
     listings_image,
 	listing_image_full,
-    listings_review,
     listings_reviews,
     user_list,
     public_user_list,
@@ -63,6 +62,7 @@ from .views import (
     follow_followers,
     follow_counts,
     follow_feed,
+    create_checkout,
 )
 
 urlpatterns = [
@@ -75,8 +75,6 @@ urlpatterns = [
         path("listings/images/",                                    listing_image_full.as_view()),
         path("listings/<int:product_id>/images/<int:image_id>/",    listings_image_id.as_view()),
         path("listings/<int:product_id>/images/",                   listings_image.as_view()),
-        path("listings/<int:product_id>/review/",                   listings_review.as_view()),
-        path("listings/<int:product_id>/review/<int:review_id>/",   listings_review.as_view()),
         path("listings/<int:product_id>/reviews/",                  listings_reviews.as_view()),
         path("listings/<int:product_id>/reviews/<int:review_id>/",  listings_reviews.as_view()),
 
@@ -116,6 +114,7 @@ urlpatterns = [
         path("orders/<int:order_id>/",              order_id.as_view()),
         path("orders/",                             order_create.as_view()),
         path("payment/<int:order_id>/",             payment_id.as_view()),
+        path("orders/create-checkout/",             create_checkout.as_view()),
 
         # user paths
         path("users/",                              user_list.as_view()),
