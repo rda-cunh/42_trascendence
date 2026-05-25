@@ -241,9 +241,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await api.logout();
       }
     } catch {
-      // TODO: Clear local auth state even if server logout fails.
+      // Server logout failed; still clear local session below.
+    } finally {
+      clearAuthState();
     }
-    clearAuthState();
   };
 
   const updateUser = async (data: Partial<User>) => {

@@ -20,7 +20,24 @@ export interface ListingImageRecord {
   created_at: string;
 }
 
-type ListingStatus = "Draft" | "Active" | "Paused" | "Deleted";
+export type ListingStatus = "Draft" | "Active" | "Paused" | "Deleted";
+
+export interface AdminDashboardData {
+  total_revenue: number;
+  total_users: number;
+  total_orders: number;
+  active_listings: number;
+  orders_trend: number[];
+  revenue_overview: number[];
+  months: string[];
+}
+
+export interface GetListingsFilters {
+  status?: ListingStatus;
+  search?: string;
+  page?: number;
+  seller_id?: number;
+}
 
 class ApiClient extends HttpClient {
   refreshToken() {
@@ -80,9 +97,12 @@ class ApiClient extends HttpClient {
   }
 
   // LISTINGS
-  getListings(filters?: { status?: ListingStatus }) {
+  getListings(filters?: GetListingsFilters) {
     const params = new URLSearchParams();
     if (filters?.status) params.set("status", filters.status);
+    if (filters?.search?.trim()) params.set("search", filters.search.trim());
+    if (filters?.page && filters.page > 0) params.set("page", String(filters.page));
+    if (filters?.seller_id) params.set("seller_id", String(filters.seller_id));
 
     const query = params.toString();
     return this.request<any>("GET", `/listings/${query ? `?${query}` : ""}`);
@@ -130,6 +150,18 @@ class ApiClient extends HttpClient {
 
   deleteUser(userId: string | number) {
     return this.request<void>("DELETE", `/admin/users/${userId}/`, {});
+  }
+
+  getAdminDashboard() {
+    return this.request<AdminDashboardData>("GET", "/admin/dashboard/");
+  }
+
+  promoteToAdmin(userId: string | number) {
+    return this.request<any>("POST", `/admin/manage/${userId}/`, {}).then(mapAdminUser);
+  }
+
+  revokeAdmin(userId: string | number) {
+    return this.request<any>("DELETE", `/admin/manage/${userId}/`, {}).then(mapAdminUser);
   }
 
   // ORDERS

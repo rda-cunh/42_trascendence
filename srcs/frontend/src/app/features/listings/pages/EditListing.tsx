@@ -25,6 +25,7 @@ import {
   getShaderListingValidationError,
 } from "@/app/core/lib/shaderListingForm";
 import { useImageUpload, ImageUploadResult } from "../hooks/useImageUpload";
+import { UploadProgressBar } from "@/app/shared/components/UploadProgressBar";
 import { useAsyncEffect } from "@/app/core/hooks/useAsyncEffect";
 
 type EditableImage = {
@@ -309,6 +310,10 @@ export function EditListing() {
                   <Upload className="h-4 w-4" />
                   <span>{imageUpload.isUploading ? "Uploading..." : "Upload image"}</span>
                 </button>
+                <UploadProgressBar
+                  progress={imageUpload.progress}
+                  isUploading={imageUpload.isUploading}
+                />
               </div>
             </div>
 

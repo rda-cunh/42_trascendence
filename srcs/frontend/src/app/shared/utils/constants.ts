@@ -64,8 +64,10 @@ export const ROUTES = {
   LOGIN: "/login",
   REGISTER: "/register",
   PROFILE: "/profile",
+  FRIENDS: "/friends",
   PRODUCT_DETAIL: "/product/:id",
   SELL: "/sell",
+  /** Cart is a header drawer only — no dedicated page route. */
   CART: "/cart",
   CHECKOUT: "/checkout",
   ORDERS: "/orders",

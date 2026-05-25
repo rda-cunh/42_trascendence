@@ -17,6 +17,7 @@ import { ProductDetail } from "@/app/features/products/pages/ProductDetail";
 import { SellerProfile } from "@/app/features/products/pages/SellerProfile";
 import { OrderDetail } from "@/app/features/profile/pages/OrderDetail";
 import { Orders } from "@/app/features/profile/pages/Orders";
+import { Friends } from "@/app/features/profile/pages/Friends";
 import { Profile } from "@/app/features/profile/pages/Profile";
 import { Layout, NotFound } from "@/app/shared/layout/Layout";
 import { PrivacyPolicy } from "@/app/shared/pages/PrivacyPolicy";
@@ -43,6 +44,7 @@ export const router = createBrowserRouter([
       { path: "listing/:id/edit", element: withAuth(<EditListing />) },
       { path: "checkout", element: withAuth(<Checkout />) },
       { path: "profile", element: withAuth(<Profile />) },
+      { path: "friends", element: withAuth(<Friends />) },
       { path: "orders", element: withAuth(<Orders />) },
       { path: "orders/:id", element: withAuth(<OrderDetail />) },
       { path: "chat", element: withAuth(<Chat />) },

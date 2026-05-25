@@ -11,6 +11,7 @@ import {
 } from "@/app/core/lib/shaderListingForm";
 import { toast } from "sonner";
 import { useImageUpload, ImageUploadResult } from "../hooks/useImageUpload";
+import { UploadProgressBar } from "@/app/shared/components/UploadProgressBar";
 
 export function SellItem() {
   const { user } = useAuth();
@@ -250,6 +251,10 @@ export function SellItem() {
                   <Upload className="h-4 w-4" />
                   <span>{imageUpload.isUploading ? "Uploading..." : "Upload image"}</span>
                 </button>
+                <UploadProgressBar
+                  progress={imageUpload.progress}
+                  isUploading={imageUpload.isUploading}
+                />
               </div>
             </div>
 

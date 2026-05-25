@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Users, Search, MoreHorizontal, CheckCircle, Ban, Trash2 } from "lucide-react";
+import { Users, Search, MoreHorizontal, CheckCircle, Ban, Trash2, Shield, ShieldOff } from "lucide-react";
+import { AdminNav } from "../components/AdminNav";
 import { toast } from "sonner";
 import { api } from "@/app/core/lib/api";
 import { User } from "@/app/core/types";
 
-type UserAction = "ban" | "unban" | "delete";
+type UserAction = "ban" | "unban" | "delete" | "promote" | "revoke";
 
 export function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
@@ -65,6 +66,18 @@ export function UserManagement() {
         const updatedUser = await api.unbanUser(user.id);
         updateUserInState(updatedUser);
         toast.success("User activated successfully");
+      } else if (action === "promote") {
+        const confirmed = window.confirm(`Grant admin role to ${user.email}?`);
+        if (!confirmed) return;
+        const updatedUser = await api.promoteToAdmin(user.id);
+        updateUserInState(updatedUser);
+        toast.success("User promoted to admin");
+      } else if (action === "revoke") {
+        const confirmed = window.confirm(`Revoke admin role from ${user.email}?`);
+        if (!confirmed) return;
+        const updatedUser = await api.revokeAdmin(user.id);
+        updateUserInState(updatedUser);
+        toast.success("Admin role revoked");
       } else {
         await api.deleteUser(user.id);
         updateUserInState({ ...user, status: "deactivated" });
@@ -104,6 +117,7 @@ export function UserManagement() {
   return (
     <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        <AdminNav />
         <div className="mb-8">
           <h1 className="flex items-center gap-2 text-3xl font-bold text-gray-900 dark:text-white">
             <Users className="h-8 w-8 text-purple-600" /> User Management
@@ -217,6 +231,24 @@ export function UserManagement() {
                                   className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20"
                                 >
                                   <Ban className="h-4 w-4" /> Ban
+                                </button>
+                              )}
+                              {user.role !== "admin" && user.status !== "deactivated" && (
+                                <button
+                                  onClick={() => handleAction(user, "promote")}
+                                  disabled={pendingAction === `${user.id}:promote`}
+                                  className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20"
+                                >
+                                  <Shield className="h-4 w-4" /> Make admin
+                                </button>
+                              )}
+                              {user.role === "admin" && (
+                                <button
+                                  onClick={() => handleAction(user, "revoke")}
+                                  disabled={pendingAction === `${user.id}:revoke`}
+                                  className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20"
+                                >
+                                  <ShieldOff className="h-4 w-4" /> Revoke admin
                                 </button>
                               )}
                               {user.status !== "deactivated" && (

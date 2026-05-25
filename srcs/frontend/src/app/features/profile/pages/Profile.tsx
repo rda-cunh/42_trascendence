@@ -1,6 +1,19 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { Camera, Edit3, Mail, Phone, Plus, Save, Shield, Upload, User } from "lucide-react";
+import {
+  Camera,
+  Edit3,
+  Lock,
+  Mail,
+  Phone,
+  Plus,
+  Save,
+  Shield,
+  ShoppingBag,
+  Upload,
+  User,
+  Users,
+} from "lucide-react";
 import { useAuth } from "@/app/core/contexts/AuthContext";
 import { ProductCard } from "@/app/features/products/components/ProductCard";
 import { api, mapListing } from "@/app/core/lib/api";
@@ -9,10 +22,20 @@ import { toast } from "sonner";
 import { UserAvatar } from "@/app/shared/components/UserAvatar";
 import { useImageUpload } from "@/app/features/listings/hooks/useImageUpload";
 import { useAsyncEffect } from "@/app/core/hooks/useAsyncEffect";
+import { ROUTES } from "@/app/shared/utils/constants";
+import { validatePassword } from "@/app/shared/utils/validators";
+import { UploadProgressBar } from "@/app/shared/components/UploadProgressBar";
 
 export function Profile() {
   const { user, updateUser } = useAuth();
   const [editing, setEditing] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    current: "",
+    next: "",
+    confirm: "",
+  });
   const [products, setProducts] = useState<Listing[]>([]);
   const [formData, setFormData] = useState({
     name: user?.name || "",
@@ -65,12 +88,49 @@ export function Profile() {
     avatarUpload.handleUpload();
   };
 
+  const handleChangePassword = async () => {
+    if (passwordForm.next !== passwordForm.confirm) {
+      toast.error("New passwords do not match");
+      return;
+    }
+
+    const validation = validatePassword(passwordForm.next);
+    if (!validation.isValid) {
+      toast.error(validation.errors[0] ?? "Invalid password");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      await api.changePassword(passwordForm.current, passwordForm.next);
+      setPasswordForm({ current: "", next: "", confirm: "" });
+      setShowPasswordForm(false);
+      toast.success("Password updated successfully");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to change password");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   const initials = user?.name?.charAt(0).toUpperCase() || "U";
 
   return (
     <div className="app-page">
       <div className="app-container-form">
-        <h1 className="page-title mb-8">My Profile</h1>
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="page-title">My Profile</h1>
+          <div className="flex flex-wrap gap-2">
+            <Link to={ROUTES.ORDERS} className="btn-secondary">
+              <ShoppingBag className="h-4 w-4" />
+              My Orders
+            </Link>
+            <Link to={ROUTES.FRIENDS} className="btn-secondary">
+              <Users className="h-4 w-4" />
+              Following
+            </Link>
+          </div>
+        </div>
 
         <div className="surface overflow-hidden">
           <div className="flex flex-col gap-6 bg-gradient-to-r from-purple-600 to-purple-800 p-8 sm:flex-row sm:items-center">
@@ -127,6 +187,10 @@ export function Profile() {
                   <span>{avatarUpload.isUploading ? "Uploading..." : "Upload photo"}</span>
                 </button>
               </div>
+              <UploadProgressBar
+                progress={avatarUpload.progress}
+                isUploading={avatarUpload.isUploading}
+              />
             </div>
 
             <div>
@@ -175,6 +239,64 @@ export function Profile() {
                 Save Changes
               </button>
             )}
+
+            <div className="border-t border-gray-200 pt-5 dark:border-gray-800">
+              <button
+                type="button"
+                onClick={() => setShowPasswordForm((v) => !v)}
+                className="btn-ghost text-purple-600 dark:text-purple-400"
+              >
+                <Lock className="h-4 w-4" />
+                {showPasswordForm ? "Hide password form" : "Change password"}
+              </button>
+
+              {showPasswordForm && (
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <label className="form-label">Current password</label>
+                    <input
+                      type="password"
+                      value={passwordForm.current}
+                      onChange={(e) =>
+                        setPasswordForm((p) => ({ ...p, current: e.target.value }))
+                      }
+                      className="form-control"
+                      autoComplete="current-password"
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label">New password</label>
+                    <input
+                      type="password"
+                      value={passwordForm.next}
+                      onChange={(e) => setPasswordForm((p) => ({ ...p, next: e.target.value }))}
+                      className="form-control"
+                      autoComplete="new-password"
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label">Confirm new password</label>
+                    <input
+                      type="password"
+                      value={passwordForm.confirm}
+                      onChange={(e) =>
+                        setPasswordForm((p) => ({ ...p, confirm: e.target.value }))
+                      }
+                      className="form-control"
+                      autoComplete="new-password"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void handleChangePassword()}
+                    disabled={isChangingPassword}
+                    className="btn-primary px-6 py-3"
+                  >
+                    {isChangingPassword ? "Updating..." : "Update password"}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

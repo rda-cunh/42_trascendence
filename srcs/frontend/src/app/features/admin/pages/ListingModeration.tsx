@@ -1,47 +1,95 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Package, Search, MoreHorizontal, CheckCircle, XCircle, Eye, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router";
-import { api } from "@/app/core/lib/api";
+import { api, mapListing, type ListingStatus } from "@/app/core/lib/api";
 import { Listing } from "@/app/core/types";
+import { AdminNav } from "../components/AdminNav";
+
+const STATUS_FILTERS = ["all", "Draft", "Active", "Paused", "Deleted"] as const;
+type StatusFilter = (typeof STATUS_FILTERS)[number];
+
+function normalizeListingStatus(listing: Listing): ListingStatus {
+  const status = String(listing.status ?? "Draft") as ListingStatus;
+  if (STATUS_FILTERS.includes(status as StatusFilter)) {
+    return status;
+  }
+  return "Draft";
+}
+
+function statusBadgeClass(status: ListingStatus) {
+  switch (status) {
+    case "Active":
+      return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
+    case "Draft":
+      return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400";
+    case "Paused":
+      return "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400";
+    case "Deleted":
+      return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+    default:
+      return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+  }
+}
 
 export function ListingModeration() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState<StatusFilter>("all");
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
+
+  const fetchListings = useCallback(async () => {
+    try {
+      const data = await api.getListings(
+        filter === "all" ? undefined : { status: filter as ListingStatus }
+      );
+      const results = Array.isArray(data) ? data : data?.results || [];
+      setListings(results.map(mapListing));
+    } catch (err) {
+      console.error("Failed to load listings:", err);
+      toast.error("Failed to load listings");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [filter]);
 
   useEffect(() => {
-    const fetchListings = async () => {
-      try {
-        const data = await api.getListings();
-        const results = Array.isArray(data) ? data : data?.results || [];
-        setListings(results);
-      } catch (err) {
-        console.error("Failed to load listings:", err);
-        toast.error("Failed to load listings");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    setIsLoading(true);
+    void fetchListings();
+  }, [fetchListings]);
 
-    fetchListings();
-  }, []);
+  const filtered = listings.filter(
+    (l) =>
+      l.title.toLowerCase().includes(search.toLowerCase()) ||
+      l.seller.toLowerCase().includes(search.toLowerCase())
+  );
 
-  const filtered = listings
-    .filter((l) => filter === "all" || (l as any).status === filter)
-    .filter(
-      (l) =>
-        l.title.toLowerCase().includes(search.toLowerCase()) ||
-        l.seller.toLowerCase().includes(search.toLowerCase())
-    );
-
-  const handleAction = (_id: string, action: string) => {
-    toast.success(`Listing ${action}d successfully`);
+  const handleAction = async (listing: Listing, action: "approve" | "reject" | "delete") => {
+    const actionKey = `${listing.id}:${action}`;
+    setPendingAction(actionKey);
     setOpenMenu(null);
-    // TODO: Call API to update listing status
+
+    try {
+      if (action === "delete") {
+        const confirmed = window.confirm(`Delete "${listing.title}"? This cannot be undone.`);
+        if (!confirmed) return;
+        await api.deleteListing(listing.id);
+        toast.success("Listing deleted");
+      } else if (action === "approve") {
+        await api.updateListing(listing.id, { status: "Active" });
+        toast.success("Listing approved");
+      } else {
+        await api.updateListing(listing.id, { status: "Paused" });
+        toast.success("Listing paused");
+      }
+      await fetchListings();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update listing");
+    } finally {
+      setPendingAction(null);
+    }
   };
 
   if (isLoading) {
@@ -55,6 +103,7 @@ export function ListingModeration() {
   return (
     <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        <AdminNav />
         <div className="mb-8">
           <h1 className="flex items-center gap-2 text-3xl font-bold text-gray-900 dark:text-white">
             <Package className="h-8 w-8 text-purple-600" /> Listing Moderation
@@ -76,8 +125,8 @@ export function ListingModeration() {
                 className="w-full rounded-lg border border-gray-300 bg-white py-2 pr-4 pl-9 text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               />
             </div>
-            <div className="flex gap-2">
-              {["all", "pending", "approved", "rejected"].map((f) => (
+            <div className="flex flex-wrap gap-2">
+              {STATUS_FILTERS.map((f) => (
                 <button
                   key={f}
                   onClick={() => setFilter(f)}
@@ -118,94 +167,99 @@ export function ListingModeration() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                {filtered.map((listing) => (
-                  <tr
-                    key={listing.id}
-                    className="transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-200 dark:bg-gray-700">
-                          <Package className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white">
-                            {listing.title}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
-                      {listing.seller}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                        {listing.category}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                      ${listing.price}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`rounded-full px-2 py-1 text-xs font-medium ${
-                          (listing as any).status === "approved"
-                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                            : (listing as any).status === "pending"
-                              ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                        }`}
-                      >
-                        {(listing as any).status || "pending"}
-                      </span>
-                    </td>
-                    <td className="relative px-6 py-4 text-right">
-                      <button
-                        onClick={() => setOpenMenu(openMenu === listing.id ? null : listing.id)}
-                        className="rounded p-1 text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
-                      >
-                        <MoreHorizontal className="h-5 w-5" />
-                      </button>
-                      {openMenu === listing.id && (
-                        <>
-                          <div className="fixed inset-0 z-40" onClick={() => setOpenMenu(null)} />
-                          <div className="absolute right-6 z-50 mt-1 w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-xl dark:border-gray-800 dark:bg-gray-900">
-                            <Link
-                              to={`/product/${listing.id}`}
-                              className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
-                            >
-                              <Eye className="h-4 w-4" /> View
-                            </Link>
-                            {(listing as any).status !== "approved" && (
-                              <button
-                                onClick={() => handleAction(listing.id, "approve")}
-                                className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
-                              >
-                                <CheckCircle className="h-4 w-4" /> Approve
-                              </button>
-                            )}
-                            {(listing as any).status !== "rejected" && (
-                              <button
-                                onClick={() => handleAction(listing.id, "reject")}
-                                className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                              >
-                                <XCircle className="h-4 w-4" /> Reject
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleAction(listing.id, "delete")}
-                              className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                            >
-                              <Trash2 className="h-4 w-4" /> Delete
-                            </button>
+                {filtered.map((listing) => {
+                  const status = normalizeListingStatus(listing);
+                  const isPending = pendingAction?.startsWith(`${listing.id}:`);
+                  return (
+                    <tr
+                      key={listing.id}
+                      className="transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-200 dark:bg-gray-700">
+                            <Package className="h-5 w-5 text-gray-400" />
                           </div>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                          <p className="font-medium text-gray-900 dark:text-white">{listing.title}</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                        {listing.seller}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                          {listing.category}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                        ${listing.price}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`rounded-full px-2 py-1 text-xs font-medium ${statusBadgeClass(status)}`}
+                        >
+                          {status}
+                        </span>
+                      </td>
+                      <td className="relative px-6 py-4 text-right">
+                        <button
+                          onClick={() => setOpenMenu(openMenu === listing.id ? null : listing.id)}
+                          className="rounded p-1 text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
+                          disabled={isPending}
+                        >
+                          <MoreHorizontal className="h-5 w-5" />
+                        </button>
+                        {openMenu === listing.id && (
+                          <>
+                            <div className="fixed inset-0 z-40" onClick={() => setOpenMenu(null)} />
+                            <div className="absolute right-6 z-50 mt-1 w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-xl dark:border-gray-800 dark:bg-gray-900">
+                              <Link
+                                to={`/product/${listing.id}`}
+                                className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                              >
+                                <Eye className="h-4 w-4" /> View
+                              </Link>
+                              {status !== "Active" && status !== "Deleted" && (
+                                <button
+                                  onClick={() => void handleAction(listing, "approve")}
+                                  disabled={!!isPending}
+                                  className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
+                                >
+                                  <CheckCircle className="h-4 w-4" /> Approve
+                                </button>
+                              )}
+                              {status !== "Paused" && status !== "Deleted" && (
+                                <button
+                                  onClick={() => void handleAction(listing, "reject")}
+                                  disabled={!!isPending}
+                                  className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-900/20"
+                                >
+                                  <XCircle className="h-4 w-4" /> Pause
+                                </button>
+                              )}
+                              {status !== "Deleted" && (
+                                <button
+                                  onClick={() => void handleAction(listing, "delete")}
+                                  disabled={!!isPending}
+                                  className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                                >
+                                  <Trash2 className="h-4 w-4" /> Delete
+                                </button>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
+            {filtered.length === 0 && (
+              <p className="p-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                No listings match your filters.
+              </p>
+            )}
           </div>
         </div>
       </div>

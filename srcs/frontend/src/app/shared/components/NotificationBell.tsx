@@ -1,18 +1,14 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { Bell } from "lucide-react";
 import {
   fetchNotifications,
   fetchUnreadCount,
+  markAllNotificationsRead,
   markNotificationsRead,
 } from "@/app/core/lib/notificationsApi";
 import type { Notification } from "@/app/core/types";
 import { UserAvatar } from "./UserAvatar";
-
-// ---- display helpers ------------------------------------------------------
-// Pure functions: same input → same output, no side effects. Defined at
-// module level so they aren't recreated on every render. Adding a new
-// notification type later means adding a case here — no JSX changes needed.
 
 function getNotificationTitle(n: Notification): string {
   const actor = n.actor_name ?? "Someone";
@@ -49,7 +45,6 @@ function getNotificationLink(n: Notification): string | null {
     case "listing_updated":
       return n.product_id !== null ? `/product/${n.product_id}` : null;
     case "listing_deleted":
-      // No link — the product is gone (soft-deleted). Clicking would return 404.
       return null;
     default:
       return null;
@@ -74,7 +69,7 @@ function formatRelativeTime(iso: string): string {
   return date.toLocaleDateString();
 }
 
-// ---- component ------------------------------------------------------------
+const POLL_INTERVAL_MS = 45_000;
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
@@ -82,63 +77,88 @@ export function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const lastFetchedAt = useRef<number>(0);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const load = async () => {
-      try {
-        const [list, count] = await Promise.all([
-          fetchNotifications({ limit: 20 }),
-          fetchUnreadCount(),
-        ]);
-        if (cancelled) return;
+  const loadNotifications = useCallback(async (opts?: { listOnly?: boolean }) => {
+    try {
+      if (opts?.listOnly) {
+        const list = await fetchNotifications({ limit: 20 });
         setNotifications(list);
-        setUnreadCount(count);
-      } catch (err) {
-        if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Failed to load notifications");
-      } finally {
-        if (!cancelled) setLoading(false);
+        setError(null);
+        return;
       }
-    };
 
-    load();
-    return () => {
-      cancelled = true;
-    };
+      const [list, count] = await Promise.all([
+        fetchNotifications({ limit: 20 }),
+        fetchUnreadCount(),
+      ]);
+      setNotifications(list);
+      setUnreadCount(count);
+      setError(null);
+      lastFetchedAt.current = Date.now();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load notifications");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Toggle the dropdown. When opening, optimistically mark currently-visible
-  // unread items as read: update local state immediately, fire the API in the
-  // background, roll back on failure. This is a user-triggered side effect
-  // so it lives in the click handler, not in a useEffect.
+  useEffect(() => {
+    void loadNotifications();
+  }, [loadNotifications]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      void fetchUnreadCount()
+        .then(setUnreadCount)
+        .catch(() => undefined);
+    }, POLL_INTERVAL_MS);
+    return () => window.clearInterval(interval);
+  }, []);
+
   const handleToggle = () => {
     const willOpen = !open;
     setOpen(willOpen);
-    if (!willOpen) return;
 
-    const unreadIds = notifications.filter((n) => n.read_at === null).map((n) => n.id);
-    if (unreadIds.length === 0) return;
+    if (willOpen) {
+      const stale = Date.now() - lastFetchedAt.current > 10_000;
+      if (stale) {
+        setLoading(true);
+        void loadNotifications();
+      }
 
-    // Optimistic update — immutable: prev.map returns a new array; the spread
-    // builds a new object for each affected notification. Anything not touched
-    // keeps its identity, so React only re-renders the rows that changed.
-    const now = new Date().toISOString();
-    setNotifications((prev) =>
-      prev.map((n) => (unreadIds.includes(n.id) ? { ...n, read_at: now } : n))
-    );
-    setUnreadCount((prev) => Math.max(0, prev - unreadIds.length));
+      const unreadIds = notifications.filter((n) => n.read_at === null).map((n) => n.id);
+      if (unreadIds.length === 0) return;
 
-    // Fire-and-forget API call. On failure, restore read_at=null for the same
-    // ids and bump the badge back up. The captured `unreadIds` makes the
-    // rollback exact — we only un-mark what we marked.
-    markNotificationsRead(unreadIds).catch(() => {
+      const now = new Date().toISOString();
       setNotifications((prev) =>
-        prev.map((n) => (unreadIds.includes(n.id) ? { ...n, read_at: null } : n))
+        prev.map((n) => (unreadIds.includes(n.id) ? { ...n, read_at: now } : n))
       );
-      setUnreadCount((prev) => prev + unreadIds.length);
-    });
+      setUnreadCount((prev) => Math.max(0, prev - unreadIds.length));
+
+      markNotificationsRead(unreadIds).catch(() => {
+        setNotifications((prev) =>
+          prev.map((n) => (unreadIds.includes(n.id) ? { ...n, read_at: null } : n))
+        );
+        setUnreadCount((prev) => prev + unreadIds.length);
+      });
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    const unreadIds = notifications.filter((n) => n.read_at === null).map((n) => n.id);
+    if (unreadIds.length === 0 && unreadCount === 0) return;
+
+    const now = new Date().toISOString();
+    setNotifications((prev) => prev.map((n) => ({ ...n, read_at: n.read_at ?? now })));
+    setUnreadCount(0);
+
+    try {
+      await markAllNotificationsRead();
+      lastFetchedAt.current = Date.now();
+    } catch {
+      void loadNotifications();
+    }
   };
 
   return (
@@ -151,7 +171,7 @@ export function NotificationBell() {
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
           <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-            {unreadCount}
+            {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </button>
@@ -159,8 +179,17 @@ export function NotificationBell() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900">
-            <div className="border-b border-gray-200 p-3 dark:border-gray-800">
+            <div className="flex items-center justify-between border-b border-gray-200 p-3 dark:border-gray-800">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Notifications</h3>
+              {(unreadCount > 0 || notifications.some((n) => n.read_at === null)) && (
+                <button
+                  type="button"
+                  onClick={() => void handleMarkAllRead()}
+                  className="text-xs font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400"
+                >
+                  Mark all read
+                </button>
+              )}
             </div>
             <div className="max-h-80 overflow-y-auto">
               {loading ? (
