@@ -6,7 +6,7 @@ export function Layout() {
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 transition-colors dark:bg-gray-950">
       <Header />
-      <main className="app-container flex-1 py-6">
+      <main className="flex-1 py-6">
         <Outlet />
       </main>
       <Footer />
