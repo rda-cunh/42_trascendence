@@ -9,6 +9,7 @@ channels
 channels-redis #redis-backed channel layer for multi-process WebSocket
 daphne
 pyOpenSSL<26 #for secure WebSocket connections (wss://) in production
-gunicorn
+#gunicorn
 django-prometheus
+stripe
 #psycopg #missing for postgres, or other for database integration
