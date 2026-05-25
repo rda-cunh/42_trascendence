@@ -1,0 +1,39 @@
+# .mailmap
+# Map commit author names and emails to canonical identities for git
+# Lines starting with '#' are comments. Each mapping can be in one of these forms:
+#
+# Proper Name <proper.email@example.com> Wrong Name <wrong.email@example.com>
+# Proper Name <proper.email@example.com> <wrong.email@example.com>
+# <proper.email@example.com> <wrong.email@example.com>
+#
+# Examples:
+# Alice Smith <alice@example.com> A. Smith <asmith@users.noreply.github.com>
+# Bob Jones <bob@example.com> <bob.jones+old@gmail.com>
+#
+# Add your project-specific mappings below (one per line):
+
+# This is based on the command:
+## git log --pretty=format:"%an <%ae>" | sort | uniq -c
+
+# Erik
+ErikG <eriklustosa@gmail.com> Erik <Eriklustosa@gmail.com>
+
+# Leonardo Maes
+Leo <devsleo@hotmail.com> Leonardo Maes <lmaes@c2r5s11.42porto.com>
+Leo <devsleo@hotmail.com> <139904135+leonardomaes@users.noreply.github.com>
+Leo <devsleo@hotmail.com> lmaes <lmaes@Debian.myguest.virtualbox.org>
+
+# Raphael (rapcampo)
+Raphael Vieira <142260510+Rapcampo@users.noreply.github.com> Raphael Campos Vieira <rapcampo@c2r1s3.42porto.com>
+Raphael Vieira <142260510+Rapcampo@users.noreply.github.com> <rapcampo@c2r2s9.42porto.com>
+Raphael Vieira <142260510+Rapcampo@users.noreply.github.com> <rapcampo@c2r3s6.42porto.com>
+Raphael Vieira <142260510+Rapcampo@users.noreply.github.com> <rapcampo@c2r5s8.42porto.com>
+Raphael Vieira <142260510+Rapcampo@users.noreply.github.com> rapcampo <rapcampo@student.42porto.com>
+
+# Ricardo Mendes
+Ricardo Mendes <ricard.mendes@gmail.com> <147749667+rda-cunh@users.noreply.github.com>
+Ricardo Mendes <ricard.mendes@gmail.com> rda-cunh
+
+# lvichi
+lvichi <leonardovichi@gmail.com> <146849296+lvichi@users.noreply.github.com>
+

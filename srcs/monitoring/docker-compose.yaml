@@ -45,9 +45,6 @@ services:
     image: grafana/grafana:13.0
     container_name: grafana
     environment:
-      - GF_SERVER_ROOT=https://127.0.0.1/metrics/
-      #- GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
-      #- GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
       - GF_AUTH_PROXY_ENABLED=true
       - GF_AUTH_PROXY_HEADER_NAME=X-WEBAUTH-USER
       - GF_AUTH_PROXY_HEADER_PROPERTY=email
@@ -59,13 +56,13 @@ services:
       - GF_SERVER_PROTOCOL=https
       - GF_SERVER_CERT_FILE=/certs/${INT_CRT_NAME:-internal.crt}
       - GF_SERVER_CERT_KEY=/certs/${INT_KEY_NAME:-internal.key}
-      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/metrics
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/metrics/
       - GF_SERVER_SERVE_FROM_SUB_PATH=true
       - GF_SECURITY_CSRF_ADDITIONAL_HEADERS=X-Forwarded-Host
       - GF_LOG_LEVEL=error
       - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/monitoring-home.json
-      - GF_FEATURE_TOGGLES_ENABLE=
       - GF_SMTP_STARTTLS_POLICY=MandatoryStartTLS
+      - GF_PLUGINS_PREINSTALL_DISABLED=true
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
     volumes:
       - certs_data:/certs:ro
@@ -129,7 +126,7 @@ services:
     build:
       context: ./cadvisor
       args:
-        CADVISOR_VERSION: 0.56.2
+        CADVISOR_VERSION: "0.56.2"
     container_name: cadvisor
     init: true
     environment:
@@ -202,8 +199,8 @@ services:
     build:
       context: ./nginx-exporter-gateway
       args:
-        NGINX_PROMETHEUS_EXPORTER_VERSION: 1.4.2
-        ALPINE_VERSION: 3.20
+        NGINX_PROMETHEUS_EXPORTER_VERSION: "1.4.2"
+        ALPINE_VERSION: "3.20"
     container_name: nginx-exporter-gateway
     environment:
       - CA_CRT_NAME=${CA_CRT_NAME:-ca.crt}
@@ -239,8 +236,8 @@ services:
     build:
       context: ./nginx-exporter-frontend
       args:
-        NGINX_PROMETHEUS_EXPORTER_VERSION: 1.4.2
-        ALPINE_VERSION: 3.20
+        NGINX_PROMETHEUS_EXPORTER_VERSION: "1.4.2"
+        ALPINE_VERSION: "3.20"
     container_name: nginx-exporter-frontend
     environment:
       - CA_CRT_NAME=${CA_CRT_NAME:-ca.crt}

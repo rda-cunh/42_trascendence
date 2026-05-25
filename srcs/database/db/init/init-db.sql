@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS product_reviews (
   body TEXT NULL DEFAULT NULL,
   status ENUM('Pending', 'Approved', 'Rejected', 'Deleted') NOT NULL DEFAULT 'Approved',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uq_review_per_item (order_items_id),
   KEY idx_review_product (product_id),

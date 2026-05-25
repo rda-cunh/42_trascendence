@@ -10,6 +10,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    tmpfs:
+      - /data
+
   backend:
     container_name: backend
     build: ./app

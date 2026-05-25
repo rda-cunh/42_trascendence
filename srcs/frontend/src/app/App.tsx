@@ -1,10 +1,10 @@
 import { RouterProvider } from "react-router";
 import { router } from "./routes";
-import { ThemeProvider } from "./contexts/ThemeContext";
-import { AuthProvider } from "./contexts/AuthContext";
-import { CartProvider } from "./contexts/CartContext";
-import { PresenceProvider } from "./contexts/PresenceContext";
-import { Toast } from "./components/Toast";
+import { AuthProvider } from "@/app/core/contexts/AuthContext";
+import { CartProvider } from "@/app/core/contexts/CartContext";
+import { PresenceProvider } from "@/app/core/contexts/PresenceContext";
+import { ThemeProvider } from "@/app/core/contexts/ThemeContext";
+import { Toast } from "@/app/shared/components/Toast";
 
 export default function App() {
   return (
