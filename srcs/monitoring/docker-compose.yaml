@@ -45,7 +45,6 @@ services:
     image: grafana/grafana:13.0
     container_name: grafana
     environment:
-      - GF_SERVER_ROOT=https://127.0.0.1/metrics/
       - GF_AUTH_PROXY_ENABLED=true
       - GF_AUTH_PROXY_HEADER_NAME=X-WEBAUTH-USER
       - GF_AUTH_PROXY_HEADER_PROPERTY=email
@@ -57,13 +56,13 @@ services:
       - GF_SERVER_PROTOCOL=https
       - GF_SERVER_CERT_FILE=/certs/${INT_CRT_NAME:-internal.crt}
       - GF_SERVER_CERT_KEY=/certs/${INT_KEY_NAME:-internal.key}
-      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/metrics
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/metrics/
       - GF_SERVER_SERVE_FROM_SUB_PATH=true
       - GF_SECURITY_CSRF_ADDITIONAL_HEADERS=X-Forwarded-Host
       - GF_LOG_LEVEL=error
       - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/monitoring-home.json
-      - GF_FEATURE_TOGGLES_ENABLE=
       - GF_SMTP_STARTTLS_POLICY=MandatoryStartTLS
+      - GF_PLUGINS_PREINSTALL_DISABLED=true
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
     volumes:
       - certs_data:/certs:ro
@@ -81,8 +80,6 @@ services:
         condition: service_started
       pki-init:
         condition: service_completed_successfully
-      data-service:
-        condition: service_started
 
   mysqld-exporter:
     image: prom/mysqld-exporter:v0.19.0

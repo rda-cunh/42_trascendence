@@ -9,6 +9,7 @@ import {
   MessageCircle,
   Shield,
   ShoppingBag,
+  Server,
 } from "lucide-react";
 import { ROUTES } from "@/app/shared/utils/constants";
 import { useTheme } from "@/app/core/contexts/ThemeContext";
@@ -96,9 +97,14 @@ export function Header() {
                   </span>
                 </Link>
                 {user.role === "admin" && (
-                  <Link to="/admin" className="btn-icon" title="Admin Panel">
-                    <Shield className="h-5 w-5" />
-                  </Link>
+                  <>
+                    <Link to="/admin" className="btn-icon" title="Admin Panel">
+                      <Shield className="h-5 w-5" />
+                    </Link>
+                    <a href="/metrics/" className="btn-icon" title="Metrics">
+                      <Server className="h-5 w-5" />
+                    </a>
+                  </>
                 )}
                 <button
                   onClick={() => {
