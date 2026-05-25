@@ -2,234 +2,263 @@
 
 These tables summarize the current module strategy for the project based on progress, implementation risk, and delivery value. Module names in the tables link to detailed notes below.
 
-## Must have / under development
+**Target:** 14 mandatory points + 5 bonus points = **19 points** (subject caps bonus at 5).
+
+## Must have / under development (14 points)
 
 | Module | Points | Current status | Module lead (person names) | Notes / Decisions |
 |---|---:|---|---|---|
-| [**Web Major 1 – Framework for frontend and backend**](#web-major-1--framework-for-frontend-and-backend) | 2 | **Completed** | All | Foundation of the whole project. **Completed.** |
-| [**User Major 1 – Standard user management and authentication**](#user-major-1--standard-user-management-and-authentication) | 2 | Features missing | **Raphael** + Ricardo + Erick | TO DO: upload avatar; add user as friends and online status; profile page **Keep.** |
-| [**User Major 2 – Advanced permission system**](#user-major-2--advanced-permission-system) | 2 | Features Missing | **Raphael** + Leonardo Maes | TO DO: view, edit and delete users; diffent views based on role. **Keep.** |
-| [**Web Minor 9 – Advanced search**](#web-minor-9--advanced-search) | 1 | Frontend Missing | **Leonardo** + Rapahel + Erik | Cheap point because much of the backend work exists already. **Keep.** |
-| [**User Minor 2 – Remote authentication with OAuth 2.0**](#user-minor-2--remote-authentication-with-oauth-20) | 1 | **Completed** | ***Keep** |Ricardo** + Erick | Implemented and working. **Keep.** |
-| [**Web Major 3 – User interaction (chat, profiles, friends)**](#web-major-3--user-interaction-chat-profiles-friends) | 2 | **Completed** | **Ricardo** + Erick + Leonardo Maes | Implemented. **Keep.** |
-| [**Web Major 2 – Real-time features**](#web-major-2--real-time-features) | 2 | **Completed** | **Ricardo** | Chat answer all requirements but other features can be added. **Keep** |
-| [**DevOps Monitoring module – Prometheus + Grafana**](#devops-monitoring-module--prometheus--grafana) | 2 | **Completed** | **Leonardo Vichi** | Already in place. Need to check with Leo all requirements are met. ***Keep.**
-| [**Web Minor 4 – Notification system**](#web-minor-4--notification-system) | 1 | **Completed** | **Ricardo** | Implemented but without real time (not requested in subject). ***Keep.** |
-| **Total** | **15** |  |  |  |
+| [**Web Major 1 – Framework for frontend and backend**](#web-major-1--framework-for-frontend-and-backend) | 2 | **Completed** | All | Foundation of the whole project. **Keep.** |
+| [**Web Major 2 – Real-time features**](#web-major-2--real-time-features) | 2 | **Completed** | **Ricardo** | Real-time chat satisfies requirements. **Keep.** |
+| [**Web Major 3 – User interaction (chat, profiles, friends)**](#web-major-3--user-interaction-chat-profiles-friends) | 2 | **Completed** | **Ricardo** + Erik + Leonardo Maes | Implemented. **Keep.** |
+| [**User Major 1 – Standard user management and authentication**](#user-major-1--standard-user-management-and-authentication) | 2 | Features missing | **Raphael** + Ricardo + Erik | Check with the group if all is implemented **Keep.** |
+| [**User Major 2 – Advanced permission system**](#user-major-2--advanced-permission-system) | 2 | Admin frontend missing | **Raphael** + Leonardo Maes | TO DO: build the admin frontend (view, edit, delete users; role-based views). **Keep.** |
+| [**DevOps Major 2 – Monitoring system with Prometheus and Grafana**](#devops-major-2--monitoring-system-with-prometheus-and-grafana) | 2 | **Completed** | **Leonardo Vichi** | Dashboards in place. Confirm alerting + secure access during evaluation. **Keep.** |
+| [**User Minor 2 – Remote authentication with OAuth 2.0**](#user-minor-2--remote-authentication-with-oauth-20) | 1 | **Completed** | **Ricardo** + Erik | Implemented and working. **Keep.** |
+| [**Web Minor 9 – Advanced search**](#web-minor-9--advanced-search) | 1 | Frontend missing | **Leonardo** + Raphael + Erik | Backend largely ready; frontend filters/sort/pagination still to wire up. **Keep.** |
+| **Total** | **14** |  |  |  |
 
-## Best choices to add
+## Bonus modules (max 5 points)
+
+Bonus is only considered if the 14 mandatory points are reached. Subject caps the bonus at 5 points.
 
 | Module | Points | Current status | Module lead (person names) | Notes / Decisions |
 |---|---:|---|---|---|
-| [**Web Major 4 – Public API**](#web-major-4--public-api) | 2 | Endpoints already prepared to support it | [TBD: Raphael + Leonardo Vichi] | Good marketplace fit and easier to justify than microservices. **High priority add.** |
-| **Total if all chosen** | **2** |  |  |  |
+| [**Web Minor 4 – Notification system**](#web-minor-4--notification-system) | 1 | **Completed** | **Ricardo** | End-to-end notifications for create/update/delete actions. **Keep.** |
+| [**Accessibility Minor 4 – Support for additional browsers**](#accessibility-minor-4--support-for-additional-browsers) | 1 | Partially validated | **Erik** | Chrome + Firefox confirmed. **Pick a second browser and validate.** |
+| [**Module of Choice Major – Internal mTLS / PKI between services**](#module-of-choice-major--internal-mtls--pki-between-services) | 2 | **Completed** | **Leonardo Vichi** | Full PKI subsystem already in `srcs/pki/` (own CA, per-service certs, scripts, tests). Try to pitch as mTLS, not just "internal HTTPS".
+| [**Module of Choice Minor – Stripe payment integration**](#module-of-choice-minor--stripe-payment-integration) | 1 | Backend partial, frontend missing | **Raphael** | Highest-risk bonus point. Needs full flow: product → checkout → webhook → order persisted → confirmation in UI. **Drop if frontend will not ship in time.** |
+| **Total bonus** | **5** |  |  |  |
 
 ## Drop for now
 
 | Module | Points | Current status | Module lead (person names) | Notes / Decisions |
 |---|---:|---|---|---|
-| [**Web Minor 10 – File upload and management system**](#web-minor-10--file-upload-and-management-system) | 1 | Planned / needed for pictures initially | [N/A – dropping] | Important for listings, assets, and marketplace usability, but adds complexity. **Drop.** |
-| [**DevOps Major 3 – Backend as microservices**](#devops-major-3--backend-as-microservices) | 2 | Not implemented | [N/A – dropping] | High complexity, no progress, and team already wants to drop it. **Drop.** |
-| [**Module of Choice – Payment system for the marketplace**](#module-of-choice--payment-system-for-the-marketplace) | 1–2 | Not implemented | [N/A – dropping] | Adds custom justification burden and full purchase-flow complexity. **Drop.** |
-| [**Gaming Major 5 – Advanced 3D graphics**](#gaming-major-5--advanced-3d-graphics) | 2 | No demo shown yet | [N/A – dropping] | Frontend-heavy and risky with no visible group progress yet. **Drop unless immediate progress appears.** |
-| [**User Minor 4 – User activity analytics**](#user-minor-4--user-activity-analytics) | 1 | Not implemented | [N/A – dropping] | Not necessary for your rescue plan and no current progress. **Drop.** |
-| [**AI Minor 1 – Content moderation AI**](#ai-minor-1--content-moderation-ai) | 1 | Not implemented | [N/A – dropping] | Adds complexity without helping the core delivery target. **Drop.** |
-| [**DevOps Major 1 – ELK / log management**](#devops-major-1--elk--log-management) | 2 | Not started | [N/A – dropping] | Lower priority and less realistic than the monitoring work already underway. **Drop.** |
-| **Total dropped** | **10–11** |  |  |  |
+| [**Web Major 4 – Public API**](#web-major-4--public-api) | 2 | Endpoints partly prepared | [N/A – dropping] | No room left under the 5-point bonus cap. Useful as a safety net if mTLS or Stripe gets rejected at evaluation. **Drop, but keep as fallback.** |
+| [**Web Minor 10 – File upload and management system**](#web-minor-10--file-upload-and-management-system) | 1 | Not implemented | [N/A – dropping] | Would help the marketplace UX but adds complexity outside the 19-point target. **Drop.** |
+| [**DevOps Major 3 – Backend as microservices**](#devops-major-3--backend-as-microservices) | 2 | Not implemented | [N/A – dropping] | High complexity, no progress. **Drop.** |
+| [**Gaming Major 5 – Advanced 3D graphics**](#gaming-major-5--advanced-3d-graphics) | 2 | Not implemented | [N/A – dropping] | Frontend-heavy, no visible progress. **Drop.** |
+| [**User Minor 4 – User activity analytics**](#user-minor-4--user-activity-analytics) | 1 | Not implemented | [N/A – dropping] | Not needed for the 19-point target. **Drop.** |
+| [**AI Minor 1 – Content moderation AI**](#ai-minor-1--content-moderation-ai) | 1 | Not implemented | [N/A – dropping] | Out of scope. **Drop.** |
+| [**DevOps Major 1 – ELK / log management**](#devops-major-1--elk--log-management) | 2 | Not started | [N/A – dropping] | Monitoring module already covers the DevOps slot. **Drop.** |
 
-## Must have / under development details
+---
+
+## Must have details
 
 ### Web Major 1 – Framework for frontend and backend
 
-**Module number and name:** Web Major 1 – Framework for frontend and backend
-
-**Justification:** This is the base of the whole application and is already under development. It also aligns directly with the project requirement to build a real web application with a frontend, backend, and database.
+**Justification:** Foundation of the whole application; satisfies the mandatory frontend + backend + database requirement.
 
 **Requirements from the subject:**
 - Use a framework for both the frontend and backend.
-- Acceptable frontend examples include React, Vue, Angular, and Svelte.
-- Acceptable backend examples include Express, NestJS, Django, Flask, and Ruby on Rails.
-- Full-stack frameworks such as Next.js, Nuxt.js, and SvelteKit count for both if both frontend and backend capabilities are used.
-
-### User Major 1 – Standard user management and authentication
-
-**Module number and name:** User Major 1 – Standard user management and authentication
-
-**Justification:** This module is already partially implemented and is a core building block for a marketplace-style application. It also reinforces the mandatory technical requirement for secure signup and login.
-
-**Requirements from the subject:**
-- Users can update their profile information.
-- Users can upload an avatar, with a default avatar if none is provided.
-- Users can add other users as friends and see their online status.
-- Users have a profile page displaying their information.
-
-### User Major 2 – Advanced permission system
-
-**Module number and name:** User Major 2 – Advanced permission system
-
-**Justification:** The project already has role definitions, so this module builds on existing work. It is also useful for marketplace logic where different types of users need different actions and views.
-
-**Requirements from the subject:**
-- View, edit, and delete users (CRUD).
-- Roles management such as admin, user, guest, moderator, etc.
-- Different views and actions based on user role.
-
-### Web Minor 9 – Advanced search
-
-**Module number and name:** Web Minor 9 – Advanced search
-
-**Justification:** Advanced search can be useful in a marketplace, and can ensure a quick win
-
-**Requirements from the subject:**
-- Implement advanced search functionality with filters, sorting, and pagination.
-
-### User Minor 2 – Remote authentication with OAuth 2.0
-
-**Module number and name:** User Minor 2 – Remote authentication with OAuth 2.0
-
-**Justification:** Much of the backend work is already implemented, which makes this a low-risk point. It also improves user onboarding and complements the base authentication module.
-
-**Requirements from the subject:**
-- Implement remote authentication with OAuth 2.0.
-- Examples include Google, GitHub, and 42 authentication providers.
-
-### Web Major 3 – User interaction (chat, profiles, friends)
-
-**Module number and name:** Web Major 3 – User interaction (chat, profiles, friends)
-
-**Justification:** This module fits well with a social or marketplace direction and reuses the user system already being built. It is also easy to show during evaluation because the features are concrete and interactive.
-
-**Requirements from the subject:**
-- Implement a basic chat system to send and receive messages between users.
-- Implement a profile system to view user information.
-- Implement a friend system to add and remove friends and see the friends list.
+- Acceptable frontend examples: React, Vue, Angular, Svelte.
+- Acceptable backend examples: Express, NestJS, Django, Flask, Ruby on Rails.
+- Full-stack frameworks (Next.js, Nuxt.js, SvelteKit) count for both if both halves are used.
 
 ### Web Major 2 – Real-time features
 
-**Module number and name:** Web Major 2 – Real-time features
-
-**Justification:** Real-time behavior can strengthen chat and other live interactions, but it should only stay if it is clearly distinct from the user interaction module. The team should confirm that the implementation and evaluation scope are separate enough.
+**Justification:** Real-time chat is implemented and clearly distinct from the user interaction module (the chat *transport* is the deliverable here, not the chat product itself).
 
 **Requirements from the subject:**
-- Implement real-time features using WebSockets or similar technology.
-- Provide real-time updates across clients.
-- Handle connection and disconnection gracefully.
-- Support efficient message broadcasting.
+- Real-time features using WebSockets or similar technology.
+- Real-time updates across clients.
+- Graceful handling of connection / disconnection.
+- Efficient message broadcasting.
 
-### DevOps Monitoring module – Prometheus + Grafana
+### Web Major 3 – User interaction (chat, profiles, friends)
 
-**Module number and name:** DevOps Major 2 – Monitoring system with Prometheus and Grafana
-
-**Justification:** This is more realistic than microservices and is already being worked on by the DevOps side. It is also demonstrable during evaluation through dashboards, metrics, and alerting.
+**Justification:** Fits the social/marketplace direction and reuses the user system. Concrete and demoable.
 
 **Requirements from the subject:**
-- Set up Prometheus to collect metrics.
-- Configure exporters and integrations.
-- Create custom Grafana dashboards.
-- Set up alerting rules.
+- Basic chat to send/receive messages between users.
+- Profile system to view user information.
+- Friends system: add/remove friends and see friends list.
+
+### User Major 1 – Standard user management and authentication
+
+**Justification:** Core building block; reinforces the mandatory secure signup/login requirement.
+
+**Requirements from the subject:**
+- Users can update their profile information.
+- Users can upload an avatar (with a default avatar fallback).
+- Users can add others as friends and see their online status.
+- Users have a profile page displaying their information.
+
+**Outstanding work:** avatar upload, friends + online status, profile page polish.
+
+### User Major 2 – Advanced permission system
+
+**Justification:** Roles already exist in the backend. The remaining work is the admin frontend exposing the CRUD and role-based views.
+
+**Requirements from the subject:**
+- View, edit, and delete users (CRUD).
+- Roles management (admin, user, guest, moderator, etc.).
+- Different views and actions based on user role.
+
+**Outstanding work:** admin frontend.
+
+### DevOps Major 2 – Monitoring system with Prometheus and Grafana
+
+**Justification:** Already in place and demoable through dashboards and metrics. More realistic than microservices or ELK.
+
+**Requirements from the subject:**
+- Prometheus collecting metrics.
+- Exporters and integrations configured.
+- Custom Grafana dashboards.
+- Alerting rules set up.
 - Secure access to Grafana.
 
-## Best choices to add details
+### User Minor 2 – Remote authentication with OAuth 2.0
 
-### Web Major 4 – Public API
-
-**Module number and name:** Web Major 4 – Public API
-
-**Justification:** This is a strong fit for a marketplace because it opens the project to structured external use and is easier to justify than microservices. If the endpoints are already close to ready, it is a practical high-priority add.
+**Justification:** Already implemented; complements base auth and improves onboarding.
 
 **Requirements from the subject:**
-- Provide a public API to interact with the database.
-- Secure the API with an API key.
-- Add rate limiting.
-- Add documentation.
-- Include at least 5 endpoints, including GET, POST, PUT, and DELETE operations.
+- Remote authentication with OAuth 2.0 (Google, GitHub, 42, etc.).
+
+### Web Minor 9 – Advanced search
+
+**Justification:** Backend is largely ready; a cheap point once filters/sort/pagination are wired into the frontend.
+
+**Requirements from the subject:**
+- Advanced search with filters, sorting, and pagination.
+
+**Outstanding work:** frontend filters, sorting, and pagination UI.
+
+---
+
+## Bonus details
 
 ### Web Minor 4 – Notification system
 
-**Module number and name:** Web Minor 4 – Notification system
-
-**Justification:** Notifications are useful in a marketplace and can improve the user experience, but they should be treated as a backup if the underlying events are already available. This keeps the team focused on higher-value modules first.
+**Justification:** Complete notification flow for create/update/delete actions is implemented end-to-end. Demonstrable across user, friends, product, and chat events.
 
 **Requirements from the subject:**
-- Implement a complete notification system for creation, update, and deletion actions.
+- A complete notification system for all creation, update, and deletion actions.
+
+**Demo checklist for evaluation:**
+- C/U/D event on at least: user profile, friends, products/listings, chat events → user-visible notification each time.
+
+### Accessibility Minor 4 – Support for additional browsers
+
+**Justification:** The project is already tested on Chrome and Firefox. Adding one more non-Chromium browser (Safari or Edge) closes the requirement.
+
+**Requirements from the subject:**
+- Full compatibility with at least 2 additional browsers (beyond Chrome).
+- Test and fix all features in each browser.
+- Document any browser-specific limitations.
+- Consistent UI/UX across all supported browsers.
+
+**Notes / risks:**
+- Chromium and Brave share Chrome's engine and are very likely **not accepted** as "additional" browsers. Do not claim them.
+- Safe combos: **Chrome + Firefox + Safari**, or **Chrome + Firefox + Edge**.
+- README must list the supported browsers and any known limitations.
+
+### Module of Choice Major – Internal mTLS / PKI between services
+
+**Justification:**
+- *Why chosen:* The subject only requires HTTPS at the edge (browser ↔ backend). All internal container-to-container traffic is allowed to be unencrypted. This module extends TLS to **every internal hop** with mutual authentication, going meaningfully beyond the mandatory baseline.
+- *Technical challenges addressed:* running an internal certificate authority, generating per-service certificates, distributing them to each container, configuring mTLS so each service both presents and verifies a certificate, cert lifecycle (issuance, rotation, revocation), and automating all of this in the compose stack.
+- *Value to the project:* defense-in-depth even inside the private network — a compromised container cannot impersonate another service.
+- *Why Major (2 points):* the PKI is a standalone subsystem (`srcs/pki/`) with its own service, scripts, and tests, integrated across backend, database, gateway, and monitoring. Comparable in weight to the Cybersecurity Major (WAF + Vault).
+
+**Risks:**
+- The subject explicitly warns that trivial "Module of Choice" implementations are rejected. The README **must frame this as mTLS / full PKI subsystem**, not "we turned on HTTPS internally."
+- If the evaluator decides the scope is too small, the module may be downgraded to Minor (1 point), breaking the 19-point math.
+
+**Demo checklist for evaluation:**
+- Show the `srcs/pki/` service (CA, scripts, tests).
+- Show certificates issued per service and mounted into each container.
+- Show a service rejecting a connection without a valid client certificate (mTLS proof).
+- Walk through cert rotation.
+
+### Module of Choice Minor – Stripe payment integration
+
+**Justification:**
+- *Why chosen:* a marketplace needs a real payment path; using Stripe (a recognized provider) makes the flow inspectable end-to-end.
+- *Technical challenges addressed:* Stripe Checkout integration, webhook signature verification, idempotent order persistence, syncing payment state with the application's order/listing state.
+- *Value to the project:* completes the e-commerce loop (list → buy → confirm) that the marketplace concept implies.
+- *Why Minor (1 point):* scope is limited to a single provider and a single payment flow (no subscriptions, refunds, or multi-currency).
+
+**Outstanding work:** frontend checkout flow, success/failure pages, and webhook-driven order confirmation in the UI.
+
+**Risks (highest of all bonus picks):**
+- The subject rejects "trivial" Module of Choice implementations. A bare Stripe button is not enough; a working end-to-end purchase with persisted order state is required.
+- Frontend is not yet implemented. **Decision rule:** if the frontend will not ship before evaluation, drop this module and accept 18 points instead of 19.
+
+**Demo checklist for evaluation:**
+- Add a product to cart in the UI.
+- Pay via Stripe test card.
+- Webhook lands, order row is created/updated.
+- User sees confirmation in the UI; admin sees the order.
+
+---
 
 ## Drop for now details
 
-### DevOps Major 3 – Backend as microservices
+### Web Major 4 – Public API
 
-**Module number and name:** DevOps Major 3 – Backend as microservices
-
-**Justification:** This is high complexity with no implementation progress yet. It adds architecture overhead and testing burden without helping the team secure the most realistic points first.
+**Status:** several endpoints already exist that could be hardened into a public API. Keeping the module documented here as a **fallback** in case the mTLS Major is downgraded or the Stripe Minor is rejected at evaluation.
 
 **Requirements from the subject:**
-- Design loosely-coupled services with clear interfaces.
-- Use REST APIs or message queues for communication.
-- Each service should have a single responsibility.
-
-### Module of Choice – Payment system for the marketplace
-
-**Module number and name:** Module of Choice – Payment system for the marketplace
-
-**Justification:** A payment flow can fit the product idea, but as a module of choice it would require additional README justification and would likely increase security, edge-case, and legal complexity. It is better kept out of the short-term rescue plan.
-
-**Requirements from the subject:**
-- The module must be custom and not listed in the official modules.
-- It must be substantial and demonstrate technical complexity.
-- The README must justify why the module was chosen, what technical challenges it addresses, how it adds value to the project, and why it deserves its point value.
-
-### Gaming Major 5 – Advanced 3D graphics
-
-**Module number and name:** Gaming Major 5 – Advanced 3D graphics
-
-**Justification:** This is risky because it is frontend-heavy and there is no visible demo progress yet. It does not support the current rescue plan as directly as the web and user modules do.
-
-**Requirements from the subject:**
-- Implement advanced 3D graphics using a library like Three.js or Babylon.js.
-- Create an immersive 3D environment.
-- Implement advanced rendering techniques.
-- Ensure smooth performance and user interaction.
+- Public API to interact with the database.
+- Secured with an API key.
+- Rate limiting.
+- Documentation.
+- At least 5 endpoints (GET, POST, PUT, DELETE).
 
 ### Web Minor 10 – File upload and management system
 
-**Module number and name:** Web Minor 10 – File upload and management system
-
-**Justification:** A marketplace needs image and file handling for listings and user content. This module adds visible value and supports a common feature set that is easy to demonstrate.
+**Justification for drop:** would help marketplace listings but adds complexity outside the 19-point target.
 
 **Requirements from the subject:**
-- Support multiple file types, including images and documents.
-- Client-side and server-side validation for type, size, and format.
-- Secure file storage with proper access control.
-- File preview functionality where applicable.
-- Progress indicators for uploads.
+- Multiple file types (images, documents).
+- Client + server-side validation (type, size, format).
+- Secure file storage with access control.
+- File preview where applicable.
+- Upload progress indicators.
 - Ability to delete uploaded files.
+
+### DevOps Major 3 – Backend as microservices
+
+**Justification for drop:** High complexity, no implementation progress.
+
+**Requirements from the subject:**
+- Loosely-coupled services with clear interfaces.
+- REST APIs or message queues for communication.
+- Each service with a single responsibility.
+
+### Gaming Major 5 – Advanced 3D graphics
+
+**Justification for drop:** Frontend-heavy and no visible progress.
+
+**Requirements from the subject:**
+- Advanced 3D graphics using Three.js or Babylon.js.
+- Immersive 3D environment.
+- Advanced rendering techniques.
+- Smooth performance and interaction.
 
 ### User Minor 4 – User activity analytics
 
-**Module number and name:** User Minor 4 – User activity analytics and insights dashboard
-
-**Justification:** This module is not necessary for the current delivery plan and there is no progress on it. It also offers less direct value than the modules already under development.
+**Justification for drop:** Not needed for the 19-point target and no current progress.
 
 **Requirements from the subject:**
-- Implement user activity analytics and an insights dashboard.
+- User activity analytics and insights dashboard.
 
 ### AI Minor 1 – Content moderation AI
 
-**Module number and name:** AI Minor 1 – Content moderation AI
-
-**Justification:** This introduces extra AI complexity without directly supporting the core project delivery target. It should only be revisited if the core platform is already stable and complete.
+**Justification for drop:** Adds complexity without supporting the core delivery target.
 
 **Requirements from the subject:**
-- Implement AI-based content moderation, such as automoderation, autodeletion, or autowarning.
+- AI-based content moderation (auto moderation, auto deletion, auto warning).
 
 ### DevOps Major 1 – ELK / log management
 
-**Module number and name:** DevOps Major 1 – Infrastructure for log management using ELK
-
-**Justification:** Log management is useful, but given the current state of the project it is less realistic than the monitoring module already underway. It adds setup and operational work that the team does not currently need for the core plan.
+**Justification for drop:** Monitoring module already covers the DevOps slot; ELK adds setup and operational work that is not needed.
 
 **Requirements from the subject:**
-- Use Elasticsearch to store and index logs.
-- Use Logstash to collect and transform logs.
-- Use Kibana for visualization and dashboards.
-- Implement log retention and archiving policies.
+- Elasticsearch for log storage and indexing.
+- Logstash for log collection and transformation.
+- Kibana for visualization and dashboards.
+- Log retention and archiving policies.
 - Secure access to all components.
