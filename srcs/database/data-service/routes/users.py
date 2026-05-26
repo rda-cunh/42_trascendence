@@ -23,7 +23,7 @@ def	get_profile(user_id: int, page: int = 1, db=Depends(get_db_dep)):
 
 	cursor.execute('SELECT id, name, description, price, avg_rating, review_count FROM products WHERE seller_id = %s ORDER BY created_at DESC LIMIT %s OFFSET %s', (user_id, limit, skip))
 	products = cursor.fetchall()
-	user['owner'] = False		## Check user_id == current_user['id'] || current_user['role'] == 'Admin'
+	user['owner'] = False
 	if not products:
 		user['listings'] = []
 		return UserResponse(**user)

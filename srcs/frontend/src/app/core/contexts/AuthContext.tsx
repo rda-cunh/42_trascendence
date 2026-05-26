@@ -52,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
     setUser(null);
     localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_provider");
     api.setToken(null);
   };
 
@@ -68,6 +69,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(newToken);
     setUser(nextUser);
     localStorage.setItem("auth_token", newToken);
+
+    if (nextUser?.auth_provider) {
+      localStorage.setItem("auth_provider", nextUser.auth_provider);
+    } else {
+      localStorage.removeItem("auth_provider");
+    }
+
     api.setToken(newToken);
   };
 
@@ -83,25 +91,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const initAuth = async () => {
       const savedToken = localStorage.getItem("auth_token");
+      const savedAuthProvider = localStorage.getItem("auth_provider");
+
       if (isUsableToken(savedToken)) {
         setToken(savedToken);
         api.setToken(savedToken);
 
         const fallbackUser = parseUserFromToken(savedToken);
-        if (fallbackUser) setUser(fallbackUser);
+        const hydratedFallbackUser = fallbackUser
+          ? {
+              ...fallbackUser,
+              auth_provider:
+                savedAuthProvider === "oauth42" || savedAuthProvider === "local"
+                  ? savedAuthProvider
+                  : undefined,
+            }
+          : null;
+
+        if (hydratedFallbackUser) setUser(hydratedFallbackUser);
 
         try {
           const profile = await api.getProfile();
-          if (profile?.id) {
-            setUser({
-              id: String(profile.id),
-              email: profile.email,
-              name: profile.name,
-              phone: profile.phone,
-              avatar_url: profile.avatar_url,
-              role: profile.role,
-              status: profile.status?.toLowerCase(),
-            });
+          const nextUser = mapProfileToAuthUser(profile ?? {}, fallbackUser);
+
+          if (nextUser) {
+            setUser(nextUser);
+          } else if (!fallbackUser) {
+            clearAuthState();
           }
         } catch {
           if (!fallbackUser) clearAuthState();
@@ -169,8 +185,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!newToken) throw new Error("Login response did not include an access token");
 
     api.setToken(newToken);
+    const normalizedUser = normalizeUser(res, newToken);
+    const fallbackUser = normalizedUser ? { ...normalizedUser, auth_provider: "local" as const } : null;
     const profile = await api.getProfile().catch(() => null);
-    persistAuth(newToken, normalizeUser(profile ?? res, newToken));
+    const nextUser = profile ? mapProfileToAuthUser(profile, fallbackUser) : fallbackUser;
+    persistAuth(newToken, nextUser);
+  };
+
+  const syncProfileAvatar = async () => {
+    const currentProfile = await api.getProfile().catch(() => null);
+
+    if (!currentProfile) {
+      return currentProfile;
+    }
+
+    const currentAvatar = currentProfile.avatar_url?.trim();
+
+    const uploadAvatarFromSource = async (sourceUrl: string, filename: string) => {
+      const response = await fetch(sourceUrl);
+      if (!response.ok) {
+        throw new Error("Failed to load avatar image");
+      }
+
+      const blob = await response.blob();
+      const file = new File([blob], filename, {
+        type: blob.type || "image/jpeg",
+      });
+
+      const upload = await api.uploadImage(file);
+      const avatarUrl = upload.url ?? `/images/${upload.filename}`;
+
+      await api.updateProfile({ avatar_url: avatarUrl });
+
+      return api.getProfile().catch(() => ({
+        ...currentProfile,
+        avatar_url: avatarUrl,
+      }));
+    };
+
+    if (!currentAvatar) {
+      return uploadAvatarFromSource("/default-avatar.jpg", "default-avatar.jpg");
+    }
+
+    const isLocalAvatar =
+      currentAvatar.startsWith("/images/") ||
+      currentAvatar.startsWith("/default-avatar.jpg") ||
+      currentAvatar.startsWith(window.location.origin);
+
+    if (isLocalAvatar) {
+      return currentProfile;
+    }
+
+    return uploadAvatarFromSource(currentAvatar, "oauth-avatar.jpg");
   };
 
   const register = async (data: {
@@ -201,8 +267,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     api.setToken(newToken);
-    const profile = await api.getProfile().catch(() => null);
-    persistAuth(newToken, normalizeUser(profile ?? res, newToken));
+
+    const normalizedUser = normalizeUser(res, newToken);
+    const fallbackUser = normalizedUser ? { ...normalizedUser, auth_provider: "local" as const } : null;
+    const profile = await syncProfileAvatar();
+    const nextUser = profile ? mapProfileToAuthUser(profile, fallbackUser) : fallbackUser;
+
+    persistAuth(newToken, nextUser);
+  };
+
+  const mapProfileToAuthUser = (
+    profile: {
+      id?: string | number;
+      email?: string;
+      name?: string;
+      phone?: string | null;
+      avatar_url?: string | null;
+      role?: string;
+      status?: string | null;
+    },
+    fallbackUser?: User | null
+  ): User | null => {
+    const resolvedId = profile.id ?? fallbackUser?.id;
+
+    if (!resolvedId) {
+      return null;
+    }
+
+    return {
+      id: String(resolvedId),
+      email: profile.email ?? fallbackUser?.email ?? "",
+      name: profile.name ?? fallbackUser?.name,
+      phone: profile.phone ?? fallbackUser?.phone ?? undefined,
+      avatar_url: profile.avatar_url ?? fallbackUser?.avatar_url ?? undefined,
+      auth_provider: fallbackUser?.auth_provider,
+      role: (profile.role ?? fallbackUser?.role) as User["role"] | undefined,
+      status: (profile.status?.toLowerCase() ?? fallbackUser?.status) as User["status"] | undefined,
+    };
   };
 
   const loginWithOAuth = async (accessToken: string, oauthUser?: User) => {
@@ -210,28 +311,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("auth_token", accessToken);
     api.setToken(accessToken);
 
-    if (oauthUser) {
-      setUser(oauthUser);
-    } else {
-      const fallback = parseUserFromToken(accessToken);
-      if (fallback) setUser(fallback);
+    const baseFallbackUser = oauthUser ?? parseUserFromToken(accessToken);
+    const fallbackUser = baseFallbackUser
+      ? { ...baseFallbackUser, auth_provider: "oauth42" as const }
+      : null;
+
+    if (fallbackUser) {
+      setUser(fallbackUser);
     }
 
     try {
-      const profile = await api.getProfile();
-      if (profile?.id) {
-        setUser({
-          id: String(profile.id),
-          email: profile.email,
-          name: profile.name,
-          phone: profile.phone,
-          avatar_url: profile.avatar_url,
-          role: profile.role,
-          status: profile.status?.toLowerCase(),
-        });
+      const profile = await syncProfileAvatar();
+      const nextUser = mapProfileToAuthUser(profile ?? {}, fallbackUser);
+
+      if (nextUser) {
+        persistAuth(accessToken, nextUser);
       }
     } catch {
-      // Keep token-derived or backend-provided user if profile fetch fails.
+      // Keep token-derived or backend-provided user if profile/avatar sync fails.
     }
   };
 

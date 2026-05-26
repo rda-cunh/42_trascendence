@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useParams, useNavigate } from "react-router";
-import { ArrowLeft, UserPlus, UserCheck } from "lucide-react";
+import { ArrowLeft, UserPlus, UserCheck, Ban } from "lucide-react";
 import { useAuth } from "@/app/core/contexts/AuthContext";
 import { ProductCard } from "../components/ProductCard";
 import { api, mapListing } from "@/app/core/lib/api";
@@ -106,6 +106,9 @@ export function SellerProfile() {
   }
 
   const isOwnProfile = user?.id === sellerId;
+  const isAdminViewer = user?.role === "admin";
+  const shouldShowBanAction = !isOwnProfile && !!user && isAdminViewer;
+  const shouldShowFollowAction = !isOwnProfile && !!user && !isAdminViewer;
 
   const handleToggleFollow = async () => {
     if (!seller || !user || isOwnProfile) return;
@@ -128,6 +131,26 @@ export function SellerProfile() {
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to update follow state");
+    } finally {
+      setIsFollowPending(false);
+    }
+  };
+
+  const handleBanUser = async () => {
+    if (!seller || !user || !isAdminViewer || isOwnProfile) return;
+
+    const confirmed = window.confirm(
+      `Ban ${seller.email || seller.name}? This will mark the account as banned.`
+    );
+    if (!confirmed) return;
+
+    setIsFollowPending(true);
+    try {
+      await api.banUser(seller.id);
+      toast.success("User banned successfully");
+      navigate("/admin/users");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to ban user");
     } finally {
       setIsFollowPending(false);
     }
@@ -160,22 +183,36 @@ export function SellerProfile() {
 
             {!isOwnProfile && user && (
               <div className="flex items-center gap-3">
-                <button
-                  onClick={() => void handleToggleFollow()}
-                  disabled={isFollowPending}
-                  className={`inline-flex items-center gap-2 rounded-lg px-6 py-3 font-medium transition-colors ${
-                    isFollowing
-                      ? "border border-white/20 bg-white/10 text-white hover:bg-white/15"
-                      : "border border-white bg-white text-purple-700 hover:bg-purple-50"
-                  } disabled:cursor-not-allowed disabled:opacity-60`}
-                >
-                  {isFollowing ? (
-                    <UserCheck className="h-4 w-4" />
-                  ) : (
-                    <UserPlus className="h-4 w-4" />
-                  )}
-                  {isFollowPending ? "Updating..." : isFollowing ? "Following" : "Follow"}
-                </button>
+                {shouldShowBanAction && (
+                  <button
+                    onClick={() => void handleBanUser()}
+                    disabled={isFollowPending}
+                    className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-600 px-6 py-3 font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Ban className="h-4 w-4" />
+                    {isFollowPending ? "Banning..." : "Ban user"}
+                  </button>
+                )}
+            
+                {shouldShowFollowAction && (
+                  <button
+                    onClick={() => void handleToggleFollow()}
+                    disabled={isFollowPending}
+                    className={`inline-flex items-center gap-2 rounded-lg px-6 py-3 font-medium transition-colors ${
+                      isFollowing
+                        ? "border border-white/20 bg-white/10 text-white hover:bg-white/15"
+                        : "border border-white bg-white text-purple-700 hover:bg-purple-50"
+                    } disabled:cursor-not-allowed disabled:opacity-60`}
+                  >
+                    {isFollowing ? (
+                      <UserCheck className="h-4 w-4" />
+                    ) : (
+                      <UserPlus className="h-4 w-4" />
+                    )}
+                    {isFollowPending ? "Updating..." : isFollowing ? "Following" : "Follow"}
+                  </button>
+                )}
+
                 <button
                   onClick={() => {
                     // Navigate to messages; user can start a conversation with the seller from the inbox

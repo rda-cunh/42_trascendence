@@ -61,12 +61,12 @@ export function ProductDetail() {
       navigate("/login");
       return;
     }
-    // Prevent adding own listing
-    const isOwner = user && listing.seller_id && String(user.id) === String(listing.seller_id);
-    if (isOwner) {
-      toast.error("You cannot add your own listing to cart. Use Edit to update it.");
+
+    if (canManageListing) {
+      toast.error("This listing is in management mode for your account. Use Edit to update it.");
       return;
     }
+
     addItem(listing);
     toast.success("Added to cart!");
   };
@@ -78,19 +78,19 @@ export function ProductDetail() {
       navigate("/login");
       return;
     }
-    // Prevent buying own listing
-    const isOwner = user && listing.seller_id && String(user.id) === String(listing.seller_id);
-    if (isOwner) {
-      toast.error("You cannot purchase your own listing. Use Edit to manage it.");
+
+    if (canManageListing) {
+      toast.error("This listing is in management mode for your account. Use Edit to manage it.");
       return;
     }
+
     addItem(listing);
     navigate("/checkout");
   };
 
   const handleDelete = async () => {
     if (!listing) return;
-    if (!user || String(user.id) !== String(listing.seller_id)) {
+    if (!user || !canManageListing) {
       toast.error("You are not allowed to delete this listing");
       return;
     }
@@ -134,6 +134,10 @@ export function ProductDetail() {
     );
   }
 
+  const isActualOwner = !!(user && listing.seller_id && String(user.id) === String(listing.seller_id));
+  const isAdmin = user?.role === "admin";
+  const canManageListing = isActualOwner || isAdmin;
+
   const avgRating = listing?.rating ?? 0;
   const reviewCount = listing?.review_count ?? reviews.length;
   const description = getListingDescription(listing);
@@ -159,7 +163,7 @@ export function ProductDetail() {
             <ProductInfo listing={listing} averageRating={avgRating} reviewCount={reviewCount} />
 
             <div className="flex gap-3">
-              {user && listing.seller_id && String(user.id) === String(listing.seller_id) ? (
+              {canManageListing ? (
                 <>
                   <Link to={`/listing/${listing.id}/edit`} className="btn-primary flex-1 px-6 py-3">
                     Edit
