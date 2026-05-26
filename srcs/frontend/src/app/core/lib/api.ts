@@ -169,6 +169,10 @@ class ApiClient extends HttpClient {
     return this.request<any>("POST", "/orders/", data);
   }
 
+  updateOrder(orderId: string | number, data: { status: string }) {
+    return this.request<any>("PATCH", `/orders/${orderId}/`, data);
+  }
+
   createCheckout(data: { items: Array<{ id: number; quantity: number }> }) {
     return this.request<{ checkout_url: string; session_id: string }>(
       "POST",
