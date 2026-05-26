@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useParams, useNavigate } from "react-router";
-import { ArrowLeft, UserPlus, UserCheck, Trash2 } from "lucide-react";
+import { ArrowLeft, UserPlus, UserCheck, Ban } from "lucide-react";
 import { useAuth } from "@/app/core/contexts/AuthContext";
 import { ProductCard } from "../components/ProductCard";
 import { api, mapListing } from "@/app/core/lib/api";
@@ -107,7 +107,7 @@ export function SellerProfile() {
 
   const isOwnProfile = user?.id === sellerId;
   const isAdminViewer = user?.role === "admin";
-  const shouldShowDeleteAction = !isOwnProfile && !!user && isAdminViewer;
+  const shouldShowBanAction = !isOwnProfile && !!user && isAdminViewer;
   const shouldShowFollowAction = !isOwnProfile && !!user && !isAdminViewer;
 
   const handleToggleFollow = async () => {
@@ -136,25 +136,25 @@ export function SellerProfile() {
     }
   };
 
-  const handleDeleteUser = async () => {
-  if (!seller || !user || !isAdminViewer || isOwnProfile) return;
+  const handleBanUser = async () => {
+    if (!seller || !user || !isAdminViewer || isOwnProfile) return;
 
-  const confirmed = window.confirm(
-    `Deactivate ${seller.email || seller.name}? This will prevent the user from logging in.`
-  );
-  if (!confirmed) return;
+    const confirmed = window.confirm(
+      `Ban ${seller.email || seller.name}? This will mark the account as banned.`
+    );
+    if (!confirmed) return;
 
-  setIsFollowPending(true);
-  try {
-    await api.deleteUser(seller.id);
-    toast.success("User deactivated successfully");
-    navigate("/admin/users");
-  } catch (err) {
-    toast.error(err instanceof Error ? err.message : "Failed to deactivate user");
-  } finally {
-    setIsFollowPending(false);
-  }
-};
+    setIsFollowPending(true);
+    try {
+      await api.banUser(seller.id);
+      toast.success("User banned successfully");
+      navigate("/admin/users");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to ban user");
+    } finally {
+      setIsFollowPending(false);
+    }
+  };
 
   return (
     <div className="app-page">
@@ -183,14 +183,14 @@ export function SellerProfile() {
 
             {!isOwnProfile && user && (
               <div className="flex items-center gap-3">
-                {shouldShowDeleteAction && (
+                {shouldShowBanAction && (
                   <button
-                    onClick={() => void handleDeleteUser()}
+                    onClick={() => void handleBanUser()}
                     disabled={isFollowPending}
                     className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-600 px-6 py-3 font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    <Trash2 className="h-4 w-4" />
-                    {isFollowPending ? "Deleting..." : "Delete"}
+                    <Ban className="h-4 w-4" />
+                    {isFollowPending ? "Banning..." : "Ban user"}
                   </button>
                 )}
             
