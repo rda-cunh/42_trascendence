@@ -1,8 +1,16 @@
 #!/bin/sh
 set -eu
 
-mysql -u root -p"${MYSQL_ROOT_PASSWORD}" <<-SQL
+ADMIN_PASSWORD_HASH=$(printf '%s' "${ADMIN_PASSWORD}" | sha256sum | cut -d' ' -f1)
+
+MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysql -u root <<-SQL
 CREATE USER IF NOT EXISTS '${MYSQL_EXPORTER_USER}'@'%' IDENTIFIED BY '${MYSQL_EXPORTER_PASSWORD}';
 GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO '${MYSQL_EXPORTER_USER}'@'%';
 FLUSH PRIVILEGES;
+SQL
+
+MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysql -u root transcendence_db <<-SQL
+INSERT INTO users (name, email, password_hash, role, status, created_at, updated_at)
+SELECT '${ADMIN_NAME}', '${ADMIN_EMAIL}', '${ADMIN_PASSWORD_HASH}', 'Admin', 'Active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = '${ADMIN_EMAIL}');
 SQL

@@ -21,6 +21,9 @@ services:
       MYSQL_PASSWORD:           ${DB_PASSWORD}
       MYSQL_EXPORTER_USER:      ${MYSQL_EXPORTER_USER}
       MYSQL_EXPORTER_PASSWORD:  ${MYSQL_EXPORTER_PASSWORD}
+      ADMIN_NAME:               ${ADMIN_NAME}
+      ADMIN_EMAIL:              ${ADMIN_EMAIL}
+      ADMIN_PASSWORD:           ${ADMIN_PASSWORD}
     command:
       - mysqld
       - --ssl-ca=/certs/${CA_CRT_NAME:-ca.crt}
