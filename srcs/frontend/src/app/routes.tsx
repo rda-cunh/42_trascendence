@@ -9,7 +9,9 @@ import { Login } from "@/app/features/auth/pages/Login";
 import { OAuthCallback } from "@/app/features/auth/pages/OAuthCallback";
 import { Register } from "@/app/features/auth/pages/Register";
 import { Chat } from "@/app/features/chat/pages/Chat";
-import { Checkout } from "@/app/features/checkout/pages/Checkout";
+import { CheckoutRedirect } from "@/app/features/checkout/pages/CheckoutRedirect";
+import { CheckoutFailure } from "@/app/features/checkout/pages/CheckoutFailure";
+import { CheckoutSuccess } from "@/app/features/checkout/pages/CheckoutSuccess";
 import { EditListing } from "@/app/features/listings/pages/EditListing";
 import { SellItem } from "@/app/features/listings/pages/SellItem";
 import { Home } from "@/app/features/products/pages/Home";
@@ -42,7 +44,9 @@ export const router = createBrowserRouter([
       { path: "seller/:sellerId", element: <SellerProfile /> },
       { path: "sell", element: withAuth(<SellItem />) },
       { path: "listing/:id/edit", element: withAuth(<EditListing />) },
-      { path: "checkout", element: withAuth(<Checkout />) },
+      { path: "checkout", element: withAuth(<CheckoutRedirect />) },
+      { path: "orders/success", element: <CheckoutSuccess /> },
+      { path: "orders/fail", element: <CheckoutFailure /> },
       { path: "profile", element: withAuth(<Profile />) },
       { path: "friends", element: withAuth(<Friends />) },
       { path: "orders", element: withAuth(<Orders />) },
