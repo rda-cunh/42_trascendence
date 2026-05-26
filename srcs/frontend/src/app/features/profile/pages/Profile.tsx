@@ -23,7 +23,6 @@ import { UserAvatar } from "@/app/shared/components/UserAvatar";
 import { useImageUpload } from "@/app/features/listings/hooks/useImageUpload";
 import { useAsyncEffect } from "@/app/core/hooks/useAsyncEffect";
 import { ROUTES } from "@/app/shared/utils/constants";
-import { validatePassword } from "@/app/shared/utils/validators";
 import { UploadProgressBar } from "@/app/shared/components/UploadProgressBar";
 
 export function Profile() {
@@ -94,9 +93,8 @@ export function Profile() {
       return;
     }
 
-    const validation = validatePassword(passwordForm.next);
-    if (!validation.isValid) {
-      toast.error(validation.errors[0] ?? "Invalid password");
+    if (passwordForm.next.length < 8) {
+      toast.error("Password must be at least 8 characters");
       return;
     }
 
@@ -272,6 +270,7 @@ export function Profile() {
                       onChange={(e) => setPasswordForm((p) => ({ ...p, next: e.target.value }))}
                       className="form-control"
                       autoComplete="new-password"
+                      minLength={8}
                     />
                   </div>
                   <div>
