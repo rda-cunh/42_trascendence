@@ -169,6 +169,18 @@ class ApiClient extends HttpClient {
     return this.request<any>("POST", "/orders/", data);
   }
 
+  createCheckout(data: { items: Array<{ id: number; quantity: number }> }) {
+    return this.request<{ checkout_url: string; session_id: string }>(
+      "POST",
+      "/orders/create-checkout/",
+      data
+    );
+  }
+
+  finalizeCheckout(sessionId: string) {
+    return this.request<any>("POST", "/orders/", { session_id: sessionId });
+  }
+
   getOrders(buyerId: string | number) {
     return this.request<any[]>("GET", `/orders/buyer/${buyerId}/`).then((data) =>
       Array.isArray(data) ? data.map(mapOrder) : []
