@@ -5,4 +5,4 @@ class IsAdminRole(BasePermission):
         token = request.auth
         if token is None:
             return False
-        return token['role'] == 'admin'
+        return token['role'] == 'Admin'

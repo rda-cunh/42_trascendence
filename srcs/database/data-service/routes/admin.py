@@ -4,6 +4,57 @@ from models.admin import *
 
 router = APIRouter(prefix='/api/admin', tags=['Users'])
 
+@router.get('/users/', response_model=list[AdminUserInfo], status_code=200)
+def get_users(
+	page: int = 1,
+	limit: int = 100,
+	search: str | None = None,
+	db = Depends(get_db_dep)
+):
+	conn, cursor = db
+	if page < 1:
+		raise HTTPException(status_code=400, detail='Invalid page')
+	if limit < 1 or limit > 200:
+		raise HTTPException(status_code=400, detail='Invalid limit')
+	skip = (page - 1) * limit
+
+	sql = """
+			SELECT
+				id, name, avatar_url, email, phone, role, status, created_at, updated_at
+			FROM users
+			WHERE 1=1"""
+	params = []
+
+	if search:
+		sql += " AND (name LIKE %s OR email LIKE %s OR role LIKE %s OR status LIKE %s)"
+		params.extend([f'%{search}%', f'%{search}%', f'%{search}%', f'%{search}%'])
+
+	sql += " ORDER BY created_at DESC LIMIT %s OFFSET %s"
+	params.extend([limit, skip])
+
+	cursor.execute(sql, params)
+	users = cursor.fetchall()
+	return [AdminUserInfo(**row) for row in users]
+
+@router.delete('/users/{user_id}/', status_code=204)
+def deactivate_user(user_id: int, db=Depends(get_db_dep)):
+	conn, cursor = db
+
+	cursor.execute("""SELECT id, role, status FROM users WHERE id = %s""", (user_id,))
+	user = cursor.fetchone()
+	if not user:
+		raise HTTPException(status_code=404, detail='User not found')
+	if user['status'] == 'Deactivated':
+		raise HTTPException(status_code=400, detail='User is already deactivated')
+
+	if user['role'] == 'Admin':
+		cursor.execute("""SELECT COUNT(*) AS total FROM users WHERE role = 'Admin' AND status != 'Deactivated'""")
+		result = cursor.fetchone()
+		if result["total"] <= 1:
+			raise HTTPException(status_code=409, detail="Cannot deactivate the last admin")
+
+	cursor.execute("""UPDATE users SET status = %s WHERE id = %s""", ('Deactivated', user_id))
+
 @router.get('/bans/', response_model=list[UserInfo], status_code=200)
 def get_bans(page: int = 1, db = Depends(get_db_dep)):
 	conn, cursor = db

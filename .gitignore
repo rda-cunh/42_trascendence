@@ -5,3 +5,4 @@ tests/*.html
 tests/*.json
 docs/notes*.md
 docs/notas*.md
+.idea
