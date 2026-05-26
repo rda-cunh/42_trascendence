@@ -51,6 +51,8 @@ database-restore:
 	$(EXEC) "$(PRE_CMD) set -a; . .env; set +a; docker exec -i -e MYSQL_PWD=$(DB_ROOT_PASSWORD) $(DB_CONTAINER_NAME) mysql -u root $(DB_NAME)" < "$$sql_path"; \
 	echo "Restoring images from $$(basename "$$img_path")..."; \
 	$(EXEC) "$(PRE_CMD) set -a; . .env; set +a; docker exec -i $(IMAGE_CONTAINER_NAME) sh -c 'find $(IMAGE_STORAGE_PATH) -mindepth 1 -delete && tar -C $(IMAGE_STORAGE_PATH) -xzf -'" < "$$img_path"; \
+	echo "Ensuring admin user exists..."; \
+	$(EXEC) "$(PRE_CMD) set -a; . .env; set +a; docker exec -i $(DB_CONTAINER_NAME) sh /docker-entrypoint-initdb.d/01-create-monitoring-user.sh"; \
 	echo "Restore completed."
 
 backend:
