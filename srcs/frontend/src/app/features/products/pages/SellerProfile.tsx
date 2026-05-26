@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useParams, useNavigate } from "react-router";
-import { ArrowLeft, UserPlus, UserCheck } from "lucide-react";
+import { ArrowLeft, UserPlus, UserCheck, Trash2 } from "lucide-react";
 import { useAuth } from "@/app/core/contexts/AuthContext";
 import { ProductCard } from "../components/ProductCard";
 import { api, mapListing } from "@/app/core/lib/api";
@@ -106,6 +106,9 @@ export function SellerProfile() {
   }
 
   const isOwnProfile = user?.id === sellerId;
+  const isAdminViewer = user?.role === "admin";
+  const shouldShowDeleteAction = !isOwnProfile && !!user && isAdminViewer;
+  const shouldShowFollowAction = !isOwnProfile && !!user && !isAdminViewer;
 
   const handleToggleFollow = async () => {
     if (!seller || !user || isOwnProfile) return;
@@ -132,6 +135,26 @@ export function SellerProfile() {
       setIsFollowPending(false);
     }
   };
+
+  const handleDeleteUser = async () => {
+  if (!seller || !user || !isAdminViewer || isOwnProfile) return;
+
+  const confirmed = window.confirm(
+    `Deactivate ${seller.email || seller.name}? This will prevent the user from logging in.`
+  );
+  if (!confirmed) return;
+
+  setIsFollowPending(true);
+  try {
+    await api.deleteUser(seller.id);
+    toast.success("User deactivated successfully");
+    navigate("/admin/users");
+  } catch (err) {
+    toast.error(err instanceof Error ? err.message : "Failed to deactivate user");
+  } finally {
+    setIsFollowPending(false);
+  }
+};
 
   return (
     <div className="app-page">
@@ -160,22 +183,36 @@ export function SellerProfile() {
 
             {!isOwnProfile && user && (
               <div className="flex items-center gap-3">
-                <button
-                  onClick={() => void handleToggleFollow()}
-                  disabled={isFollowPending}
-                  className={`inline-flex items-center gap-2 rounded-lg px-6 py-3 font-medium transition-colors ${
-                    isFollowing
-                      ? "border border-white/20 bg-white/10 text-white hover:bg-white/15"
-                      : "border border-white bg-white text-purple-700 hover:bg-purple-50"
-                  } disabled:cursor-not-allowed disabled:opacity-60`}
-                >
-                  {isFollowing ? (
-                    <UserCheck className="h-4 w-4" />
-                  ) : (
-                    <UserPlus className="h-4 w-4" />
-                  )}
-                  {isFollowPending ? "Updating..." : isFollowing ? "Following" : "Follow"}
-                </button>
+                {shouldShowDeleteAction && (
+                  <button
+                    onClick={() => void handleDeleteUser()}
+                    disabled={isFollowPending}
+                    className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-600 px-6 py-3 font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {isFollowPending ? "Deleting..." : "Delete"}
+                  </button>
+                )}
+            
+                {shouldShowFollowAction && (
+                  <button
+                    onClick={() => void handleToggleFollow()}
+                    disabled={isFollowPending}
+                    className={`inline-flex items-center gap-2 rounded-lg px-6 py-3 font-medium transition-colors ${
+                      isFollowing
+                        ? "border border-white/20 bg-white/10 text-white hover:bg-white/15"
+                        : "border border-white bg-white text-purple-700 hover:bg-purple-50"
+                    } disabled:cursor-not-allowed disabled:opacity-60`}
+                  >
+                    {isFollowing ? (
+                      <UserCheck className="h-4 w-4" />
+                    ) : (
+                      <UserPlus className="h-4 w-4" />
+                    )}
+                    {isFollowPending ? "Updating..." : isFollowing ? "Following" : "Follow"}
+                  </button>
+                )}
+
                 <button
                   onClick={() => {
                     // Navigate to messages; user can start a conversation with the seller from the inbox
