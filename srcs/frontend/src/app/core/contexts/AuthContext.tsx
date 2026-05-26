@@ -52,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
     setUser(null);
     localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_provider");
     api.setToken(null);
   };
 
@@ -68,6 +69,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(newToken);
     setUser(nextUser);
     localStorage.setItem("auth_token", newToken);
+
+    if (nextUser?.auth_provider) {
+      localStorage.setItem("auth_provider", nextUser.auth_provider);
+    } else {
+      localStorage.removeItem("auth_provider");
+    }
+
     api.setToken(newToken);
   };
 
@@ -83,12 +91,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const initAuth = async () => {
       const savedToken = localStorage.getItem("auth_token");
+      const savedAuthProvider = localStorage.getItem("auth_provider");
+
       if (isUsableToken(savedToken)) {
         setToken(savedToken);
         api.setToken(savedToken);
 
         const fallbackUser = parseUserFromToken(savedToken);
-        if (fallbackUser) setUser(fallbackUser);
+        const hydratedFallbackUser = fallbackUser
+          ? {
+              ...fallbackUser,
+              auth_provider:
+                savedAuthProvider === "oauth42" || savedAuthProvider === "local"
+                  ? savedAuthProvider
+                  : undefined,
+            }
+          : null;
+
+        if (hydratedFallbackUser) setUser(hydratedFallbackUser);
 
         try {
           const profile = await api.getProfile();
@@ -165,7 +185,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!newToken) throw new Error("Login response did not include an access token");
 
     api.setToken(newToken);
-    const fallbackUser = normalizeUser(res, newToken);
+    const normalizedUser = normalizeUser(res, newToken);
+    const fallbackUser = normalizedUser ? { ...normalizedUser, auth_provider: "local" as const } : null;
     const profile = await api.getProfile().catch(() => null);
     const nextUser = profile ? mapProfileToAuthUser(profile, fallbackUser) : fallbackUser;
     persistAuth(newToken, nextUser);
@@ -247,7 +268,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     api.setToken(newToken);
 
-    const fallbackUser = normalizeUser(res, newToken);
+    const normalizedUser = normalizeUser(res, newToken);
+    const fallbackUser = normalizedUser ? { ...normalizedUser, auth_provider: "local" as const } : null;
     const profile = await syncProfileAvatar();
     const nextUser = profile ? mapProfileToAuthUser(profile, fallbackUser) : fallbackUser;
 
@@ -278,6 +300,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       name: profile.name ?? fallbackUser?.name,
       phone: profile.phone ?? fallbackUser?.phone ?? undefined,
       avatar_url: profile.avatar_url ?? fallbackUser?.avatar_url ?? undefined,
+      auth_provider: fallbackUser?.auth_provider,
       role: (profile.role ?? fallbackUser?.role) as User["role"] | undefined,
       status: (profile.status?.toLowerCase() ?? fallbackUser?.status) as User["status"] | undefined,
     };
@@ -288,7 +311,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("auth_token", accessToken);
     api.setToken(accessToken);
 
-    const fallbackUser = oauthUser ?? parseUserFromToken(accessToken);
+    const baseFallbackUser = oauthUser ?? parseUserFromToken(accessToken);
+    const fallbackUser = baseFallbackUser
+      ? { ...baseFallbackUser, auth_provider: "oauth42" as const }
+      : null;
 
     if (fallbackUser) {
       setUser(fallbackUser);
