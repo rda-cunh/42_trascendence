@@ -10,13 +10,14 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import redirect as django_redirect
 from urllib.parse import urlencode
 from .permissions import IsAdminRole
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 
 from . import serializers
 from . import presence as presence_store
 import requests
 import secrets
 import json
+import stripe
 
 # TODO LISTING ID PATCH
 # TODO LISTING ID DELETE
@@ -24,12 +25,22 @@ import json
 # TODO ORDER GET, POST
 # TODO ORDER ID GET, PATCH
 
+stripe.api_key = settings.STRIPE_SECRET_KEY
+
+def to_cents(amount) -> int:
+    try:
+        return int(
+                (Decimal(str(amount)) * 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+                )
+    except (InvalidOperation, TypeError, ValueError) as e:
+        raise ValueError(f"to_cents got unparseable amount: {amount!r}") from e
+
 # admin check for non-admin exclusive behaviours
 def is_admin(request):
     token = request.auth
     if token is None:
         return False
-    return token['role'] == 'admin'
+    return token['role'] == 'Admin'
 
 # utility to convert non-JSON-serializable values (like Decimal) into strings for safe JSON responses
 def make_json_safe(value):
@@ -711,6 +722,7 @@ class follow_followers(APIView):
 class follow_counts(APIView):
     """GET follower and following counts for user_id. This is public."""
     def get(self, request, user_id):
+        permission_classes = [AllowAny]
         # merged the two calls here. Evaluate later if this needs to be separated.
         followers = proxy_request("GET", f"/follow/followers-count/{user_id}/")
         following = proxy_request("GET", f"/follow/following-count/{user_id}/")
@@ -834,16 +846,28 @@ class listings_image_id(APIView):
             raise PermissionDenied("You do not have permission to edit this product.")
         return proxy_request("DELETE", f"/listings/{product_id}/images/{image_id}")
 
-class listings_review(APIView):
-    def post(self, request, product_id):
-        return proxy_request("POST", f"/listings/{product_id}/review/")
 
-    def get(self, request, product_id):
-        return proxy_request("GET", f"/listings/{product_id}/review/")
+class listings_reviews(APIView):
+    def get(self, request, product_id, review_id=None):
+        if review_id is not None:
+            return proxy_request("GET", f"/listings/{product_id}/reviews/{review_id}/")
+        return proxy_request("GET", f"/listings/{product_id}/reviews/", params=request.query_params)
+
+    def post(self, request, product_id):
+        payload = dict(request.data)
+        if request.user and request.user.is_authenticated:
+            payload["reviewer_id"] = request.user.id
+        return proxy_request("POST", f"/listings/{product_id}/reviews/", data=payload)
 
     def patch(self, request, product_id, review_id):
-        return proxy_request("PATCH", f"/listings/{product_id}/review/{review_id}/")
+        return proxy_request(
+            "PATCH",
+            f"/listings/{product_id}/reviews/{review_id}/",
+            data=request.data,
+        )
 
+    def delete(self, request, product_id, review_id):
+        return proxy_request("DELETE", f"/listings/{product_id}/reviews/{review_id}/")
 
 class seller_id(APIView):
     def get(self, request, user_id):
@@ -880,31 +904,90 @@ class seller_product(APIView):
 
 # orders API
 
+class create_checkout(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        items = request.data.get("items", [])
+        if not items:
+            return Response({"details": "Cart is empty"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        line_items = []
+        for item in items:
+            product_id = item["id"]
+            quantity = int(item["quantity"])
+            listing = proxy_request("GET", f"/listings/{product_id}/")
+            if not listing:
+                return Response({"detail": "Each item needs product_id and quantity"},
+                                status=status.HTTP_400_BAD_REQUEST)
+            line_items.append({
+                "price_data": {
+                    "currency": "usd",
+                    "product_data": {"name": listing.data["name"]},
+                    "unit_amount": to_cents(listing.data["price"]),
+                    },
+                "quantity": quantity,
+                })
+        try:
+            session = stripe.checkout.Session.create(
+                    mode="payment",
+                    payment_method_types=["card"],
+                    line_items=line_items,
+                    success_url=(
+                        f"{settings.STRIPE_SUCCESS_REDIRECT}"
+                        f"?session_id={{CHECKOUT_SESSION_ID}}"
+                        ),
+                    cancel_url=settings.STRIPE_FAIL_REDIRECT,
+                    metadata={
+                        "buyer_id": str(request.user.id)
+                        },
+                    )
+        except stripe.error.StripeError as e:
+            return Response({"detail": "Stripe checkout Session failed",
+                             "error": str(e)},
+                            status=status.HTTP_502_BAD_GATEWAY)
+        return Response(
+                {"checkout_url": session.url, "session_id": session.id},
+                status=status.HTTP_201_CREATED,
+                )
+
+
 class order_create(APIView):
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # This API should have JWT_STRING, ?page=num&status=created
-        # return a list or old orders
-        return proxy_request("GET", "/orders/")
+        return proxy_request("GET", f"/orders/{request.user.id}/")
 
-    def post(self, request):
-        # this API should have JWT_STRING and list of items [id] and quantatity
-        # should also have billing address and name
+    def post(self, request, session_id: str):
+        try:
+            session = stripe.checkout.Session.retrieve(session_id)
+        except stripe.error.InvalidRequestError:
+            return Response({"detail": "Unknown session."},
+                            status=status.HTTP_404_NOT_FOUND)
+        except stripe.error.StripeError as e:
+            return Response({"detail": "Payment provider error.", "error": str(e)},
+                            status=status.HTTP_502_BAD_GATEWAY)
+        buyer_id_in_session = (session.metadata or {}).get("buyer_id")
+        if buyer_id_in_session != str(request.user.id):
+            return Response({"detail": "Forbidden"},
+                            status=status.HTTP_403_FORBIDDEN)
+        paid = session.payment_status == "paid"
+        if not paid:
+            return Response({"detail": "Payment failed."},
+                            status=status.HTTP_403_FORBIDDEN)
         return proxy_request("POST", "/orders/", request.data)
 
-
 class order_id(APIView):
-    def get(self, request, id):
+    def get(self, request, order_id):
         return proxy_request("GET", f"/orders/{order_id}/")
 
-    def patch(self, request, id):
-        return proxy_request("PATCH", f"/orders/{order_id}", request.data)
+    def patch(self, request, order_id):
+        return proxy_request("PATCH", f"/orders/{order_id}/", request.data)
 
 
 class order_buyer_id(APIView):
-    def get(self, request, id):
+    def get(self, request, user_id):
         return proxy_request("GET", f"/orders/buyer/{user_id}/")
-
 
 class payment_id(APIView):
     def get(self, request, order_id):
@@ -965,6 +1048,18 @@ class public_listing_full(APIView):
 
 # ADMIN API
 
+class admin_users(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        return proxy_request("GET", "/admin/users/", params=request.query_params)
+
+class manage_users(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def delete(self, request, user_id):
+        return proxy_request("DELETE", f"/admin/users/{user_id}/")
+
 # return list of banned users
 class admin_bans(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
@@ -982,7 +1077,7 @@ class manage_bans(APIView):
         return proxy_request("POST", f"/admin/bans/{user_id}/")
 
     # unban funcionality
-    def delete(self, request, id):
+    def delete(self, request, user_id):
         return proxy_request("DELETE", f"/admin/bans/{user_id}/")
 
 class manage_admins(APIView):

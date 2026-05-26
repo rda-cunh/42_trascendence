@@ -26,7 +26,7 @@ from .views import (
     listings_image_id,
     listings_image,
 	listing_image_full,
-    listings_review,
+    listings_reviews,
     user_list,
     public_user_list,
     user_id,
@@ -39,6 +39,7 @@ from .views import (
     auth_password,
     order_create,
     order_id,
+    order_buyer_id,
     auth_42_redirect,
     auth_42_callback,
     chat_conversations,
@@ -50,8 +51,10 @@ from .views import (
     notification_mark_read,
     notification_mark_all_read,
     admin_bans,
+    admin_users,
     manage_admins,
     manage_bans,
+    manage_users,
 	admin_dashboard,
     grafana_auth,
     follow_action,
@@ -59,21 +62,22 @@ from .views import (
     follow_followers,
     follow_counts,
     follow_feed,
+    create_checkout,
 )
 
 urlpatterns = [
         
         # listing paths
-        path("listings/<int:product_id>/", listing_id.as_view()),
-        path("listings/", listing_full.as_view()),
-        path("listings/seller/<int:product_id>/", seller_product.as_view()),
-        path("listings/seller/<int:user_id>/", seller_id.as_view()),
-        path("listings/images/", listing_image_full.as_view()),
-        path("listings/<int:product_id>/images/<int:image_id>/", listings_image_id.as_view()),
-        path("listings/<int:product_id>/images/", listings_image.as_view()),
-        path("listings/<int:product_id>/review/", listings_review.as_view()),
-        path("listings/<int:product_id>/review/<int:review_id>/", listings_review.as_view()),
-        
+        path("listings/<int:product_id>/",                          listing_id.as_view()),
+        path("listings/",                                           listing_full.as_view()),
+        path("listings/seller/<int:product_id>/",                   seller_product.as_view()),
+        path("listings/seller/<int:user_id>/",                      seller_id.as_view()),
+        path("listings/images/",                                    listing_image_full.as_view()),
+        path("listings/<int:product_id>/images/<int:image_id>/",    listings_image_id.as_view()),
+        path("listings/<int:product_id>/images/",                   listings_image.as_view()),
+        path("listings/<int:product_id>/reviews/",                  listings_reviews.as_view()),
+        path("listings/<int:product_id>/reviews/<int:review_id>/",  listings_reviews.as_view()),
+
         # auth paths [everything under /api/auth]
         path("auth/register/",                      auth_register.as_view()),
         path("auth/login/",                         auth_login.as_view()),
@@ -106,9 +110,11 @@ urlpatterns = [
         path("follow/feed/",                        follow_feed.as_view()),
 
         # orders paths
+        path("orders/buyer/<int:user_id>/",         order_buyer_id.as_view()),
         path("orders/<int:order_id>/",              order_id.as_view()),
         path("orders/",                             order_create.as_view()),
         path("payment/<int:order_id>/",             payment_id.as_view()),
+        path("orders/create-checkout/",             create_checkout.as_view()),
 
         # user paths
         path("users/",                              user_list.as_view()),
@@ -121,6 +127,8 @@ urlpatterns = [
         path("public/users/<int:user_id>/",         public_user_id.as_view()),
 
         # admin paths
+        path("admin/users/<int:user_id>/",          manage_users.as_view()),
+        path("admin/users/",                        admin_users.as_view()),
         path("admin/bans/<int:user_id>/",           manage_bans.as_view()),
         path("admin/bans/",                         admin_bans.as_view()),
         path("admin/manage/<int:user_id>/",         manage_admins.as_view()),
