@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams, Link } from "react-router";
 import { useAuth } from "@/app/core/contexts/AuthContext";
 import { api } from "@/app/core/lib/api";
 import { ArrowLeft, Package, Clock, CheckCircle, Truck, XCircle } from "lucide-react";
-import { Order } from "@/app/core/types";
+import { Listing, Order } from "@/app/core/types";
 import { toast } from "sonner";
 import { useAsyncEffect } from "@/app/core/hooks/useAsyncEffect";
+import { mapListing } from "@/app/core/lib/api";
+import { isShaderListing } from "@/app/core/lib/shaders";
 
 const statusConfig: Record<
   string,
@@ -43,6 +45,7 @@ export function OrderDetail() {
   const { id } = useParams();
   const { user } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
+  const [purchasedListings, setPurchasedListings] = useState<Record<string, Listing>>({});
 
   const isLoading = useAsyncEffect(
     async ({ isCancelled }) => {
@@ -53,6 +56,34 @@ export function OrderDetail() {
       if (isCancelled()) return;
 
       setOrder(data);
+
+      const productIds = Array.from(
+        new Set(
+          (data.items ?? [])
+            .map((item: any) => String(item.product_id ?? ""))
+            .filter((value: string) => value.length > 0)
+        )
+      );
+
+      const listingEntries = await Promise.all(
+        productIds.map(async (productId) => {
+          try {
+            const listingData = await api.getListing(productId);
+            if (!listingData?.id && !listingData?.product_id) return null;
+            return [productId, mapListing(listingData)] as const;
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      if (isCancelled()) return;
+
+      setPurchasedListings(
+        Object.fromEntries(
+          listingEntries.filter((entry): entry is readonly [string, Listing] => Boolean(entry))
+        )
+      );
     },
     [id, user],
     {
@@ -62,6 +93,18 @@ export function OrderDetail() {
       },
     }
   );
+
+  const enrichedItems = useMemo(() => {
+    if (!order) return [];
+
+    return (order.items ?? []).map((item) => {
+      const listing = purchasedListings[String(item.product_id)];
+      return {
+        item,
+        listing,
+      };
+    });
+  }, [order, purchasedListings]);
 
   if (!user) {
     return (
@@ -139,23 +182,43 @@ export function OrderDetail() {
 
           <div className="p-6">
             <h3 className="mb-4 font-semibold text-gray-900 dark:text-white">Items</h3>
-            <div className="space-y-3">
-              {order.items?.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between border-b border-gray-100 py-3 last:border-0 dark:border-gray-800"
-                >
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      {(item as any).name || `Item ${item.id}`}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Qty: {item.quantity}</p>
+            <div className="space-y-4">
+              {enrichedItems.map(({ item, listing }) => {
+                const isShader = listing ? isShaderListing(listing) : false;
+                const shaderCode = isShader ? listing.shader.code : null;
+
+                return (
+                  <div
+                    key={item.id}
+                    className="border-b border-gray-100 py-4 last:border-0 dark:border-gray-800"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {(item as any).name || `Item ${item.id}`}
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Qty: {item.quantity}
+                        </p>
+                      </div>
+                      <p className="font-semibold text-gray-900 dark:text-white">
+                        ${item.price.toFixed(2)}
+                      </p>
+                    </div>
+
+                    {shaderCode && (
+                      <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div className="border-b border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                          Shader Code
+                        </div>
+                        <pre className="overflow-x-auto bg-gray-950 p-4 text-sm text-gray-100">
+                          <code>{shaderCode}</code>
+                        </pre>
+                      </div>
+                    )}
                   </div>
-                  <p className="font-semibold text-gray-900 dark:text-white">
-                    ${item.price.toFixed(2)}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4 dark:border-gray-800">
