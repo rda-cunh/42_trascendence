@@ -14,6 +14,9 @@ services:
       - db_data:/var/lib/mysql
       - ./db/init:/docker-entrypoint-initdb.d
       - certs_data:/certs:ro
+    depends_on:
+      pki-init:
+        condition: service_completed_successfully
     environment:
       MYSQL_ROOT_PASSWORD:      ${DB_ROOT_PASSWORD}
       MYSQL_DATABASE:           ${DB_NAME}
