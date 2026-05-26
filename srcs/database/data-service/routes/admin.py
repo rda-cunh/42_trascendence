@@ -78,26 +78,31 @@ def ban_user(user_id: int, db = Depends(get_db_dep)):
 	user = cursor.fetchone()
 	if not user:
 		raise HTTPException(status_code=400, detail='User does\'t exist or is already banned')
+ 
 	cursor.execute("""UPDATE users SET status = %s WHERE id = %s""", ('Banned', user_id))
-	cursor.execute(""" SELECT * FROM users WHERE id = %s""", (user_id,))
+	conn.commit()
+ 
+	cursor.execute("""SELECT * FROM users WHERE id = %s""", (user_id,))
 	updated_user = cursor.fetchone()
-
-	return updated_user
+ 
+	return UserInfo(**updated_user)
 
 @router.delete('/bans/{user_id}/', response_model=UserInfo, status_code=200)
 def unban_user(user_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
-
+ 
 	cursor.execute("""SELECT id FROM users WHERE id = %s AND status = %s""", (user_id, 'Banned'))
 	user = cursor.fetchone()
 	if not user:
 		raise HTTPException(status_code=400, detail="User doesn't exist or is not banned")
+ 
 	cursor.execute("""UPDATE users SET status = %s WHERE id = %s""", ('Active', user_id))
-
+	conn.commit()
+ 
 	cursor.execute("""SELECT * FROM users WHERE id = %s""", (user_id,))
 	updated_user = cursor.fetchone()
-
-	return updated_user
+ 
+	return UserInfo(**updated_user)
 
 @router.get('/manage/', response_model=list[UserInfo], status_code=200)
 def get_admins(page: int = 1, db = Depends(get_db_dep)):
@@ -117,16 +122,19 @@ def get_admins(page: int = 1, db = Depends(get_db_dep)):
 @router.post('/manage/{user_id}/', response_model=UserInfo, status_code=201)
 def admin_user(user_id: int, db = Depends(get_db_dep)):
 	conn, cursor = db
-
+ 
 	cursor.execute("""SELECT id FROM users WHERE id = %s AND role != %s""", (user_id, 'Admin'))
 	user = cursor.fetchone()
 	if not user:
 		raise HTTPException(status_code=400, detail='User does\'t exist or is already admin')
+ 
 	cursor.execute("""UPDATE users SET role = %s WHERE id = %s""", ('Admin', user_id))
-	cursor.execute(""" SELECT * FROM users WHERE id = %s""", (user_id,))
+	conn.commit()
+ 
+	cursor.execute("""SELECT * FROM users WHERE id = %s""", (user_id,))
 	updated_user = cursor.fetchone()
-
-	return updated_user
+ 
+	return UserInfo(**updated_user)
 
 @router.delete('/manage/{user_id}/', response_model=UserInfo, status_code=200)
 def unadmin_user(user_id: int, db=Depends(get_db_dep)):
@@ -137,17 +145,19 @@ def unadmin_user(user_id: int, db=Depends(get_db_dep)):
 	total_admins = result["total"]
 	if total_admins == 1:
 		raise HTTPException(status_code=409, detail="Cannot remove the last admin")
-
+ 
 	cursor.execute("""SELECT id FROM users WHERE id = %s AND role = %s""", (user_id, 'Admin'))
 	user = cursor.fetchone()
 	if not user:
 		raise HTTPException(status_code=400, detail="User doesn't exist or is not admin")
+ 
 	cursor.execute("""UPDATE users SET role = %s WHERE id = %s""", ('User', user_id))
-
+	conn.commit()
+ 
 	cursor.execute("""SELECT * FROM users WHERE id = %s""", (user_id,))
 	updated_user = cursor.fetchone()
-
-	return updated_user
+ 
+	return UserInfo(**updated_user)
 
 @router.get('/dashboard/', response_model=DashboardInfo)
 def get_dashboard(db=Depends(get_db_dep)):
