@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 import pymysql
-import bcrypt
+import hashlib
 from database import get_db_dep
 from models.auth import *
 
@@ -9,11 +9,8 @@ router = APIRouter(prefix='/api/auth', tags=['Users'])
 _USER_UPDATABLE_FIELDS = {'name', 'phone', 'avatar_url'}
 
 # AUTH
-def hash_pw(pw: str) -> bytes:
-	return bcrypt.hashpw(pw.encode(), bcrypt.gensalt())
-
-def verify_pw(pw: str, hashed: bytes) -> bool:
-	return bcrypt.checkpw(pw.encode(), hashed)
+def hash_pw(pw: str) -> str:
+	return hashlib.sha256(pw.encode()).hexdigest()
 
 # Create new user
 @router.post('/register/', response_model=UserResponse, status_code=201)
@@ -76,7 +73,7 @@ def login_user(user_in: UserLogin, db=Depends(get_db_dep)):
 		(user_in.email,)
 	)
 	user = cursor.fetchone()
-	if not user or not verify_pw(user_in.password, user['password_hash']):
+	if not user or user['password_hash'] != hash_pw(user_in.password):
 		raise HTTPException(status_code=401, detail='Invalid credentials')
 	if user['status'] != 'Active':
 		raise HTTPException(status_code=403, detail='User is not active')
@@ -172,7 +169,7 @@ def update_user_password(user_id: int, user_in: UserPasswordUpdate, db=Depends(g
 	user = cursor.fetchone()
 	if not user:
 		raise HTTPException(status_code=404, detail='User not found')
-	if not verify_pw(user_in.oldPass, user['password_hash']):
+	if user['password_hash'] != hash_pw(user_in.oldPass):
 		raise HTTPException(status_code=400, detail="Password doesn't match")
 	
 	cursor.execute('UPDATE users SET password_hash = %s WHERE id = %s', (hash_pw(user_in.newPass), user_id))
