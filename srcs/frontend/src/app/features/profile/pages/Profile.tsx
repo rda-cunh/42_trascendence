@@ -23,7 +23,6 @@ import { UserAvatar } from "@/app/shared/components/UserAvatar";
 import { useImageUpload } from "@/app/features/listings/hooks/useImageUpload";
 import { useAsyncEffect } from "@/app/core/hooks/useAsyncEffect";
 import { ROUTES } from "@/app/shared/utils/constants";
-import { validatePassword } from "@/app/shared/utils/validators";
 import { UploadProgressBar } from "@/app/shared/components/UploadProgressBar";
 
 export function Profile() {
@@ -94,9 +93,8 @@ export function Profile() {
       return;
     }
 
-    const validation = validatePassword(passwordForm.next);
-    if (!validation.isValid) {
-      toast.error(validation.errors[0] ?? "Invalid password");
+    if (passwordForm.next.length < 8) {
+      toast.error("Password must be at least 8 characters");
       return;
     }
 
@@ -114,6 +112,7 @@ export function Profile() {
   };
 
   const initials = user?.name?.charAt(0).toUpperCase() || "U";
+  const canChangePassword = user?.auth_provider !== "oauth42";
 
   return (
     <div className="app-page">
@@ -240,63 +239,67 @@ export function Profile() {
               </button>
             )}
 
-            <div className="border-t border-gray-200 pt-5 dark:border-gray-800">
-              <button
-                type="button"
-                onClick={() => setShowPasswordForm((v) => !v)}
-                className="btn-ghost text-purple-600 dark:text-purple-400"
-              >
-                <Lock className="h-4 w-4" />
-                {showPasswordForm ? "Hide password form" : "Change password"}
-              </button>
+            {canChangePassword && (
+              <div className="border-t border-gray-200 pt-5 dark:border-gray-800">
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordForm((v) => !v)}
+                  className="btn-ghost text-purple-600 dark:text-purple-400"
+                >
+                  <Lock className="h-4 w-4" />
+                  {showPasswordForm ? "Hide password form" : "Change password"}
+                </button>
 
-              {showPasswordForm && (
-                <div className="mt-4 space-y-4">
-                  <div>
-                    <label className="form-label">Current password</label>
-                    <input
-                      type="password"
-                      value={passwordForm.current}
-                      onChange={(e) =>
-                        setPasswordForm((p) => ({ ...p, current: e.target.value }))
-                      }
-                      className="form-control"
-                      autoComplete="current-password"
-                    />
+                {showPasswordForm && (
+                  <div className="mt-4 space-y-4">
+                    <div>
+                      <label className="form-label">Current password</label>
+                      <input
+                        type="password"
+                        value={passwordForm.current}
+                        onChange={(e) =>
+                          setPasswordForm((p) => ({ ...p, current: e.target.value }))
+                        }
+                        className="form-control"
+                        autoComplete="current-password"
+                      />
+                    </div>
+                    <div>
+                      <label className="form-label">New password</label>
+                      <input
+                        type="password"
+                        value={passwordForm.next}
+                        onChange={(e) => setPasswordForm((p) => ({ ...p, next: e.target.value }))}
+                        className="form-control"
+                        autoComplete="new-password"
+                        minLength={8}
+                      />
+                    </div>
+                    <div>
+                      <label className="form-label">Confirm new password</label>
+                      <input
+                        type="password"
+                        value={passwordForm.confirm}
+                        onChange={(e) =>
+                          setPasswordForm((p) => ({ ...p, confirm: e.target.value }))
+                        }
+                        className="form-control"
+                        autoComplete="new-password"
+                        minLength={8}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void handleChangePassword()}
+                      disabled={isChangingPassword}
+                      className="btn-primary px-6 py-3"
+                    >
+                      {isChangingPassword ? "Updating..." : "Update password"}
+                    </button>
                   </div>
-                  <div>
-                    <label className="form-label">New password</label>
-                    <input
-                      type="password"
-                      value={passwordForm.next}
-                      onChange={(e) => setPasswordForm((p) => ({ ...p, next: e.target.value }))}
-                      className="form-control"
-                      autoComplete="new-password"
-                    />
-                  </div>
-                  <div>
-                    <label className="form-label">Confirm new password</label>
-                    <input
-                      type="password"
-                      value={passwordForm.confirm}
-                      onChange={(e) =>
-                        setPasswordForm((p) => ({ ...p, confirm: e.target.value }))
-                      }
-                      className="form-control"
-                      autoComplete="new-password"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => void handleChangePassword()}
-                    disabled={isChangingPassword}
-                    className="btn-primary px-6 py-3"
-                  >
-                    {isChangingPassword ? "Updating..." : "Update password"}
-                  </button>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

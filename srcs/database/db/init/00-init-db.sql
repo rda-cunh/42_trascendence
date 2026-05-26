@@ -173,7 +173,3 @@ CREATE TABLE IF NOT EXISTS notifications (
   CONSTRAINT fk_notif_actor FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL,
   CONSTRAINT fk_notif_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-INSERT INTO users (name, email, password_hash, role, status, created_at, updated_at)
-SELECT 'System Administrator', 'admin@admin.com', '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225', 'Admin', 'Active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-WHERE NOT EXISTS ( SELECT 1 FROM users WHERE email = 'admin@admin.com');

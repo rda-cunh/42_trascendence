@@ -2,9 +2,11 @@
 # TRANSCENDENCE DEPLOYMENT TOOL
 # =====================================================================================================
 # USAGE:
-#   make database-backup  - Create a backup of the database and images
-#   make database-restore - Restore the database and images from a backup
-#   make backend          - Build and run the backend service
+#   make database-backup              - Create a timestamped backup of the database and images
+#   make database-backup NAME=name    - Create/update a named backup pair
+#   make database-restore             - Restore the database and images from a backup
+#   make database-restore NAME=name   - Restore directly from a named backup pair
+#   make backend                      - Build and run the backend service
 # =====================================================================================================
 
 DATABASE_PATH = ./srcs/database
@@ -14,10 +16,22 @@ IMAGE_STORAGE_PATH = /data/images
 
 # Make a backup pair: database dump + image archive
 database-backup:
-	@timestamp=$$(date +%Y%m%d_%H%M%S); \
-	sql_file="$(BACKUP_PATH)/$(DB_NAME)_$$timestamp.sql"; \
-	img_file="$(BACKUP_PATH)/$(DB_NAME)_$$timestamp.images.tar.gz"; \
-	mkdir -p "$(BACKUP_PATH)"; \
+	@mkdir -p "$(BACKUP_PATH)"; \
+	if [ -n "$(NAME)" ]; then \
+		base_name="$(NAME)"; \
+	else \
+		base_name="$(DB_NAME)_$$(date +%Y%m%d_%H%M%S)"; \
+	fi; \
+	sql_file="$(BACKUP_PATH)/$$base_name.sql"; \
+	img_file="$(BACKUP_PATH)/$$base_name.images.tar.gz"; \
+	if [ -f "$$sql_file" ] || [ -f "$$img_file" ]; then \
+		printf "Backup '%s' already exists. Overwrite? [y/N] " "$$base_name"; \
+		read confirm; \
+		if [ "$$confirm" != "y" ] && [ "$$confirm" != "Y" ]; then \
+			echo "Backup cancelled."; \
+			exit 1; \
+		fi; \
+	fi; \
 	echo "Creating database backup: $$sql_file"; \
 	$(EXEC) "$(PRE_CMD) set -a; . .env; set +a; docker exec -e MYSQL_PWD=$(DB_ROOT_PASSWORD) $(DB_CONTAINER_NAME) mysqldump -u root $(DB_NAME)" > "$$sql_file"; \
 	echo "Creating image backup: $$img_file"; \
@@ -31,26 +45,33 @@ database-restore:
 		echo "No SQL backups found in $(BACKUP_PATH)"; \
 		exit 1; \
 	fi; \
-	echo "Available backups:"; \
-	echo "$$files"; \
-	echo ""; \
-	printf "Backup file (.sql): "; \
-	read file; \
-	sql_path="$(BACKUP_PATH)/$$file"; \
-	base_name="$${file%.sql}"; \
+	if [ -n "$(NAME)" ]; then \
+		base_name="$(NAME)"; \
+		file="$$base_name.sql"; \
+	else \
+		echo "Available backups:"; \
+		echo "$$files"; \
+		echo ""; \
+		printf "Backup file (.sql): "; \
+		read file; \
+		base_name="$${file%.sql}"; \
+	fi; \
+	sql_path="$(BACKUP_PATH)/$$base_name.sql"; \
 	img_path="$(BACKUP_PATH)/$$base_name.images.tar.gz"; \
 	if [ ! -f "$$sql_path" ]; then \
-		echo "SQL backup does not exist: $$file"; \
+		echo "SQL backup does not exist: $$(basename "$$sql_path")"; \
 		exit 1; \
 	fi; \
 	if [ ! -f "$$img_path" ]; then \
 		echo "Matching image backup does not exist: $$(basename "$$img_path")"; \
 		exit 1; \
 	fi; \
-	echo "Restoring database from $$file..."; \
+	echo "Restoring database from $$(basename "$$sql_path")..."; \
 	$(EXEC) "$(PRE_CMD) set -a; . .env; set +a; docker exec -i -e MYSQL_PWD=$(DB_ROOT_PASSWORD) $(DB_CONTAINER_NAME) mysql -u root $(DB_NAME)" < "$$sql_path"; \
 	echo "Restoring images from $$(basename "$$img_path")..."; \
 	$(EXEC) "$(PRE_CMD) set -a; . .env; set +a; docker exec -i $(IMAGE_CONTAINER_NAME) sh -c 'find $(IMAGE_STORAGE_PATH) -mindepth 1 -delete && tar -C $(IMAGE_STORAGE_PATH) -xzf -'" < "$$img_path"; \
+	echo "Ensuring admin user exists..."; \
+	$(EXEC) "$(PRE_CMD) set -a; . .env; set +a; docker exec -i $(DB_CONTAINER_NAME) sh /docker-entrypoint-initdb.d/01-create-monitoring-user.sh"; \
 	echo "Restore completed."
 
 backend:

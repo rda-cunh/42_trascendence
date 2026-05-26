@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router";
 import { useAuth } from "@/app/core/contexts/AuthContext";
+import { MIN_PASSWORD_LENGTH } from "@/app/shared/utils/constants";
 import { Mail, Lock, LogIn } from "lucide-react";
 import { toast } from "sonner";
 
@@ -15,6 +16,12 @@ export function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      toast.error(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
+      return;
+    }
+
     setIsLoading(true);
     try {
       await login(email, password);
@@ -58,6 +65,7 @@ export function Login() {
               <input
                 type="password"
                 required
+                minLength={MIN_PASSWORD_LENGTH}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"

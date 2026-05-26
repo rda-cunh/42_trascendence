@@ -7,6 +7,7 @@ export interface User {
   name?: string;
   phone?: string;
   avatar_url?: string;
+  auth_provider?: "local" | "oauth42";
   role?: "user" | "seller" | "admin";
   status?: "active" | "suspended" | "banned" | "deactivated";
   created_at?: string;
