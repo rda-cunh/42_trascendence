@@ -92,16 +92,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         try {
           const profile = await api.getProfile();
-          if (profile?.id) {
-            setUser({
-              id: String(profile.id),
-              email: profile.email,
-              name: profile.name,
-              phone: profile.phone,
-              avatar_url: profile.avatar_url,
-              role: profile.role,
-              status: profile.status?.toLowerCase(),
-            });
+          const nextUser = mapProfileToAuthUser(profile ?? {}, fallbackUser);
+
+          if (nextUser) {
+            setUser(nextUser);
+          } else if (!fallbackUser) {
+            clearAuthState();
           }
         } catch {
           if (!fallbackUser) clearAuthState();
@@ -169,34 +165,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!newToken) throw new Error("Login response did not include an access token");
 
     api.setToken(newToken);
+    const fallbackUser = normalizeUser(res, newToken);
     const profile = await api.getProfile().catch(() => null);
-    persistAuth(newToken, normalizeUser(profile ?? res, newToken));
+    const nextUser = profile ? mapProfileToAuthUser(profile, fallbackUser) : fallbackUser;
+    persistAuth(newToken, nextUser);
   };
 
-  const assignDefaultAvatarIfMissing = async () => {
+  const syncProfileAvatar = async () => {
     const currentProfile = await api.getProfile().catch(() => null);
 
-    if (currentProfile?.avatar_url) {
+    if (!currentProfile) {
       return currentProfile;
     }
 
-    const response = await fetch("/default-avatar.jpg");
-    if (!response.ok) {
-      throw new Error("Failed to load default avatar");
+    const currentAvatar = currentProfile.avatar_url?.trim();
+
+    const uploadAvatarFromSource = async (sourceUrl: string, filename: string) => {
+      const response = await fetch(sourceUrl);
+      if (!response.ok) {
+        throw new Error("Failed to load avatar image");
+      }
+
+      const blob = await response.blob();
+      const file = new File([blob], filename, {
+        type: blob.type || "image/jpeg",
+      });
+
+      const upload = await api.uploadImage(file);
+      const avatarUrl = upload.url ?? `/images/${upload.filename}`;
+
+      await api.updateProfile({ avatar_url: avatarUrl });
+
+      return api.getProfile().catch(() => ({
+        ...currentProfile,
+        avatar_url: avatarUrl,
+      }));
+    };
+
+    if (!currentAvatar) {
+      return uploadAvatarFromSource("/default-avatar.jpg", "default-avatar.jpg");
     }
 
-    const blob = await response.blob();
-    const file = new File([blob], "default-avatar.jpg", { type: blob.type || "image/jpeg" });
+    const isLocalAvatar =
+      currentAvatar.startsWith("/images/") ||
+      currentAvatar.startsWith("/default-avatar.jpg") ||
+      currentAvatar.startsWith(window.location.origin);
 
-    const upload = await api.uploadImage(file);
-    const avatarUrl = upload.url ?? `/images/${upload.filename}`;
+    if (isLocalAvatar) {
+      return currentProfile;
+    }
 
-    await api.updateProfile({ avatar_url: avatarUrl });
-
-    return api.getProfile().catch(() => ({
-      ...currentProfile,
-      avatar_url: avatarUrl,
-    }));
+    return uploadAvatarFromSource(currentAvatar, "oauth-avatar.jpg");
   };
 
   const register = async (data: {
@@ -228,13 +247,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     api.setToken(newToken);
 
-    let profile = await api.getProfile().catch(() => null);
+    const fallbackUser = normalizeUser(res, newToken);
+    const profile = await syncProfileAvatar();
+    const nextUser = profile ? mapProfileToAuthUser(profile, fallbackUser) : fallbackUser;
 
-    if (!profile?.avatar_url) {
-      profile = await assignDefaultAvatarIfMissing();
+    persistAuth(newToken, nextUser);
+  };
+
+  const mapProfileToAuthUser = (
+    profile: {
+      id?: string | number;
+      email?: string;
+      name?: string;
+      phone?: string | null;
+      avatar_url?: string | null;
+      role?: string;
+      status?: string | null;
+    },
+    fallbackUser?: User | null
+  ): User | null => {
+    const resolvedId = profile.id ?? fallbackUser?.id;
+
+    if (!resolvedId) {
+      return null;
     }
 
-    persistAuth(newToken, normalizeUser(profile ?? res, newToken));
+    return {
+      id: String(resolvedId),
+      email: profile.email ?? fallbackUser?.email ?? "",
+      name: profile.name ?? fallbackUser?.name,
+      phone: profile.phone ?? fallbackUser?.phone ?? undefined,
+      avatar_url: profile.avatar_url ?? fallbackUser?.avatar_url ?? undefined,
+      role: (profile.role ?? fallbackUser?.role) as User["role"] | undefined,
+      status: (profile.status?.toLowerCase() ?? fallbackUser?.status) as User["status"] | undefined,
+    };
   };
 
   const loginWithOAuth = async (accessToken: string, oauthUser?: User) => {
@@ -242,28 +288,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("auth_token", accessToken);
     api.setToken(accessToken);
 
-    if (oauthUser) {
-      setUser(oauthUser);
-    } else {
-      const fallback = parseUserFromToken(accessToken);
-      if (fallback) setUser(fallback);
+    const fallbackUser = oauthUser ?? parseUserFromToken(accessToken);
+
+    if (fallbackUser) {
+      setUser(fallbackUser);
     }
 
     try {
-      const profile = await api.getProfile();
-      if (profile?.id) {
-        setUser({
-          id: String(profile.id),
-          email: profile.email,
-          name: profile.name,
-          phone: profile.phone,
-          avatar_url: profile.avatar_url,
-          role: profile.role,
-          status: profile.status?.toLowerCase(),
-        });
+      const profile = await syncProfileAvatar();
+      const nextUser = mapProfileToAuthUser(profile ?? {}, fallbackUser);
+
+      if (nextUser) {
+        persistAuth(accessToken, nextUser);
       }
     } catch {
-      // Keep token-derived or backend-provided user if profile fetch fails.
+      // Keep token-derived or backend-provided user if profile/avatar sync fails.
     }
   };
 
