@@ -19,6 +19,10 @@ type UseChatResult = {
   refreshConversations: () => Promise<void>;
 };
 
+function hasRenderableConversation(conversation: Conversation) {
+  return Boolean(conversation.last_message?.trim() || conversation.last_message_at);
+}
+
 export function useChat(accessToken: string | null): UseChatResult {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
@@ -73,7 +77,9 @@ export function useChat(accessToken: string | null): UseChatResult {
       }
 
       setError(null);
-      const data = await fetchConversations();
+      const fetchedConversations = await fetchConversations();
+      const data = fetchedConversations.filter(hasRenderableConversation);
+
       const previous = conversationsRef.current;
       const previousById = new Map(previous.map((conversation) => [conversation.id, conversation]));
 
