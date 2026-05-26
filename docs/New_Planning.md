@@ -11,11 +11,11 @@ These tables summarize the current module strategy for the project based on prog
 | [**Web Major 1 – Framework for frontend and backend**](#web-major-1--framework-for-frontend-and-backend) | 2 | **Completed** | All | Foundation of the whole project. **Keep.** |
 | [**Web Major 2 – Real-time features**](#web-major-2--real-time-features) | 2 | **Completed** | **Ricardo** | Real-time chat satisfies requirements. **Keep.** |
 | [**Web Major 3 – User interaction (chat, profiles, friends)**](#web-major-3--user-interaction-chat-profiles-friends) | 2 | **Completed** | **Ricardo** + Erik + Leonardo Maes | Implemented. **Keep.** |
-| [**User Major 1 – Standard user management and authentication**](#user-major-1--standard-user-management-and-authentication) | 2 | Features missing | **Raphael** + Ricardo + Erik | Check with the group if all is implemented **Keep.** |
-| [**User Major 2 – Advanced permission system**](#user-major-2--advanced-permission-system) | 2 | Admin frontend missing | **Raphael** + Leonardo Maes | TO DO: build the admin frontend (view, edit, delete users; role-based views). **Keep.** |
+| [**User Major 1 – Standard user management and authentication**](#user-major-1--standard-user-management-and-authentication) | 2 | **Completed** | **Raphael** + Ricardo + Erik | Avatar upload (with default-avatar fallback), friends + live online status, and profile page all shipped. **Keep.** |
+| [**User Major 2 – Advanced permission system**](#user-major-2--advanced-permission-system) | 2 | **Completed** | **Raphael** + Leonardo Maes | Admin frontend shipped (Dashboard, UserManagement with ban/unban/delete/promote/revoke, ListingModeration). Admin auto-created on startup from `.env`. **Keep.** |
 | [**DevOps Major 2 – Monitoring system with Prometheus and Grafana**](#devops-major-2--monitoring-system-with-prometheus-and-grafana) | 2 | **Completed** | **Leonardo Vichi** | Dashboards in place. Confirm alerting + secure access during evaluation. **Keep.** |
 | [**User Minor 2 – Remote authentication with OAuth 2.0**](#user-minor-2--remote-authentication-with-oauth-20) | 1 | **Completed** | **Ricardo** + Erik | Implemented and working. **Keep.** |
-| [**Web Minor 9 – Advanced search**](#web-minor-9--advanced-search) | 1 | Frontend missing | **Leonardo** + Raphael + Erik | Backend largely ready; frontend filters/sort/pagination still to wire up. **Keep.** |
+| [**Web Minor 9 – Advanced search**](#web-minor-9--advanced-search) | 1 | **Completed** | **Leonardo** + Raphael + Erik | Frontend filters (category, price range), sort (newest/price-asc/price-desc), debounced search, and pagination are wired against the backend `/api/listings/` endpoint. **Keep.** |
 | **Total** | **14** |  |  |  |
 
 ## Bonus modules (max 5 points)
@@ -26,8 +26,8 @@ Bonus is only considered if the 14 mandatory points are reached. Subject caps th
 |---|---:|---|---|---|
 | [**Web Minor 4 – Notification system**](#web-minor-4--notification-system) | 1 | **Completed** | **Ricardo** | End-to-end notifications for create/update/delete actions. **Keep.** |
 | [**Accessibility Minor 4 – Support for additional browsers**](#accessibility-minor-4--support-for-additional-browsers) | 1 | Partially validated | **Erik** | Chrome + Firefox confirmed. **Pick a second browser and validate.** |
-| [**Module of Choice Major – Internal mTLS / PKI between services**](#module-of-choice-major--internal-mtls--pki-between-services) | 2 | **Completed** | **Leonardo Vichi** | Full PKI subsystem already in `srcs/pki/` (own CA, per-service certs, scripts, tests). Try to pitch as mTLS, not just "internal HTTPS".
-| [**Module of Choice Minor – Stripe payment integration**](#module-of-choice-minor--stripe-payment-integration) | 1 | Backend partial, frontend missing | **Raphael** | Highest-risk bonus point. Needs full flow: product → checkout → webhook → order persisted → confirmation in UI. **Drop if frontend will not ship in time.** |
+| [**Module of Choice Major – Internal PKI / authenticated TLS for all service-to-service traffic**](#module-of-choice-major--internal-pki--authenticated-tls-for-all-service-to-service-traffic) | 2 | **Completed** | **Leonardo Vichi** | Pitch updated: framed as **internal PKI + CA-authenticated TLS on every internal hop**, not "mTLS." PKI subsystem in `srcs/pki/` (own CA, SANs for 15+ internal services, MySQL boot ordering fixed today). Gateway and upstreams all run on CA-signed certs and the gateway verifies every upstream against the internal CA. **Keep.** |
+| [**Module of Choice Minor – Stripe payment integration**](#module-of-choice-minor--stripe-payment-integration) | 1 | **End-to-end flow shipped (session-driven, not webhook)** | **Raphael** | Frontend Checkout / Success / Failure / Redirect pages shipped today. Backend `create_checkout` opens a Stripe Checkout Session; order is persisted on the return path by retrieving the session and verifying `payment_status == "paid"`. **No webhook receiver yet** — decide whether to add one before evaluation. |
 | **Total bonus** | **5** |  |  |  |
 
 ## Drop for now
@@ -85,18 +85,25 @@ Bonus is only considered if the 14 mandatory points are reached. Subject caps th
 - Users can add others as friends and see their online status.
 - Users have a profile page displaying their information.
 
-**Outstanding work:** avatar upload, friends + online status, profile page polish.
+**Status:** all four requirements are in place.
+- Profile updates and password change live in the profile page (validation aligned with signup; password-change UI hidden for 42 OAuth sessions where it does not apply).
+- Avatar upload runs through the dedicated `image-service` (size/MIME/extension validation, progress reporting), with a default avatar assigned on signup and on 42 OAuth when the provider gives no picture.
+- Friends / follow API is wired into the Friends page, with live online status pulled from the presence service.
+- Profile page displays user information, listings, and orders.
 
 ### User Major 2 – Advanced permission system
 
-**Justification:** Roles already exist in the backend. The remaining work is the admin frontend exposing the CRUD and role-based views.
+**Justification:** Roles already exist in the backend. The admin frontend exposing CRUD and role-based views shipped today.
 
 **Requirements from the subject:**
 - View, edit, and delete users (CRUD).
 - Roles management (admin, user, guest, moderator, etc.).
 - Different views and actions based on user role.
 
-**Outstanding work:** admin frontend.
+**Status:** complete.
+- Admin frontend (`features/admin/`) exposes a Dashboard (metrics + charts), User Management (search, filter by status, ban/unban, delete, promote/revoke admin), and Listing Moderation (search, status filter, delete) — all gated by role-based access.
+- Admin user is auto-provisioned on startup from `.env` values.
+- Product list and seller actions render in management mode when the viewer is an admin.
 
 ### DevOps Major 2 – Monitoring system with Prometheus and Grafana
 
@@ -118,12 +125,14 @@ Bonus is only considered if the 14 mandatory points are reached. Subject caps th
 
 ### Web Minor 9 – Advanced search
 
-**Justification:** Backend is largely ready; a cheap point once filters/sort/pagination are wired into the frontend.
+**Justification:** Frontend filters/sort/pagination are now wired against the backend listing endpoint.
 
 **Requirements from the subject:**
 - Advanced search with filters, sorting, and pagination.
 
-**Outstanding work:** frontend filters, sorting, and pagination UI.
+**Status:** complete.
+- Home page provides debounced text search, category filter, min/max price filter, sort (newest / price ascending / price descending) and page-based pagination (Prev/Next, `hasMore`).
+- Backend `/api/listings/` supports `search`, `status`, `seller_id`, `page`, with `ORDER BY created_at DESC` and SQL `LIMIT / OFFSET`.
 
 ---
 
@@ -154,43 +163,68 @@ Bonus is only considered if the 14 mandatory points are reached. Subject caps th
 - Safe combos: **Chrome + Firefox + Safari**, or **Chrome + Firefox + Edge**.
 - README must list the supported browsers and any known limitations.
 
-### Module of Choice Major – Internal mTLS / PKI between services
+### Module of Choice Major – Internal PKI / Authenticated TLS for all service-to-service traffic
 
-**Justification:**
-- *Why chosen:* The subject only requires HTTPS at the edge (browser ↔ backend). All internal container-to-container traffic is allowed to be unencrypted. This module extends TLS to **every internal hop** with mutual authentication, going meaningfully beyond the mandatory baseline.
-- *Technical challenges addressed:* running an internal certificate authority, generating per-service certificates, distributing them to each container, configuring mTLS so each service both presents and verifies a certificate, cert lifecycle (issuance, rotation, revocation), and automating all of this in the compose stack.
-- *Value to the project:* defense-in-depth even inside the private network — a compromised container cannot impersonate another service.
-- *Why Major (2 points):* the PKI is a standalone subsystem (`srcs/pki/`) with its own service, scripts, and tests, integrated across backend, database, gateway, and monitoring. Comparable in weight to the Cybersecurity Major (WAF + Vault).
+**Renamed from "Internal mTLS / PKI between services"** — see status section. The pitch is now framed around the PKI subsystem and CA-authenticated TLS on every internal hop, which is what is actually shipping.
 
-**Risks:**
-- The subject explicitly warns that trivial "Module of Choice" implementations are rejected. The README **must frame this as mTLS / full PKI subsystem**, not "we turned on HTTPS internally."
-- If the evaluator decides the scope is too small, the module may be downgraded to Minor (1 point), breaking the 19-point math.
+**Justification (Major, 2 points):**
+- *Why chosen:* The subject only mandates HTTPS at the edge (browser ↔ gateway). All internal container-to-container traffic is allowed to be plaintext. This module rebuilds the trust chain **inside** the private network with our own CA and CA-signed certs on every service, so no hop on the path of a user request is unauthenticated cleartext.
+- *Technical challenges addressed:* running an internal certificate authority (4096-bit RSA root, 10-year validity, isolated from public CAs); generating per-service leaf certs with proper SANs covering each compose service name; orchestrating cert issuance **before** dependent services boot (the MySQL container is explicitly gated on cert generation, fix shipped today); distributing certs to each container via a shared `/certs` volume; configuring TLS on backend, data-service, image-service, gateway, and the monitoring stack (Grafana / Prometheus / Loki / Promtail / exporters); preserving trust across restarts by reusing the existing CA.
+- *Value to the project:* a hostile actor with a foothold inside the docker network cannot just speak HTTP to `backend:8000` or `data-service:8001` — every internal endpoint terminates TLS and presents a cert signed by our internal CA, and every internal client verifies that signature. Internal traffic confidentiality is real, and a rogue container cannot impersonate a known service without obtaining a CA-signed cert.
+- *Scope = Major, not Minor:* the PKI is a standalone subsystem (`srcs/pki/`) with its own compose service, its own SAN configuration covering 15+ internal DNS names, its own startup ordering, and integration changes in **every** other service folder. It is not "we added a flag to nginx" — it is a dedicated component on which the rest of the platform now depends.
+
+**Current implementation status (verified 2026-05-27):**
+- `srcs/pki/scripts/gen-certs.sh` generates the root CA and an internal leaf cert with SANs for `backend`, `database`, `gateway`, `data-service`, `image-service`, `prometheus`, `grafana`, `loki`, `promtail`, `mysqld-exporter`, `node-exporter`, `cadvisor`, `nginx-exporter-gateway`, `nginx-exporter-frontend`, `frontend` (15 entries).
+- `srcs/pki/docker-compose.yaml` runs the cert generator before any consumer service starts; the database compose was updated today (`fix(database): ensure MySQL starts after internal certificates are generated`).
+- Gateway terminates TLS for external traffic **and** opens TLS connections to every upstream, verifying the upstream cert against our internal CA: `proxy_ssl_verify on; proxy_ssl_trusted_certificate /certs/${CA_CRT_NAME};` on `/api/`, `/api/auth/`, `/api/orders/`, `/ws/`, `/images/`, the frontend route, and the monitoring subpath.
+- Internal services (`backend`, `data-service`, `image-service`, `grafana`, etc.) listen on HTTPS using their CA-signed certs, so the gateway's verification actually has something to verify.
+- Cert lifetime / rotation: script is idempotent — if `$CA_CRT` is already present the volume is preserved, so trust survives container restarts and only a deliberate volume wipe re-issues certificates.
+
+**Honest scope note:** at the time of evaluation, the handshake authenticates the **server side** of every internal hop (the gateway and other internal callers verify that the upstream they are talking to is signed by our CA). The gateway does not currently *present* a client certificate to upstreams, and upstreams do not require one (no `ssl_verify_client on`). We deliberately do **not** market this as mTLS in the README — we market it as **"internal PKI with CA-authenticated TLS on every service-to-service hop"**. This framing is accurate and still meaningfully exceeds the subject's edge-only HTTPS baseline.
+
+**Why this should still hold as Major:**
+- The subject's complaint about "trivial Module of Choice" is aimed at things like "we changed a config flag." Here we deliver a *new subsystem* (`srcs/pki/`), a *new dependency* in the compose graph, *new SAN strategy* covering 15+ services, and *cross-cutting changes* in every other service folder — that is the body of work a Major calls for, regardless of whether the handshake is one-way or two-way.
+- The Cybersecurity Major comparison still holds: WAF + Vault is "we added two services and integrated them" — same shape as "we added a PKI service and integrated it across the platform."
+- The deliverable is something an evaluator can *see fail*: kill the cert volume, restart, and the entire internal call graph breaks until certs are reissued. That demonstrability is the point.
+
+**Risks (now better understood, not catastrophic):**
+- An evaluator who reads "Internal mTLS" in older docs and then sees one-way verification could push for a downgrade. **Mitigation:** rename the module everywhere user-facing (README, evaluation walkthrough, this doc) to "Internal PKI / authenticated TLS." That is what we built and what we should defend.
+- If after all that the evaluator still downgrades this to Minor (1 point), the 19-point math becomes 18. That is the worst-case fallback and is acceptable — the project remains comfortably above the threshold.
 
 **Demo checklist for evaluation:**
-- Show the `srcs/pki/` service (CA, scripts, tests).
-- Show certificates issued per service and mounted into each container.
-- Show a service rejecting a connection without a valid client certificate (mTLS proof).
-- Walk through cert rotation.
+- Open `srcs/pki/`: show the CA, the SAN config, the generation script.
+- Show the compose graph: every internal service mounts `/certs` and has its TLS listener bound to a CA-signed cert.
+- `curl -v https://backend:8000/...` from inside the network without the CA in the trust store → handshake fails. Repeat with `--cacert /certs/ca.crt` → success. This is the live proof.
+- Show MySQL startup depending on cert generation (today's fix).
+- Walk through cert lifecycle: stopping/starting the stack preserves certs; deleting the cert volume forces a re-issuance and re-establishes trust without code changes.
 
 ### Module of Choice Minor – Stripe payment integration
 
 **Justification:**
 - *Why chosen:* a marketplace needs a real payment path; using Stripe (a recognized provider) makes the flow inspectable end-to-end.
-- *Technical challenges addressed:* Stripe Checkout integration, webhook signature verification, idempotent order persistence, syncing payment state with the application's order/listing state.
+- *Technical challenges addressed:* Stripe Checkout Session creation server-side, server-side payment-status verification before order persistence, syncing payment state with the application's order/listing state.
 - *Value to the project:* completes the e-commerce loop (list → buy → confirm) that the marketplace concept implies.
 - *Why Minor (1 point):* scope is limited to a single provider and a single payment flow (no subscriptions, refunds, or multi-currency).
 
-**Outstanding work:** frontend checkout flow, success/failure pages, and webhook-driven order confirmation in the UI.
+**Current implementation status (verified 2026-05-27):**
+- Frontend Checkout flow shipped: `Checkout.tsx`, `CheckoutSuccess.tsx`, `CheckoutFailure.tsx`, `CheckoutRedirect.tsx`.
+- Backend `POST /api/orders/create-checkout/` opens a Stripe Checkout Session with the cart line items, stamps the `buyer_id` in session metadata, and returns the checkout URL.
+- On return, the success page sends the `session_id` to `POST /api/orders/<session_id>/`, which retrieves the session from Stripe, checks `payment_status == "paid"`, validates `buyer_id` against the authenticated user, and only then persists the order via the data-service.
+- This is a **session-retrieval flow, not a webhook-driven flow.** Stripe accepts both patterns for the standard one-shot checkout case; webhooks become important when the success redirect is unreliable (closed tab, slow networks, async payment methods).
 
-**Risks (highest of all bonus picks):**
-- The subject rejects "trivial" Module of Choice implementations. A bare Stripe button is not enough; a working end-to-end purchase with persisted order state is required.
-- Frontend is not yet implemented. **Decision rule:** if the frontend will not ship before evaluation, drop this module and accept 18 points instead of 19.
+**Outstanding / optional work:**
+- Adding a `POST /api/stripe/webhook/` endpoint with signature verification (`stripe.Webhook.construct_event`) would make the order-persistence path resilient to a user closing the tab before the success redirect lands. Not required for the Minor to be defensible, but recommended if time allows.
+
+**Risks:**
+- The subject rejects "trivial" Module of Choice implementations. The current flow is end-to-end (cart → Stripe-hosted checkout → server-verified payment → persisted order → confirmation in UI), which is materially more than a "Stripe button." The Minor framing remains appropriate.
+- If an evaluator insists on webhook delivery as part of the demo, fall back on the optional webhook above.
 
 **Demo checklist for evaluation:**
 - Add a product to cart in the UI.
-- Pay via Stripe test card.
-- Webhook lands, order row is created/updated.
-- User sees confirmation in the UI; admin sees the order.
+- Pay via Stripe test card on the Stripe-hosted checkout page.
+- Land on the success page → backend retrieves the session, verifies payment, persists the order.
+- User sees confirmation in the UI / orders list; admin sees the order in the admin dashboard.
+- If asked: explain that webhook delivery would be the production-resilient variant and point to the session-retrieve-on-success path that backstops it today.
 
 ---
 
