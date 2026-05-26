@@ -173,6 +173,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     persistAuth(newToken, normalizeUser(profile ?? res, newToken));
   };
 
+  const assignDefaultAvatarIfMissing = async () => {
+    const currentProfile = await api.getProfile().catch(() => null);
+
+    if (currentProfile?.avatar_url) {
+      return currentProfile;
+    }
+
+    const response = await fetch("/default-avatar.jpg");
+    if (!response.ok) {
+      throw new Error("Failed to load default avatar");
+    }
+
+    const blob = await response.blob();
+    const file = new File([blob], "default-avatar.jpg", { type: blob.type || "image/jpeg" });
+
+    const upload = await api.uploadImage(file);
+    const avatarUrl = upload.url ?? `/images/${upload.filename}`;
+
+    await api.updateProfile({ avatar_url: avatarUrl });
+
+    return api.getProfile().catch(() => ({
+      ...currentProfile,
+      avatar_url: avatarUrl,
+    }));
+  };
+
   const register = async (data: {
     name: string;
     email: string;
@@ -201,7 +227,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     api.setToken(newToken);
-    const profile = await api.getProfile().catch(() => null);
+
+    let profile = await api.getProfile().catch(() => null);
+
+    if (!profile?.avatar_url) {
+      profile = await assignDefaultAvatarIfMissing();
+    }
+
     persistAuth(newToken, normalizeUser(profile ?? res, newToken));
   };
 
