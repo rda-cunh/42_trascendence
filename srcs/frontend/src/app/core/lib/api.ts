@@ -95,6 +95,10 @@ class ApiClient extends HttpClient {
     return this.request<any>("PATCH", "/auth/profile/", data);
   }
 
+  deleteProfile(password: string) {
+    return this.request<any>("DELETE", "/auth/profile/", { password });
+  }
+
   changePassword(password: string, newPassword: string) {
     return this.request<any>("PATCH", "/auth/password/", {
       password,

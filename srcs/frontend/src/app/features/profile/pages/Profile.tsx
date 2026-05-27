@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
+  AlertTriangle,
   Camera,
   DollarSign,
   Edit3,
@@ -27,15 +28,19 @@ import { ROUTES } from "@/app/shared/utils/constants";
 import { UploadProgressBar } from "@/app/shared/components/UploadProgressBar";
 
 export function Profile() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, deleteAccount } = useAuth();
+  const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [showDeactivateForm, setShowDeactivateForm] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isDeactivating, setIsDeactivating] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     current: "",
     next: "",
     confirm: "",
   });
+  const [deactivatePassword, setDeactivatePassword] = useState("");
   const [products, setProducts] = useState<Listing[]>([]);
   const [formData, setFormData] = useState({
     name: user?.name || "",
@@ -109,6 +114,31 @@ export function Profile() {
       toast.error(err instanceof Error ? err.message : "Failed to change password");
     } finally {
       setIsChangingPassword(false);
+    }
+  };
+
+  const handleDeactivateAccount = async () => {
+    if (!deactivatePassword.trim()) {
+      toast.error("Please confirm your password");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Deactivate your account? You will be signed out and lose access to this profile."
+    );
+    if (!confirmed) return;
+
+    setIsDeactivating(true);
+    try {
+      await deleteAccount(deactivatePassword);
+      setDeactivatePassword("");
+      setShowDeactivateForm(false);
+      toast.success("Account deactivated successfully");
+      navigate("/login", { replace: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to deactivate account");
+    } finally {
+      setIsDeactivating(false);
     }
   };
 
@@ -303,6 +333,55 @@ export function Profile() {
                     </button>
                   </div>
                 )}
+              </div>
+            )}
+
+            {canChangePassword && (
+              <div className="border-t border-gray-200 pt-5 dark:border-gray-800">
+                <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900/40 dark:bg-red-950/20">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="space-y-1">
+                      <h4 className="flex items-center gap-2 text-base font-semibold text-red-700 dark:text-red-300">
+                        <AlertTriangle className="h-4 w-4" />
+                        Deactivate account
+                      </h4>
+                      <p className="text-sm text-red-700/80 dark:text-red-200/80">
+                        This will deactivate your account and sign you out of the app.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowDeactivateForm((value) => !value)}
+                      className="btn-secondary border-red-300 text-red-700 hover:bg-red-100 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-900/20"
+                    >
+                      <AlertTriangle className="h-4 w-4" />
+                      {showDeactivateForm ? "Cancel" : "Deactivate account"}
+                    </button>
+                  </div>
+
+                  {showDeactivateForm && (
+                    <div className="mt-4 space-y-4">
+                      <div>
+                        <label className="form-label">Confirm password</label>
+                        <input
+                          type="password"
+                          value={deactivatePassword}
+                          onChange={(e) => setDeactivatePassword(e.target.value)}
+                          className="form-control"
+                          autoComplete="current-password"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void handleDeactivateAccount()}
+                        disabled={isDeactivating}
+                        className="btn-primary bg-red-600 px-6 py-3 text-white hover:bg-red-700"
+                      >
+                        {isDeactivating ? "Deactivating..." : "Confirm deactivation"}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

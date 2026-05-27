@@ -16,6 +16,7 @@ interface AuthContextType {
   }) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (data: Partial<User>) => Promise<void>;
+  deleteAccount: (password: string) => Promise<void>;
   loginWithOAuth: (accessToken: string, oauthUser?: User) => Promise<void>;
 }
 
@@ -35,6 +36,9 @@ const fallbackAuthContext: AuthContextType = {
     throw new Error(missingAuthProviderError);
   },
   updateUser: async () => {
+    throw new Error(missingAuthProviderError);
+  },
+  deleteAccount: async () => {
     throw new Error(missingAuthProviderError);
   },
   loginWithOAuth: async () => {
@@ -80,6 +84,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     api.setToken(newToken);
   };
+
+  function mapProfileToAuthUser(
+    profile: {
+      id?: string | number;
+      email?: string;
+      name?: string;
+      phone?: string | null;
+      avatar_url?: string | null;
+      role?: string;
+      status?: string | null;
+    },
+    fallbackUser?: User | null
+  ): User | null {
+    const resolvedId = profile.id ?? fallbackUser?.id;
+
+    if (!resolvedId) {
+      return null;
+    }
+
+    return {
+      id: String(resolvedId),
+      email: profile.email ?? fallbackUser?.email ?? "",
+      name: profile.name ?? fallbackUser?.name,
+      phone: profile.phone ?? fallbackUser?.phone ?? undefined,
+      avatar_url: profile.avatar_url ?? fallbackUser?.avatar_url ?? undefined,
+      auth_provider: fallbackUser?.auth_provider,
+      role: (profile.role ?? fallbackUser?.role) as User["role"] | undefined,
+      status: (profile.status?.toLowerCase() ?? fallbackUser?.status) as User["status"] | undefined,
+    };
+  }
 
   useEffect(() => {
     api.setTokenChangeHandler((newToken) => {
@@ -278,36 +312,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     persistAuth(newToken, nextUser);
   };
 
-  const mapProfileToAuthUser = (
-    profile: {
-      id?: string | number;
-      email?: string;
-      name?: string;
-      phone?: string | null;
-      avatar_url?: string | null;
-      role?: string;
-      status?: string | null;
-    },
-    fallbackUser?: User | null
-  ): User | null => {
-    const resolvedId = profile.id ?? fallbackUser?.id;
-
-    if (!resolvedId) {
-      return null;
-    }
-
-    return {
-      id: String(resolvedId),
-      email: profile.email ?? fallbackUser?.email ?? "",
-      name: profile.name ?? fallbackUser?.name,
-      phone: profile.phone ?? fallbackUser?.phone ?? undefined,
-      avatar_url: profile.avatar_url ?? fallbackUser?.avatar_url ?? undefined,
-      auth_provider: fallbackUser?.auth_provider,
-      role: (profile.role ?? fallbackUser?.role) as User["role"] | undefined,
-      status: (profile.status?.toLowerCase() ?? fallbackUser?.status) as User["status"] | undefined,
-    };
-  };
-
   const loginWithOAuth = async (accessToken: string, oauthUser?: User) => {
     setToken(accessToken);
     localStorage.setItem("auth_token", accessToken);
@@ -373,9 +377,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
   };
 
+    const deleteAccount = async (password: string) => {
+      if (!user) return;
+
+      await api.deleteProfile(password);
+      clearAuthState();
+    };
+
   return (
     <AuthContext.Provider
-      value={{ user, token, loading, login, register, logout, updateUser, loginWithOAuth }}
+        value={{
+          user,
+          token,
+          loading,
+          login,
+          register,
+          logout,
+          updateUser,
+          deleteAccount,
+          loginWithOAuth,
+        }}
     >
       {children}
     </AuthContext.Provider>
