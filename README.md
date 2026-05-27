@@ -351,13 +351,6 @@ This is delivered as a **dedicated subsystem** — `srcs/pki/` — with its own 
 - Propose a feature outside the listed modules that materially improves the project's quality, security, or scalability.
 - Implement it as a non-trivial, integrated piece of work.
 
-**Demo checklist for evaluation.**
-- Open `srcs/pki/`: walk through the CA, the SAN config, and the generation script.
-- Show the compose graph: every internal service mounts `/certs` and has its TLS listener bound to a CA-signed cert.
-- From inside the docker network: `curl -v https://backend:8000/...` without our CA in the trust store → handshake fails. Repeat with `--cacert /certs/ca.crt` → success.
-- Show the MySQL boot dependency on cert generation.
-- Walk through cert lifecycle: stopping/starting the stack preserves certs; deleting the cert volume forces a re-issuance and re-establishes trust without code changes.
-
 **Owner.** Leonardo Vichi.
 
 ---
@@ -378,12 +371,6 @@ This is delivered as a **dedicated subsystem** — `srcs/pki/` — with its own 
 **Subject requirements (Module of Choice)**
 - Propose a feature outside the listed modules that materially improves the project's quality or value.
 - Implement it as a non-trivial, integrated piece of work — not a stub.
-
-**Demo checklist for evaluation.**
-- Add a product to cart in the UI.
-- Click checkout → land on the Stripe-hosted page → pay with the standard test card (`4242 4242 4242 4242`, any future expiry, any CVC, any postal code).
-- Return to the app → success page sends `session_id` to the backend → backend verifies payment + buyer → order is persisted.
-- Verify the order shows up under `/orders` for the buyer and in the admin dashboard.
 
 **Owner.** Raphael.
 
@@ -449,13 +436,6 @@ This is delivered as a **dedicated subsystem** — `srcs/pki/` — with its own 
 
 **Subject requirements**
 - User activity analytics and insights dashboard.
-
-**Demo checklist for evaluation.**
-- Open Grafana at `/api/admin/grafana/` → walk through the gateway RPS / connection panels, the FastAPI Total Requests panels, and the MySQL QPS panel as the *real-time activity telemetry* tier.
-- Open the **admin dashboard** → walk through total users / revenue / orders / active listings, the 6-month revenue + orders charts, and the category distribution pie chart as the *aggregated business-insights* tier.
-- Open `/profile` for the signed-in user → show their listings portfolio.
-- Open `/orders` → show purchase history with status badges.
-- Open another user's `/seller/:id` → show follower / following counts and listings.
 
 **Owners.** Raphael (admin dashboard backend + frontend), Leonardo Maes (data-service analytics queries), Leonardo Vichi (Grafana dashboards backing the telemetry tier), Erik (admin/profile frontend), Ricardo (profile/orders surfacing).
 
