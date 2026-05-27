@@ -1,5 +1,6 @@
 import { usePresence } from "@/app/core/contexts/PresenceContext";
 import type { Conversation } from "@/app/core/types/chat";
+import { parseServerDate } from "@/app/shared/utils/time";
 
 type Props = {
   conversations: Conversation[];
@@ -12,9 +13,8 @@ type Props = {
 };
 
 function formatDateTime(value: string | null | undefined) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
+  const date = parseServerDate(value);
+  if (!date) return "";
   return date.toLocaleString([], {
     month: "short",
     day: "numeric",
