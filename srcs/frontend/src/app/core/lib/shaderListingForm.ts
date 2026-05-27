@@ -1,5 +1,7 @@
 import { slugifyShaderTitle } from "./shaders";
 
+export const MAX_SHADER_PRICE = 100000;
+
 export type ShaderListingFormData = {
   title: string;
   price: string;
@@ -29,6 +31,10 @@ export function getShaderListingValidationError({
   const parsedPrice = Number.parseFloat(price);
   if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
     return "Price must be higher than zero";
+  }
+
+  if (parsedPrice > MAX_SHADER_PRICE) {
+    return `Price must be ${MAX_SHADER_PRICE} or less`;
   }
 
   if (!code.includes("void main")) {

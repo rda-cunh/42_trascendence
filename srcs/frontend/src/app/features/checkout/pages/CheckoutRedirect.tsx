@@ -11,13 +11,18 @@ import { resolveImageUrl } from "@/app/core/lib/images";
 const PENDING_STRIPE_ORDER_KEY = "pending_stripe_order";
 
 export function CheckoutRedirect() {
-  const { items, removeItem, total } = useCart();
+  const { items, removeItem, total, itemCount } = useCart();
   const { user } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleStartCheckout = async () => {
     if (items.length === 0) {
       toast.error("Your cart is empty");
+      return;
+    }
+
+    if (itemCount > 100) {
+      toast.error("You cannot checkout more than 100 items. Reduce your cart to 100 items or fewer.");
       return;
     }
 
@@ -140,7 +145,7 @@ export function CheckoutRedirect() {
             <div className="space-y-3 border-b border-gray-100 pb-4 text-sm dark:border-gray-800">
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">Items</span>
-                <span className="font-medium text-gray-900 dark:text-white">{items.length}</span>
+                <span className="font-medium text-gray-900 dark:text-white">{itemCount}</span>
               </div>
               <div className="flex items-center justify-between text-base">
                 <span className="font-medium text-gray-900 dark:text-white">Total</span>
