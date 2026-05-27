@@ -53,19 +53,19 @@ export function Home() {
     const load = async () => {
       setIsLoading(true);
       try {
-        const data = await api.getListings({
-          status: "Active",
+        const data = await api.getPublicListings({
           search: debouncedSearch || undefined,
           page,
+          limit: API_PAGE_SIZE,
         });
-        const results = Array.isArray(data) ? data : data?.results || [];
+        const results = Array.isArray(data) ? data : [];
 
         if (cancelled) return;
 
         const apiListings: Listing[] = results
           .filter((item: unknown) => !isDeletedListing(item))
           .map(mapListing);
-        setListings(apiListings);
+        setListings(apiListings.filter((listing) => listing.status === "Active"));
         setHasMore(apiListings.length >= API_PAGE_SIZE);
       } catch (err) {
         if (!cancelled) {

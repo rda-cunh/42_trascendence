@@ -814,7 +814,7 @@ class listing_full(APIView):
         return proxy_request("POST", "/listings/", request.data)
 
     def get(self, request):
-        return proxy_request("GET", "/listings/")
+        return proxy_request("GET", "/listings/", params=request.query_params)
 
 class listings_image(APIView):
     def get(self, request, product_id):
@@ -1032,7 +1032,7 @@ class public_listing_full(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        return proxy_request("GET", "/public/listings/")
+        return proxy_request("GET", "/public/listings/", params=request.query_params)
 
 # ADMIN API
 
