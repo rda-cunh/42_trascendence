@@ -3,6 +3,7 @@
 # =====================================================================================================
 # USAGE:
 #   make              - Full deployment (Setup deps -> Sync files -> Run)
+#   make build        - Build or rebuild the Docker images without caching
 #   make dev          - Full deployment and immediately attach to logs
 #   make restart      - Restart the containers
 #   make restart dev  - Restart the containers and attach to logs
@@ -128,6 +129,10 @@ remove-files:
 	@if [ "$(SERVER)" != "local" ]; then \
   		$(EXEC) "rm -rf /tmp/$(PROJECT_NAME)"; \
 	fi
+
+build: ssh-check check-docker sync-files
+	@$(EXEC) "$(PRE_CMD) $(LOAD_ENV) docker compose --env-file .env -f $(COMPOSE_FILE) build --no-cache"
+	@$(EXEC) "docker builder prune -af"
 
 run: ssh-check check-docker sync-files
 	@$(EXEC) "$(PRE_CMD) $(LOAD_ENV) docker compose --env-file .env -f $(COMPOSE_FILE) up -d"
