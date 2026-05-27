@@ -91,7 +91,7 @@ const DEFAULT_BILLING = {
 };
 
 export function Checkout() {
-  const { items, removeItem, total, clear } = useCart();
+  const { items, removeItem, total, clear, itemCount } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -237,6 +237,11 @@ export function Checkout() {
   const handlePlaceOrder = async () => {
     if (items.length === 0) {
       toast.error("Your cart is empty");
+      return;
+    }
+
+    if (itemCount > 100) {
+      toast.error("You cannot place an order with more than 100 items. Reduce your cart.");
       return;
     }
 

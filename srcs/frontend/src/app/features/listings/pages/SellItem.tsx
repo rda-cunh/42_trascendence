@@ -6,6 +6,7 @@ import { ShaderPreview } from "@/app/features/products/components/ShaderPreview"
 import { api } from "@/app/core/lib/api";
 import { buildShaderDescription, DEFAULT_FRAGMENT_SHADER } from "@/app/core/lib/shaders";
 import {
+  MAX_SHADER_PRICE,
   getShaderListingSlug,
   getShaderListingValidationError,
 } from "@/app/core/lib/shaderListingForm";
@@ -187,6 +188,7 @@ export function SellItem() {
                   type="number"
                   required
                   min="0.01"
+                  max={MAX_SHADER_PRICE}
                   step="0.01"
                   value={formData.price}
                   onChange={(e) => setFormData({ ...formData, price: e.target.value })}
