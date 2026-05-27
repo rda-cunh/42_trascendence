@@ -158,12 +158,17 @@ function normalizeOrderStatus(status: unknown): OrderStatus {
 }
 
 function mapOrderItem(item: any) {
+  const quantity = Number(item?.quantity ?? item?.qty ?? 0);
+  const price = Number(item?.price ?? 0);
+
   return {
     id: String(item?.id ?? ""),
     product_id: String(item?.product_id ?? ""),
-    quantity: Number(item?.quantity ?? item?.qty ?? 0),
-    price: Number(item?.price ?? 0),
+    quantity,
+    price,
     name: item?.name ?? item?.product_name ?? `Item ${item?.id ?? ""}`,
+    seller_id: item?.seller_id != null ? String(item.seller_id) : undefined,
+    subtotal: item?.subtotal != null ? Number(item.subtotal) : price * quantity,
   };
 }
 

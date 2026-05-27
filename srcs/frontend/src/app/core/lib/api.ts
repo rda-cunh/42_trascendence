@@ -191,6 +191,12 @@ class ApiClient extends HttpClient {
     );
   }
 
+  getSoldOrders(sellerId: string | number) {
+    return this.request<any[]>("GET", `/orders/seller/${sellerId}/`).then((data) =>
+      Array.isArray(data) ? data.map(mapOrder) : []
+    );
+  }
+
   getOrder(id: string) {
     return this.request<any>("GET", `/orders/${id}/`).then(mapOrder);
   }
