@@ -6,3 +6,4 @@ pydantic
 pydantic-settings
 python-dotenv
 prometheus-fastapi-instrumentator
+python-dateutil
