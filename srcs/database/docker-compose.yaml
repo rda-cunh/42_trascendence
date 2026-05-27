@@ -32,6 +32,7 @@ services:
       - --ssl-ca=/certs/${CA_CRT_NAME:-ca.crt}
       - --ssl-cert=/certs/${INT_CRT_NAME:-internal.crt}
       - --ssl-key=/certs/${INT_KEY_NAME:-internal.key}
+      - --default-time-zone=+00:00
 
   data-service:
     build: ./data-service
