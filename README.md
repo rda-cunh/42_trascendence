@@ -404,7 +404,9 @@ This is delivered as a **dedicated subsystem** — `srcs/pki/` — with its own 
 **Known limitations.** Documented per-browser so evaluators see the team has actually validated each browser rather than copy-pasting a claim:
 
 - **Firefox.** Self-signed certificate must be accepted manually on first visit (same as Chrome). All claimed features work as on Chrome.
-- **Midori (WebKitGTK).** Self-signed certificate flow is more terse than Chrome's. Stripe Checkout opens correctly because the checkout UI is rendered server-side by Stripe and does not rely on Blink-specific APIs. WebSocket-driven features (chat, presence, notifications) work over WebKitGTK's WebSocket implementation. Older Midori builds (pre-9.x) used a different engine and are not supported; install a current Midori from the Debian repositories.
+- **Midori (WebKitGTK).** Self-signed certificate flow is more terse than Chrome's. Stripe Checkout opens correctly because the checkout UI is rendered server-side by Stripe and does not rely on Blink-specific APIs. WebSocket-driven features (chat, presence, notifications) work over WebKitGTK's WebSocket implementation.
+  - *Visual-only limitation:* the Three.js shader preview on listing cards may render without animated effects or fall back to a static thumbnail, depending on whether WebKitGTK's WebGL stack is enabled in the local build. This is cosmetic only — listings remain fully functional (browse, view, buy, chat). Three.js is not claimed as a module in this project, so the degradation does not affect any module being evaluated.
+  - Older Midori builds (pre-9.x) used a different engine and are not supported; install a current Midori from the Debian repositories.
 
 **Subject requirements**
 - Full compatibility with at least two additional browsers beyond Chrome.
