@@ -39,6 +39,12 @@ export interface GetListingsFilters {
   seller_id?: number;
 }
 
+export interface GetPublicListingsFilters {
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
 class ApiClient extends HttpClient {
   refreshToken() {
     return this.refresh();
@@ -106,6 +112,19 @@ class ApiClient extends HttpClient {
 
     const query = params.toString();
     return this.request<any>("GET", `/listings/${query ? `?${query}` : ""}`);
+  }
+
+  getPublicListings(filters?: GetPublicListingsFilters) {
+    const params = new URLSearchParams();
+    const limit = filters?.limit && filters.limit > 0 ? filters.limit : 10;
+
+    params.set("limit", String(limit));
+    if (filters?.search?.trim()) params.set("search", filters.search.trim());
+    if (filters?.page && filters.page > 0) {
+      params.set("skip", String((filters.page - 1) * limit));
+    }
+
+    return this.request<any[]>("GET", `/public/listings/?${params.toString()}`);
   }
 
   getListing(id: string) {
