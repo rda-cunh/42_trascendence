@@ -97,6 +97,32 @@ def get_buyer_orders(buyer_id: int, db=Depends(get_db_dep)):
 	
 	return [OrderResponse(**o) for o in orders]
 
+# GET /orders/seller/{id}
+@router.get('/seller/{seller_id}/', response_model=list[OrderResponse], status_code=200)
+def get_seller_orders(seller_id: int, db=Depends(get_db_dep)):
+	conn, cursor = db
+
+	cursor.execute(
+		'''
+		SELECT DISTINCT o.*
+		FROM orders o
+		INNER JOIN order_items oi ON oi.order_id = o.id
+		WHERE oi.seller_id = %s
+		ORDER BY o.created_at DESC
+		''',
+		(seller_id,)
+	)
+	orders = cursor.fetchall()
+
+	for order in orders:
+		cursor.execute(
+			'SELECT * FROM order_items WHERE order_id = %s AND seller_id = %s',
+			(order['id'], seller_id)
+		)
+		order['items'] = cursor.fetchall()
+
+	return [OrderResponse(**o) for o in orders]
+
 # PATCH /orders{order_id}
 @router.patch('/{order_id}/', response_model=OrderResponse, status_code=200)
 def update_orders(order_id: int, order_in: OrderUpdate, db=Depends(get_db_dep)):

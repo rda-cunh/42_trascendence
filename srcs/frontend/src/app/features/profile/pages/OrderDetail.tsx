@@ -1,14 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMemo, useState } from "react";
-import { useParams, Link } from "react-router";
+import { useParams, Link, useSearchParams } from "react-router";
 import { useAuth } from "@/app/core/contexts/AuthContext";
 import { api } from "@/app/core/lib/api";
-import { ArrowLeft, Package, Clock, CheckCircle, Truck, XCircle } from "lucide-react";
-import { Listing, Order } from "@/app/core/types";
+import { ArrowLeft, Clock, CheckCircle, Truck, XCircle, Package } from "lucide-react";
+import { Listing, Order, OrderItem } from "@/app/core/types";
 import { toast } from "sonner";
 import { useAsyncEffect } from "@/app/core/hooks/useAsyncEffect";
 import { mapListing } from "@/app/core/lib/api";
 import { isShaderListing } from "@/app/core/lib/shaders";
+
+type OrdersView = "purchases" | "sales";
 
 const statusConfig: Record<
   string,
@@ -41,11 +43,29 @@ const statusConfig: Record<
   },
 };
 
+function getView(searchParams: URLSearchParams): OrdersView {
+  return searchParams.get("view") === "sales" ? "sales" : "purchases";
+}
+
+function getLineTotal(item: OrderItem) {
+  return item.subtotal ?? item.price * item.quantity;
+}
+
+function formatMoney(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(value);
+}
+
 export function OrderDetail() {
   const { id } = useParams();
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [order, setOrder] = useState<Order | null>(null);
   const [purchasedListings, setPurchasedListings] = useState<Record<string, Listing>>({});
+
+  const view = getView(searchParams);
 
   const isLoading = useAsyncEffect(
     async ({ isCancelled }) => {
@@ -94,17 +114,31 @@ export function OrderDetail() {
     }
   );
 
-  const enrichedItems = useMemo(() => {
+  const visibleItems = useMemo(() => {
     if (!order) return [];
+    if (view !== "sales" || !user?.id) return order.items ?? [];
 
-    return (order.items ?? []).map((item) => {
+    return (order.items ?? []).filter(
+      (item) => String(item.seller_id ?? "") === String(user.id)
+    );
+  }, [order, user?.id, view]);
+
+  const enrichedItems = useMemo(() => {
+    return visibleItems.map((item) => {
       const listing = purchasedListings[String(item.product_id)];
       return {
         item,
         listing,
       };
     });
-  }, [order, purchasedListings]);
+  }, [visibleItems, purchasedListings]);
+
+  const visibleTotal = useMemo(() => {
+    if (!order) return 0;
+    if (view !== "sales") return order.total;
+
+    return visibleItems.reduce((sum, item) => sum + getLineTotal(item), 0);
+  }, [order, view, visibleItems]);
 
   if (!user) {
     return (
@@ -148,12 +182,13 @@ export function OrderDetail() {
 
   const cfg = statusConfig[order.status] || statusConfig.pending;
   const Icon = cfg.icon;
+  const backHref = view === "sales" ? "/orders?view=sales" : "/orders";
 
   return (
     <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
       <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
         <Link
-          to="/orders"
+          to={backHref}
           className="mb-6 inline-flex items-center gap-2 text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" /> Back to Orders
@@ -163,7 +198,7 @@ export function OrderDetail() {
           <div className="flex items-center justify-between border-b border-gray-200 p-6 dark:border-gray-800">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Order #{order.id}
+                {view === "sales" ? "Sold order" : "Order"} #{order.id}
               </h1>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 {new Date(order.created_at).toLocaleDateString("en-US", {
@@ -181,50 +216,63 @@ export function OrderDetail() {
           </div>
 
           <div className="p-6">
-            <h3 className="mb-4 font-semibold text-gray-900 dark:text-white">Items</h3>
-            <div className="space-y-4">
-              {enrichedItems.map(({ item, listing }) => {
-                const isShader = listing ? isShaderListing(listing) : false;
-                const shaderCode = isShader ? listing.shader.code : null;
+            <h3 className="mb-4 font-semibold text-gray-900 dark:text-white">
+              {view === "sales" ? "Items sold" : "Items"}
+            </h3>
 
-                return (
-                  <div
-                    key={item.id}
-                    className="border-b border-gray-100 py-4 last:border-0 dark:border-gray-800"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {(item as any).name || `Item ${item.id}`}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Qty: {item.quantity}
-                        </p>
-                      </div>
-                      <p className="font-semibold text-gray-900 dark:text-white">
-                        ${item.price.toFixed(2)}
-                      </p>
-                    </div>
+            {enrichedItems.length === 0 ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                No items from this order belong to your seller account.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {enrichedItems.map(({ item, listing }) => {
+                  const isShader = listing ? isShaderListing(listing) : false;
+                  const shaderCode = isShader ? listing.shader.code : null;
+                  const lineTotal = getLineTotal(item);
 
-                    {shaderCode && (
-                      <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-                        <div className="border-b border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-gray-300">
-                          Shader Code
+                  return (
+                    <div
+                      key={item.id}
+                      className="border-b border-gray-100 py-4 last:border-0 dark:border-gray-800"
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {item.name || `Item ${item.id}`}
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Qty: {item.quantity} x {formatMoney(item.price)}
+                          </p>
                         </div>
-                        <pre className="overflow-x-auto bg-gray-950 p-4 text-sm text-gray-100">
-                          <code>{shaderCode}</code>
-                        </pre>
+
+                        <p className="font-semibold text-gray-900 dark:text-white">
+                          {formatMoney(lineTotal)}
+                        </p>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+
+                      {shaderCode && (
+                        <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+                          <div className="border-b border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                            Shader Code
+                          </div>
+                          <pre className="overflow-x-auto bg-gray-950 p-4 text-sm text-gray-100">
+                            <code>{shaderCode}</code>
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4 dark:border-gray-800">
-              <span className="text-lg font-semibold text-gray-900 dark:text-white">Total</span>
+              <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                {view === "sales" ? "Cash total" : "Total"}
+              </span>
               <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                ${order.total.toFixed(2)}
+                {formatMoney(visibleTotal)}
               </span>
             </div>
           </div>

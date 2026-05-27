@@ -973,6 +973,10 @@ class order_buyer_id(APIView):
     def get(self, request, user_id):
         return proxy_request("GET", f"/orders/buyer/{user_id}/")
 
+class order_seller_id(APIView):
+    def get(self, request, user_id):
+        return proxy_request("GET", f"/orders/seller/{user_id}/")
+
 class payment_id(APIView):
     def get(self, request, order_id):
         return proxy_request("GET", f"/orders/{order_id}/payment/")
