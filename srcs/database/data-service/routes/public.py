@@ -80,7 +80,7 @@ def	get_user_products(user_id: int, limit: int = 20, db=Depends(get_db_dep)):
 @router.get('/listings/', response_model=list[ProductResponse])
 def	list_products(
 	skip:	int = 0,
-	limit:	int = 20,
+	limit:	int = 50,
 	search:	str | None = Query(None, description='Product or description'),
 	db=Depends(get_db_dep)
 ):
@@ -90,8 +90,8 @@ def	list_products(
 	params = []
 
 	if search:
-		sql += ' AND (name LIKE %s OR description LIKE %s)'
-		params.extend([f'%{search}%', f'%{search}%'])
+		sql += ' AND (name LIKE %s)'
+		params.extend([f'%{search}%'])
 
 	sql += ' ORDER BY created_at DESC LIMIT %s OFFSET %s'
 	params.extend([limit, skip])

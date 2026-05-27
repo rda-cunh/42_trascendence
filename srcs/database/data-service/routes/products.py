@@ -165,7 +165,7 @@ def	list_products(
 	db=Depends(get_db_dep)
 ):
 	conn, cursor = db
-	limit = 10
+	limit = 50
 	skip = (page - 1) * limit
 	if page < 1:
 		raise HTTPException(status_code=400, detail="Invalid page")
@@ -174,8 +174,8 @@ def	list_products(
 	params = []
 	
 	if search:
-		sql += ' AND (name LIKE %s OR description LIKE %s)'
-		params.extend([f'%{search}%', f'%{search}%'])
+		sql += ' AND (name LIKE %s)'
+		params.extend([f'%{search}%'])
 	if status:
 		sql += ' AND status = %s'
 		params.append(status)
