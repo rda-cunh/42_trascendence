@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 import {
   Camera,
+  DollarSign,
   Edit3,
   Lock,
   Mail,
@@ -127,6 +128,10 @@ export function Profile() {
             <Link to={ROUTES.FRIENDS} className="btn-secondary">
               <Users className="h-4 w-4" />
               Following
+            </Link>
+            <Link to={`${ROUTES.ORDERS}?view=sales`} className="btn-secondary">
+              <DollarSign className="h-4 w-4" />
+              Sold Orders
             </Link>
           </div>
         </div>

@@ -96,9 +96,6 @@ export function Friends() {
             <Users className="h-8 w-8 text-purple-600" />
             People You Follow
           </h1>
-          <p className="page-description">
-            Creators you follow with live online status (social graph via follow API).
-          </p>
         </div>
 
         {isLoading ? (

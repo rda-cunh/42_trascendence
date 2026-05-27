@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User } from "@/app/core/types";
 import { api, getAccessToken, normalizeUser, parseUserFromToken } from "@/app/core/lib/api";
+import { CART_STORAGE_KEY } from "@/app/core/contexts/CartContext";
 
 interface AuthContextType {
   user: User | null;
@@ -53,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     localStorage.removeItem("auth_token");
     localStorage.removeItem("auth_provider");
+    localStorage.removeItem(CART_STORAGE_KEY);
     api.setToken(null);
   };
 
