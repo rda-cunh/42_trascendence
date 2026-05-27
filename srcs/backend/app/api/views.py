@@ -326,9 +326,7 @@ class auth_profile(APIView):
     
     # delete account method
     def delete(self, request):
-        serializer = serializers.DeleteAccountSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        return proxy_request("DELETE", f"/auth/profile/{request.user.id}/", serializer.validated_data)
+        return proxy_request("DELETE", f"/auth/profile/{request.user.id}/", request.data)
 
 # --- AUTH PASSWORD ---
 class auth_password(APIView):

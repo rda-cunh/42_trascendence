@@ -94,7 +94,7 @@ def ban_user(user_id: int, db = Depends(get_db_dep)):
 def unban_user(user_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
  
-	cursor.execute("""SELECT id FROM users WHERE id = %s AND status = %s""", (user_id, 'Banned'))
+	cursor.execute("""SELECT id FROM users WHERE id = %s AND status = %s OR status = %s""", (user_id, 'Banned', 'Deactivated'))
 	user = cursor.fetchone()
 	if not user:
 		raise HTTPException(status_code=400, detail="User doesn't exist or is not banned")
