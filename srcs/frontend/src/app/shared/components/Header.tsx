@@ -26,15 +26,18 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-gray-200 bg-white transition-colors dark:border-gray-800 dark:bg-gray-900">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+        <div className="flex flex-col gap-3 py-3 sm:h-16 sm:flex-row sm:items-center sm:justify-between sm:py-0">
+          <Link
+            to="/"
+            className="flex shrink-0 items-center gap-2 whitespace-nowrap transition-opacity hover:opacity-80"
+          >
             <Gamepad2 className="h-8 w-8 text-purple-600 dark:text-purple-500" />
-            <span className="text-xl font-semibold text-gray-900 dark:text-white">
+            <span className="text-lg font-semibold text-gray-900 sm:text-xl dark:text-white">
               GameAsset Hub
             </span>
           </Link>
 
-          <nav className="flex items-center gap-2">
+          <nav className="flex w-full flex-wrap items-center gap-1 overflow-x-hidden sm:w-auto sm:flex-nowrap sm:justify-end sm:gap-2">
             {user && (
               <Link
                 to="/sell"
@@ -84,7 +87,7 @@ export function Header() {
             </button>
 
             {user ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <Link to="/profile" className="btn-ghost h-10 gap-3 px-2.5 pr-4">
                   <UserAvatar
                     userId={user.id}
