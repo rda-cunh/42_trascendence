@@ -958,23 +958,7 @@ class order_create(APIView):
     def get(self, request):
         return proxy_request("GET", f"/orders/{request.user.id}/")
 
-    def post(self, request, session_id: str):
-        try:
-            session = stripe.checkout.Session.retrieve(session_id)
-        except stripe.error.InvalidRequestError:
-            return Response({"detail": "Unknown session."},
-                            status=status.HTTP_404_NOT_FOUND)
-        except stripe.error.StripeError as e:
-            return Response({"detail": "Payment provider error.", "error": str(e)},
-                            status=status.HTTP_502_BAD_GATEWAY)
-        buyer_id_in_session = (session.metadata or {}).get("buyer_id")
-        if buyer_id_in_session != str(request.user.id):
-            return Response({"detail": "Forbidden"},
-                            status=status.HTTP_403_FORBIDDEN)
-        paid = session.payment_status == "paid"
-        if not paid:
-            return Response({"detail": "Payment failed."},
-                            status=status.HTTP_403_FORBIDDEN)
+    def post(self, request):
         return proxy_request("POST", "/orders/", request.data)
 
 class order_id(APIView):
@@ -988,6 +972,10 @@ class order_id(APIView):
 class order_buyer_id(APIView):
     def get(self, request, user_id):
         return proxy_request("GET", f"/orders/buyer/{user_id}/")
+
+class order_seller_id(APIView):
+    def get(self, request, user_id):
+        return proxy_request("GET", f"/orders/seller/{user_id}/")
 
 class payment_id(APIView):
     def get(self, request, order_id):

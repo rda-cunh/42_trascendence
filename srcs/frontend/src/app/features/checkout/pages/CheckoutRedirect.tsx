@@ -8,6 +8,8 @@ import { api } from "@/app/core/lib/api";
 import { ImageWithFallback } from "@/app/shared/components/figma/ImageWithFallback";
 import { resolveImageUrl } from "@/app/core/lib/images";
 
+const PENDING_STRIPE_ORDER_KEY = "pending_stripe_order";
+
 export function CheckoutRedirect() {
   const { items, removeItem, total } = useCart();
   const { user } = useAuth();
@@ -27,6 +29,16 @@ export function CheckoutRedirect() {
     setIsProcessing(true);
 
     try {
+      const orderPayload = {
+        user_id: Number(user.id),
+        items: items.map((item) => ({
+          product_id: Number(item.listing.id),
+          qty: item.quantity,
+        })),
+      };
+
+      sessionStorage.setItem(PENDING_STRIPE_ORDER_KEY, JSON.stringify(orderPayload));
+
       const { checkout_url } = await api.createCheckout({
         items: items.map((item) => ({
           id: Number(item.listing.id),
@@ -36,6 +48,7 @@ export function CheckoutRedirect() {
 
       window.location.assign(checkout_url);
     } catch (error) {
+      sessionStorage.removeItem(PENDING_STRIPE_ORDER_KEY);
       const message = error instanceof Error ? error.message : "Failed to start checkout";
       toast.error(message);
       setIsProcessing(false);

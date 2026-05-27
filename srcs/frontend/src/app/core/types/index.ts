@@ -81,9 +81,12 @@ export interface Order {
 export interface OrderItem {
   id: string;
   product_id: string;
-  product: Product;
+  product?: Product;
   quantity: number;
   price: number;
+  name?: string;
+  seller_id?: string;
+  subtotal?: number;
 }
 
 export type OrderStatus = "pending" | "processing" | "shipped" | "completed" | "cancelled";

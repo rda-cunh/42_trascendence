@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Users, Search, MoreHorizontal, CheckCircle, Ban, Trash2, Shield, ShieldOff } from "lucide-react";
 import { AdminNav } from "../components/AdminNav";
 import { toast } from "sonner";
@@ -6,6 +7,11 @@ import { api } from "@/app/core/lib/api";
 import { User } from "@/app/core/types";
 
 type UserAction = "ban" | "unban" | "delete" | "promote" | "revoke";
+type MenuPosition = {
+  top: number;
+  left: number;
+  openAbove: boolean;
+};
 
 export function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
@@ -13,6 +19,7 @@ export function UserManagement() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [menuPosition, setMenuPosition] = useState<MenuPosition | null>(null);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,6 +52,34 @@ export function UserManagement() {
     );
   };
 
+  const closeMenu = () => {
+    setOpenMenu(null);
+    setMenuPosition(null);
+  };
+
+  const toggleMenu = (user: User, event: React.MouseEvent<HTMLButtonElement>) => {
+    if (openMenu === user.id) {
+      closeMenu();
+      return;
+    }
+
+    const buttonRect = event.currentTarget.getBoundingClientRect();
+    const menuWidth = 176;
+    const menuHeight = 208;
+    const left = Math.min(
+      window.innerWidth - menuWidth - 16,
+      Math.max(16, buttonRect.right - menuWidth)
+    );
+    const openAbove = window.innerHeight - buttonRect.bottom < menuHeight && buttonRect.top > menuHeight;
+
+    setOpenMenu(user.id);
+    setMenuPosition({
+      top: openAbove ? buttonRect.top - 8 : buttonRect.bottom + 8,
+      left,
+      openAbove,
+    });
+  };
+
   const handleAction = async (user: User, action: UserAction) => {
     if (action === "delete") {
       const confirmed = window.confirm(
@@ -55,7 +90,7 @@ export function UserManagement() {
 
     const actionKey = `${user.id}:${action}`;
     setPendingAction(actionKey);
-    setOpenMenu(null);
+    closeMenu();
 
     try {
       if (action === "ban") {
@@ -125,7 +160,7 @@ export function UserManagement() {
           <p className="mt-1 text-gray-600 dark:text-gray-400">Manage and monitor user accounts</p>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div className="overflow-visible rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
           <div className="flex flex-col justify-between gap-4 border-b border-gray-200 p-4 sm:flex-row dark:border-gray-800">
             <div className="relative max-w-sm">
               <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -206,63 +241,73 @@ export function UserManagement() {
                       </td>
                       <td className="relative px-6 py-4 text-right">
                         <button
-                          onClick={() => setOpenMenu(openMenu === user.id ? null : user.id)}
+                          onClick={(event) => toggleMenu(user, event)}
                           className="rounded p-1 text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
                         >
                           <MoreHorizontal className="h-5 w-5" />
                         </button>
-                        {openMenu === user.id && (
-                          <>
-                            <div className="fixed inset-0 z-40" onClick={() => setOpenMenu(null)} />
-                            <div className="absolute right-6 z-50 mt-1 w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-xl dark:border-gray-800 dark:bg-gray-900">
-                              {user.status === "banned" && (
-                                <button
-                                  onClick={() => handleAction(user, "unban")}
-                                  disabled={pendingAction === `${user.id}:unban`}
-                                  className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
-                                >
-                                  <CheckCircle className="h-4 w-4" /> Activate
-                                </button>
-                              )}
-                              {user.status !== "banned" && user.status !== "deactivated" && (
-                                <button
-                                  onClick={() => handleAction(user, "ban")}
-                                  disabled={pendingAction === `${user.id}:ban`}
-                                  className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20"
-                                >
-                                  <Ban className="h-4 w-4" /> Ban
-                                </button>
-                              )}
-                              {user.role !== "admin" && user.status !== "deactivated" && (
-                                <button
-                                  onClick={() => handleAction(user, "promote")}
-                                  disabled={pendingAction === `${user.id}:promote`}
-                                  className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20"
-                                >
-                                  <Shield className="h-4 w-4" /> Make admin
-                                </button>
-                              )}
-                              {user.role === "admin" && (
-                                <button
-                                  onClick={() => handleAction(user, "revoke")}
-                                  disabled={pendingAction === `${user.id}:revoke`}
-                                  className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20"
-                                >
-                                  <ShieldOff className="h-4 w-4" /> Revoke admin
-                                </button>
-                              )}
-                              {user.status !== "deactivated" && (
-                                <button
-                                  onClick={() => handleAction(user, "delete")}
-                                  disabled={pendingAction === `${user.id}:delete`}
-                                  className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                                >
-                                  <Trash2 className="h-4 w-4" /> Delete
-                                </button>
-                              )}
-                            </div>
-                          </>
-                        )}
+                        {openMenu === user.id &&
+                          menuPosition &&
+                          createPortal(
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={closeMenu} />
+                              <div
+                                className="fixed z-50 w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-xl dark:border-gray-800 dark:bg-gray-900"
+                                style={{
+                                  top: menuPosition.top,
+                                  left: menuPosition.left,
+                                  transform: menuPosition.openAbove ? "translateY(-100%)" : "none",
+                                }}
+                              >
+                                {(user.status === "banned" || user.status === "deactivated") && (
+                                  <button
+                                    onClick={() => handleAction(user, "unban")}
+                                    disabled={pendingAction === `${user.id}:unban`}
+                                    className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
+                                  >
+                                    <CheckCircle className="h-4 w-4" /> Activate
+                                  </button>
+                                )}
+                                {user.status !== "banned" && user.status !== "deactivated" && (
+                                  <button
+                                    onClick={() => handleAction(user, "ban")}
+                                    disabled={pendingAction === `${user.id}:ban`}
+                                    className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20"
+                                  >
+                                    <Ban className="h-4 w-4" /> Ban
+                                  </button>
+                                )}
+                                {user.role !== "admin" && user.status !== "deactivated" && (
+                                  <button
+                                    onClick={() => handleAction(user, "promote")}
+                                    disabled={pendingAction === `${user.id}:promote`}
+                                    className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20"
+                                  >
+                                    <Shield className="h-4 w-4" /> Make admin
+                                  </button>
+                                )}
+                                {user.role === "admin" && (
+                                  <button
+                                    onClick={() => handleAction(user, "revoke")}
+                                    disabled={pendingAction === `${user.id}:revoke`}
+                                    className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20"
+                                  >
+                                    <ShieldOff className="h-4 w-4" /> Revoke admin
+                                  </button>
+                                )}
+                                {user.status !== "deactivated" && (
+                                  <button
+                                    onClick={() => handleAction(user, "delete")}
+                                    disabled={pendingAction === `${user.id}:delete`}
+                                    className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                                  >
+                                    <Trash2 className="h-4 w-4" /> Delete
+                                  </button>
+                                )}
+                              </div>
+                            </>,
+                            document.body
+                          )}
                       </td>
                     </tr>
                   ))}

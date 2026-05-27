@@ -169,6 +169,10 @@ class ApiClient extends HttpClient {
     return this.request<any>("POST", "/orders/", data);
   }
 
+  updateOrder(orderId: string | number, data: { status: string }) {
+    return this.request<any>("PATCH", `/orders/${orderId}/`, data);
+  }
+
   createCheckout(data: { items: Array<{ id: number; quantity: number }> }) {
     return this.request<{ checkout_url: string; session_id: string }>(
       "POST",
@@ -183,6 +187,12 @@ class ApiClient extends HttpClient {
 
   getOrders(buyerId: string | number) {
     return this.request<any[]>("GET", `/orders/buyer/${buyerId}/`).then((data) =>
+      Array.isArray(data) ? data.map(mapOrder) : []
+    );
+  }
+
+  getSoldOrders(sellerId: string | number) {
+    return this.request<any[]>("GET", `/orders/seller/${sellerId}/`).then((data) =>
       Array.isArray(data) ? data.map(mapOrder) : []
     );
   }

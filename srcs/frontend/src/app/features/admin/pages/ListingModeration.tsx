@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Package, Search, MoreHorizontal, CheckCircle, XCircle, Eye, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router";
@@ -8,6 +9,11 @@ import { AdminNav } from "../components/AdminNav";
 
 const STATUS_FILTERS = ["all", "Draft", "Active", "Paused", "Deleted"] as const;
 type StatusFilter = (typeof STATUS_FILTERS)[number];
+type MenuPosition = {
+  top: number;
+  left: number;
+  openAbove: boolean;
+};
 
 function normalizeListingStatus(listing: Listing): ListingStatus {
   const status = String(listing.status ?? "Draft") as ListingStatus;
@@ -38,6 +44,7 @@ export function ListingModeration() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [menuPosition, setMenuPosition] = useState<MenuPosition | null>(null);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
 
   const fetchListings = useCallback(async () => {
@@ -60,6 +67,34 @@ export function ListingModeration() {
     void fetchListings();
   }, [fetchListings]);
 
+  const closeMenu = () => {
+    setOpenMenu(null);
+    setMenuPosition(null);
+  };
+
+  const toggleMenu = (listing: Listing, event: React.MouseEvent<HTMLButtonElement>) => {
+    if (openMenu === listing.id) {
+      closeMenu();
+      return;
+    }
+
+    const buttonRect = event.currentTarget.getBoundingClientRect();
+    const menuWidth = 176;
+    const menuHeight = 184;
+    const left = Math.min(
+      window.innerWidth - menuWidth - 16,
+      Math.max(16, buttonRect.right - menuWidth)
+    );
+    const openAbove = window.innerHeight - buttonRect.bottom < menuHeight && buttonRect.top > menuHeight;
+
+    setOpenMenu(listing.id);
+    setMenuPosition({
+      top: openAbove ? buttonRect.top - 8 : buttonRect.bottom + 8,
+      left,
+      openAbove,
+    });
+  };
+
   const filtered = listings.filter(
     (l) =>
       l.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -69,7 +104,7 @@ export function ListingModeration() {
   const handleAction = async (listing: Listing, action: "approve" | "reject" | "delete") => {
     const actionKey = `${listing.id}:${action}`;
     setPendingAction(actionKey);
-    setOpenMenu(null);
+    closeMenu();
 
     try {
       if (action === "delete") {
@@ -113,7 +148,7 @@ export function ListingModeration() {
           </p>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div className="overflow-visible rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
           <div className="flex flex-col justify-between gap-4 border-b border-gray-200 p-4 sm:flex-row dark:border-gray-800">
             <div className="relative max-w-sm">
               <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -203,52 +238,62 @@ export function ListingModeration() {
                       </td>
                       <td className="relative px-6 py-4 text-right">
                         <button
-                          onClick={() => setOpenMenu(openMenu === listing.id ? null : listing.id)}
+                          onClick={(event) => toggleMenu(listing, event)}
                           className="rounded p-1 text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
                           disabled={isPending}
                         >
                           <MoreHorizontal className="h-5 w-5" />
                         </button>
-                        {openMenu === listing.id && (
-                          <>
-                            <div className="fixed inset-0 z-40" onClick={() => setOpenMenu(null)} />
-                            <div className="absolute right-6 z-50 mt-1 w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-xl dark:border-gray-800 dark:bg-gray-900">
-                              <Link
-                                to={`/product/${listing.id}`}
-                                className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                        {openMenu === listing.id &&
+                          menuPosition &&
+                          createPortal(
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={closeMenu} />
+                              <div
+                                className="fixed z-50 w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-xl dark:border-gray-800 dark:bg-gray-900"
+                                style={{
+                                  top: menuPosition.top,
+                                  left: menuPosition.left,
+                                  transform: menuPosition.openAbove ? "translateY(-100%)" : "none",
+                                }}
                               >
-                                <Eye className="h-4 w-4" /> View
-                              </Link>
-                              {status !== "Active" && status !== "Deleted" && (
-                                <button
-                                  onClick={() => void handleAction(listing, "approve")}
-                                  disabled={!!isPending}
-                                  className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
+                                <Link
+                                  to={`/product/${listing.id}`}
+                                  className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
                                 >
-                                  <CheckCircle className="h-4 w-4" /> Approve
-                                </button>
-                              )}
-                              {status !== "Paused" && status !== "Deleted" && (
-                                <button
-                                  onClick={() => void handleAction(listing, "reject")}
-                                  disabled={!!isPending}
-                                  className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-900/20"
-                                >
-                                  <XCircle className="h-4 w-4" /> Pause
-                                </button>
-                              )}
-                              {status !== "Deleted" && (
-                                <button
-                                  onClick={() => void handleAction(listing, "delete")}
-                                  disabled={!!isPending}
-                                  className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                                >
-                                  <Trash2 className="h-4 w-4" /> Delete
-                                </button>
-                              )}
-                            </div>
-                          </>
-                        )}
+                                  <Eye className="h-4 w-4" /> View
+                                </Link>
+                                {status !== "Active" && status !== "Deleted" && (
+                                  <button
+                                    onClick={() => void handleAction(listing, "approve")}
+                                    disabled={!!isPending}
+                                    className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
+                                  >
+                                    <CheckCircle className="h-4 w-4" /> Approve
+                                  </button>
+                                )}
+                                {status !== "Paused" && status !== "Deleted" && (
+                                  <button
+                                    onClick={() => void handleAction(listing, "reject")}
+                                    disabled={!!isPending}
+                                    className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-900/20"
+                                  >
+                                    <XCircle className="h-4 w-4" /> Pause
+                                  </button>
+                                )}
+                                {status !== "Deleted" && (
+                                  <button
+                                    onClick={() => void handleAction(listing, "delete")}
+                                    disabled={!!isPending}
+                                    className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                                  >
+                                    <Trash2 className="h-4 w-4" /> Delete
+                                  </button>
+                                )}
+                              </div>
+                            </>,
+                            document.body
+                          )}
                       </td>
                     </tr>
                   );
