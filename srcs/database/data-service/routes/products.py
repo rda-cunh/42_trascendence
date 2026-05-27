@@ -8,6 +8,9 @@ import unicodedata
 
 router = APIRouter(prefix='/api/listings', tags=['Products'])
 
+_PRODUCT_UPDATABLE_FIELDS = {'name', 'description', 'price', 'status'}
+_REVIEW_UPDATABLE_FIELDS  = {'rating', 'title', 'body'}
+
 def generate_slug(name: str) -> str:
 	name = name.lower().strip()
 
@@ -59,11 +62,13 @@ def GetProductInfo(db, product_id:	int):
 	product['images'] = [img['image_hash'] for img in image_rows]
 
 	cursor.execute(
-		'''SELECT name, email, avatar_url FROM users WHERE id = %s''',
+		'''SELECT name, email, avatar_url, status FROM users WHERE id = %s''',
 		(product['seller_id'],)
 	)
 	user = cursor.fetchone()
-
+	if user['status'] == 'Banned' or user['status'] == 'Deactivated':
+		raise HTTPException(status_code=404, detail='Product not found')
+	del user['status']
 	# TO DO
 	# if product['seller_id'] == current_user['id'] || current_user['role'] == 'Admin':
 	# 	user['is_owner'] = True
@@ -212,24 +217,26 @@ def get_id_products(product_id: int, db=Depends(get_db_dep)):
 @router.patch('/{product_id}/', response_model=ProductResponse)
 def update_products(product_id: int, product_in: ProductUpdate, db=Depends(get_db_dep)):
 	conn, cursor = db
-	cursor.execute('SELECT * FROM products WHERE id = %s', (product_id,))
+	cursor.execute("SELECT id FROM products WHERE id = %s AND status NOT IN ('Deleted', 'Disabled')", (product_id,))
 	if not cursor.fetchone():
 		raise HTTPException(status_code=404, detail='Product not found')
+ 
 	update_data = {
 		k: v for k, v in product_in.model_dump(exclude_none=True).items()
-		if v != ""
-		}
+		if v != "" and k in _PRODUCT_UPDATABLE_FIELDS
+	}
 	if not update_data:
 		raise HTTPException(status_code=400, detail='No fields to update')
+ 
 	set_clause = ', '.join(f'{k} = %s' for k in update_data.keys())
 	values = list(update_data.values()) + [product_id]
-
+ 
 	cursor.execute(
 		f'UPDATE products SET {set_clause} WHERE id = %s',
 		values
 	)
 	conn.commit()
-
+ 
 	# Fan out 'listing_updated' notifications to the seller's followers.
 	# Added to satisfy the subject requirement of notifications for "all creation,
 	# update, and deletion actions".
@@ -238,7 +245,7 @@ def update_products(product_id: int, product_in: ProductUpdate, db=Depends(get_d
 		_fanout_listing_event(db, product_row['seller_id'], product_id, 'listing_updated')
 	except Exception as e:
 		print(f'_fanout_listing_event (updated) failed for product {product_id}: {e}')
-
+ 
 	product = GetProductInfo(db, product_id)
 	return ProductResponse(**product)
 
@@ -428,15 +435,18 @@ def get_review(product_id: int, review_id: int, db=Depends(get_db_dep)):
 @router.patch('/{product_id}/reviews/{review_id}/', response_model=ReviewResponse)
 def update_review(product_id: int, review_id: int, review_in: ReviewUpdate, db=Depends(get_db_dep)):
 	conn, cursor = db
-
+ 
 	cursor.execute(
-		'SELECT id, reviewer_id, created_at FROM product_reviews WHERE id = %s AND product_id = %s',
+		'SELECT id, reviewer_id, created_at, status FROM product_reviews WHERE id = %s AND product_id = %s',
 		(review_id, product_id)
 	)
 	review = cursor.fetchone()
-	if not review:
+	if not review or review['status'] == 'Deleted':
 		raise HTTPException(status_code=404, detail='Review not found')
 
+	if review['status'] not in ('Approved', 'Pending'):
+		raise HTTPException(status_code=403, detail='Review cannot be edited in its current status')
+ 
 	# TO DO: verificar se caller é o reviewer ou admin
 	cursor.execute(
 		'SELECT id FROM product_reviews WHERE id = %s AND created_at >= NOW() - INTERVAL 30 DAY',
@@ -444,16 +454,14 @@ def update_review(product_id: int, review_id: int, review_in: ReviewUpdate, db=D
 	)
 	if not cursor.fetchone():
 		raise HTTPException(status_code=403, detail='Edit window expired (30 days)')
-
+ 
 	update_data = {
 		k: v for k, v in review_in.model_dump(exclude_none=True).items()
-		if v != ''
+		if v != '' and k in _REVIEW_UPDATABLE_FIELDS
 	}
 	if not update_data:
 		raise HTTPException(status_code=400, detail='No fields to update')
-
-	#TO DO
-	# update_data['status'] = 'Pending'
+ 
 	set_clause = ', '.join(f'{k} = %s' for k in update_data)
 	values     = list(update_data.values()) + [review_id, product_id]
  
@@ -463,7 +471,7 @@ def update_review(product_id: int, review_id: int, review_in: ReviewUpdate, db=D
 	)
 	_recalc_listing_rating(cursor, product_id)
 	conn.commit()
-
+ 
 	cursor.execute(
 		'''SELECT r.id, r.product_id, r.reviewer_id, r.rating, r.title, r.body,
 				  r.status, r.created_at, r.updated_at,

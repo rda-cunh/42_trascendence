@@ -6,6 +6,8 @@ from decimal import Decimal
 
 router = APIRouter(prefix='/api/orders', tags=['Orders'])
 
+_ORDER_UPDATABLE_FIELDS = {'status', 'notes'}
+
 # Generate uniq code for orders
 def generate_order_code() -> str:
 	return f'ORD-{uuid.uuid4().hex[:8].upper()}'
@@ -26,7 +28,9 @@ def create_order(order_in: OrderCreate, db=Depends(get_db_dep)):
 		)
 		product = cursor.fetchone()
 		if not product:
-			raise HTTPException(status_code=404, detail=f'Product [item.product_id] not found or inactive')
+			raise HTTPException(status_code=404, detail=f'Product not found or inactive')
+		if product['seller_id'] == order_in.user_id:
+			raise HTTPException(status_code=400, detail=f'Product belongs to the buyer')
 		subtotal = Decimal(product['price']) * item.qty
 		total += subtotal
 		items_data.append({
@@ -55,6 +59,7 @@ def create_order(order_in: OrderCreate, db=Depends(get_db_dep)):
 			(order_id, item_data['product_id'], item_data['seller_id'], item_data['product_name'],
 			item_data['price'], item_data['qty'], item_data['subtotal'])
 		)
+	conn.commit()
 	cursor.execute('SELECT * FROM orders WHERE id = %s', (order_id,))
 	order = cursor.fetchone()
 	cursor.execute('SELECT * FROM order_items WHERE order_id = %s', (order_id,))
@@ -67,13 +72,10 @@ def create_order(order_in: OrderCreate, db=Depends(get_db_dep)):
 def get_order(order_id: int, db=Depends(get_db_dep)):
 	conn, cursor = db
 
-	# Q1 - order data
 	cursor.execute('SELECT * FROM orders WHERE id = %s', (order_id,))
 	order = cursor.fetchone()
 	if not order:
 		raise HTTPException(status_code=404, detail='Order not found')
-
-	# Q2 - Order items
 	cursor.execute('SELECT * FROM order_items WHERE order_id = %s ORDER BY id', (order_id,))
 	order['items'] = cursor.fetchall()
 
@@ -99,41 +101,37 @@ def get_buyer_orders(buyer_id: int, db=Depends(get_db_dep)):
 @router.patch('/{order_id}/', response_model=OrderResponse, status_code=200)
 def update_orders(order_id: int, order_in: OrderUpdate, db=Depends(get_db_dep)):
 	conn, cursor = db
-	cursor.execute('SELECT * FROM orders WHERE id = %s', (order_id,))
+ 
+	cursor.execute(
+		"SELECT * FROM orders WHERE id = %s AND status NOT IN ('Cancelled', 'Done')",
+		(order_id,)
+	)
 	if not cursor.fetchone():
-		raise HTTPException(status_code=404, detail='Order not found')
-	update_data = { k: v for k, v in order_in.model_dump(exclude_none=True).items()
-    	if v != ""}
+		raise HTTPException(status_code=404, detail='Order not found or cannot be edited')
+ 
+	update_data = {
+		k: v for k, v in order_in.model_dump(exclude_none=True).items()
+		if v != "" and k in _ORDER_UPDATABLE_FIELDS
+	}
 	if not update_data:
 		raise HTTPException(status_code=400, detail='No fields to update')
-	set_clause = ', '.join(f'{k} = %s' for k in update_data.keys())
-	values = list(update_data.values()) + [order_id]
-
+ 
 	cursor.execute(
-		f'UPDATE orders SET {set_clause} WHERE id = %s',
-		values
+		'''UPDATE orders
+		   SET
+		       status = COALESCE(%s, status),
+		       notes  = COALESCE(%s, notes)
+		   WHERE id = %s''',
+		(
+			update_data.get('status'),
+			update_data.get('notes'),
+			order_id,
+		)
 	)
+	conn.commit()
+ 
 	cursor.execute('SELECT * FROM orders WHERE id = %s', (order_id,))
-	return OrderResponse(**cursor.fetchone())
-
-
-
-
-# POST /payment
-
-
-
-
-# GET /payment
-
-
-
-
-# PATCH /payment
-
-
-
-# DELETE /payment
-
-
-
+	order = cursor.fetchone()
+	cursor.execute('SELECT * FROM order_items WHERE order_id = %s ORDER BY id', (order_id,))
+	order['items'] = cursor.fetchall()
+	return OrderResponse(**order)
