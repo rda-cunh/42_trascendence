@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { Listing, CartItem as CartItemType } from "@/app/core/types";
+import { useAuth } from "@/app/core/contexts/AuthContext";
 
 interface CartContextType {
   items: CartItemType[];
@@ -13,15 +14,26 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+export const CART_STORAGE_KEY = "cart_items";
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+
   const [items, setItems] = useState<CartItemType[]>(() => {
-    const stored = localStorage.getItem("cart_items");
+    const stored = localStorage.getItem(CART_STORAGE_KEY);
     return stored ? JSON.parse(stored) : [];
   });
 
   useEffect(() => {
-    localStorage.setItem("cart_items", JSON.stringify(items));
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
   }, [items]);
+
+  useEffect(() => {
+    if (!user) {
+      setItems([]);
+      localStorage.removeItem(CART_STORAGE_KEY);
+    }
+  }, [user]);
 
   const addItem = useCallback((listing: Listing) => {
     setItems((prev) => {
@@ -41,6 +53,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const clear = useCallback(() => {
     setItems([]);
+    localStorage.removeItem(CART_STORAGE_KEY);
   }, []);
 
   const total = items.reduce((sum, item) => sum + item.listing.price * item.quantity, 0);
