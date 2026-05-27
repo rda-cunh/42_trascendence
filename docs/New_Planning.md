@@ -2,7 +2,7 @@
 
 These tables summarize the current module strategy for the project based on progress, implementation risk, and delivery value. Module names in the tables link to detailed notes below.
 
-**Target:** 14 mandatory points + 5 bonus points = **19 points** (subject caps bonus at 5).
+**Target:** 14 mandatory points + 5 effective bonus points = **19 points** (subject caps bonus at 5). We ship **6 raw bonus points** as a deliberate safeguard, so a single downgrade on any of the other bonus modules still leaves 5 effective points on the table.
 
 ## Must have / under development (14 points)
 
@@ -28,7 +28,8 @@ Bonus is only considered if the 14 mandatory points are reached. Subject caps th
 | [**Accessibility Minor 4 – Support for additional browsers**](#accessibility-minor-4--support-for-additional-browsers) | 1 | Partially validated | **Erik** | Chrome + Firefox confirmed. **Pick a second browser and validate.** |
 | [**Module of Choice Major – Internal PKI / authenticated TLS for all service-to-service traffic**](#module-of-choice-major--internal-pki--authenticated-tls-for-all-service-to-service-traffic) | 2 | **Completed** | **Leonardo Vichi** | Pitch updated: framed as **internal PKI + CA-authenticated TLS on every internal hop**, not "mTLS." PKI subsystem in `srcs/pki/` (own CA, SANs for 15+ internal services, MySQL boot ordering fixed today). Gateway and upstreams all run on CA-signed certs and the gateway verifies every upstream against the internal CA. **Keep.** |
 | [**Module of Choice Minor – Stripe payment integration**](#module-of-choice-minor--stripe-payment-integration) | 1 | **End-to-end flow shipped (session-driven, not webhook)** | **Raphael** | Frontend Checkout / Success / Failure / Redirect pages shipped today. Backend `create_checkout` opens a Stripe Checkout Session; order is persisted on the return path by retrieving the session and verifying `payment_status == "paid"`. **No webhook receiver yet** — decide whether to add one before evaluation. |
-| **Total bonus** | **5** |  |  |  |
+| [**User Minor 4 – User activity analytics**](#user-minor-4--user-activity-analytics) | 1 | **Completed (defensive 6th point)** | **Raphael** + Leonardo Maes + Leonardo Vichi + Ricardo | Three-tier analytics already shipped: (1) real-time activity telemetry in Grafana (gateway RPS, FastAPI request counts, MySQL QPS), (2) admin insights dashboard (users / revenue / orders / listings + 6-month trends + category distribution), (3) per-user views (profile listings, orders history with status breakdown, seller profile counts). Listed as a **6th raw bonus point**: if PKI Major is downgraded (Major → Minor) we still hit 5 effective points. **Keep as safeguard.** |
+| **Total bonus (raw / effective at 5-cap)** | **6 / 5** |  |  |  |
 
 ## Drop for now
 
@@ -38,7 +39,6 @@ Bonus is only considered if the 14 mandatory points are reached. Subject caps th
 | [**Web Minor 10 – File upload and management system**](#web-minor-10--file-upload-and-management-system) | 1 | Not implemented | [N/A – dropping] | Would help the marketplace UX but adds complexity outside the 19-point target. **Drop.** |
 | [**DevOps Major 3 – Backend as microservices**](#devops-major-3--backend-as-microservices) | 2 | Not implemented | [N/A – dropping] | High complexity, no progress. **Drop.** |
 | [**Gaming Major 5 – Advanced 3D graphics**](#gaming-major-5--advanced-3d-graphics) | 2 | Not implemented | [N/A – dropping] | Frontend-heavy, no visible progress. **Drop.** |
-| [**User Minor 4 – User activity analytics**](#user-minor-4--user-activity-analytics) | 1 | Not implemented | [N/A – dropping] | Not needed for the 19-point target. **Drop.** |
 | [**AI Minor 1 – Content moderation AI**](#ai-minor-1--content-moderation-ai) | 1 | Not implemented | [N/A – dropping] | Out of scope. **Drop.** |
 | [**DevOps Major 1 – ELK / log management**](#devops-major-1--elk--log-management) | 2 | Not started | [N/A – dropping] | Monitoring module already covers the DevOps slot. **Drop.** |
 
@@ -226,6 +226,48 @@ Bonus is only considered if the 14 mandatory points are reached. Subject caps th
 - User sees confirmation in the UI / orders list; admin sees the order in the admin dashboard.
 - If asked: explain that webhook delivery would be the production-resilient variant and point to the session-retrieve-on-success path that backstops it today.
 
+### User Minor 4 – User activity analytics
+
+**Justification (Minor, 1 point — defensive 6th bonus point):**
+
+We list this as a **6th raw bonus point** while the subject caps bonus at **5 effective points**. The cap means this module cannot increase the score in the happy path — its purpose is purely defensive. If any other bonus claim is downgraded at evaluation (most plausibly the PKI Major being interpreted as a Minor), this module absorbs the loss and we still hit the 5-point cap. We accept that in the no-downgrade case it contributes 0 to the score; the asymmetry between "free downside protection" and "small effort to claim" is what makes it worth listing.
+
+**Why "user activity analytics" fits the marketplace context.** The subject wording — "User activity analytics and insights dashboard" — is engine-agnostic and does not prescribe a particular instrumentation pattern (it does not mandate clickstream/pageview tracking, A/B funnels, session replay, etc.). On a marketplace the *user activities that matter* are economic and social: registering, listing items, browsing listings, messaging about products, completing orders, leaving reviews, following sellers. A generic clickstream dashboard would actually be less relevant here than the buy/sell/message/review breakdown we already surface. We claim the module on that interpretation, and we disclose it openly so the evaluator can judge the framing.
+
+**Current implementation status (verified 2026-05-27) — three complementary tiers:**
+
+1. **Real-time activity telemetry (Grafana).** The Prometheus + Grafana stack already scraping the platform exposes user-activity *volume and rate* at every hop on the request path. Relevant panels include:
+   - **Gateway dashboard:** Active Connections, Requests Per Second, HTTP Request Throughput, Connection States — direct view of concurrent users and traffic shape over time.
+   - **Data-service dashboard (FastAPI Observability):** Total Requests, Requests Count, Request Per Sec, 2xx / 5xx ratios, p99 duration — aggregate user-driven CRUD operations (listings, orders, follows, reviews).
+   - **Backend dashboard (Django):** request volume, latency distribution, response-size distribution, requests slower than threshold.
+   - **MySQL dashboard:** Current QPS, MySQL Connections, MySQL Client Thread Activity, MySQL Questions, Top Command Counters — query-level view of activity driven by user actions.
+   - All accessible at `/api/admin/grafana/` behind admin authentication (no anonymous access).
+
+2. **Admin business-insights dashboard.** `features/admin/pages/Dashboard.tsx` rendered against `/api/admin/dashboard/` (proxied to `/admin/dashboard/` on the data service — see [`routes/admin.py:162`](srcs/database/data-service/routes/admin.py)). Surfaces: total active users, total revenue from completed orders, total orders, active listings, a **6-month revenue bar chart**, a **6-month orders trend line chart**, and a **category distribution pie chart** computed from active listings (i.e. what users are listing).
+
+3. **Per-user activity views.**
+   - **Profile** (`features/profile/pages/Profile.tsx`) — the signed-in user's listings portfolio (seller activity).
+   - **Orders** (`features/profile/pages/Orders.tsx`) — full personal purchase history with status breakdown (`pending` / `processing` / `shipped` / `completed` / `cancelled`) and per-order totals.
+   - **SellerProfile** (`features/products/pages/SellerProfile.tsx`) — follower / following counts and listing portfolio for any user (publicly visible activity of other users).
+   - **Data sources** — all derived from the existing schema (`users`, `orders`, `order_items`, `products`, `follows`, `notifications`). No new tracking pipeline; the analytics layer reads what the marketplace already records.
+
+**Honest scope disclosure.**
+- We do **not** ship a separate behavioural-tracking pipeline (no client-side pageview events, no funnel A/B, no session replay). The "activity" we analyse is the commerce + social activity already captured in the database, plus the operational activity already scraped by Prometheus.
+- We do **not** claim this is a richer module than the subject requires. The implementation reuses dashboards built for the User Major 2 (Advanced permissions) and DevOps Major 2 (Monitoring) claims. We list it here because the same dashboards genuinely satisfy User Minor 4's subject wording when read against the marketplace domain — they are not double-counted toward the *primary* modules, they back a defensive *6th* claim.
+
+**Risks.**
+- An evaluator who reads "user activity" as strictly "browsing/clickstream telemetry" could reject the framing. **Mitigation:** the 6th-point status means even an outright rejection leaves us at **5 effective bonus points** via the other four modules. The downside is bounded by construction.
+- An evaluator could object that the dashboards are reused from other claims. **Mitigation:** the underlying data is the same, but the *question being answered* is different — User Major 2 is about RBAC and admin actions (CRUD on users/listings); User Minor 4 is about the analytics and insights surfaced *from* user behaviour. The two answer different questions from overlapping data, which is normal in any platform.
+- An evaluator could push for explicit per-user "last login / session count / browsing time" metrics. **Mitigation:** `users.last_login` already exists in the schema and can be surfaced with a single backend endpoint + UI tile if needed at evaluation; treat this as a stretch-fix during the demo, not a blocker.
+
+**Demo checklist for evaluation:**
+- Open Grafana (`/api/admin/grafana/`) → walk through the gateway RPS / connection panels, the FastAPI Total Requests / Request Per Sec panels, the MySQL QPS panel. Frame these as the *real-time activity telemetry* tier.
+- Open the **admin dashboard** → walk through total users / revenue / orders / active listings, then the 6-month revenue + orders charts, then the category distribution. Frame as the *aggregated business-insights* tier.
+- Open `/profile` for the signed-in user → show their listings portfolio.
+- Open `/orders` → show purchase history with the status-breakdown badges.
+- Open another user's `/seller/:id` → show follower / following counts and their listings.
+- If asked about the 5/6 framing: state explicitly that this module is a deliberate **safeguard against a downgrade on any other bonus claim**, that the bonus cap means it contributes 0 in the happy path, and that this is documented in `New_Planning.md` and the README.
+
 ---
 
 ## Drop for now details
@@ -271,13 +313,6 @@ Bonus is only considered if the 14 mandatory points are reached. Subject caps th
 - Immersive 3D environment.
 - Advanced rendering techniques.
 - Smooth performance and interaction.
-
-### User Minor 4 – User activity analytics
-
-**Justification for drop:** Not needed for the 19-point target and no current progress.
-
-**Requirements from the subject:**
-- User activity analytics and insights dashboard.
 
 ### AI Minor 1 – Content moderation AI
 

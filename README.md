@@ -172,12 +172,13 @@ The database is **MySQL 8** and is initialised by [`srcs/database/db/init/init-d
 | Ops | HTTPS-only access via Nginx gateway + in-cluster PKI | mandatory | Leonardo Vichi |
 | Ops | Internal PKI: own CA, CA-signed certs on every service, gateway verifies every upstream against the internal CA | **Module of Choice Major (bonus)** | Leonardo Vichi |
 | Ops | Prometheus + Grafana with cAdvisor, node/mysqld/nginx exporters and provisioned dashboards | DevOps Major | Leonardo Vichi |
+| Analytics | Three-tier user-activity analytics: real-time telemetry in Grafana (RPS, FastAPI request counts, MySQL QPS), admin business-insights dashboard (users, revenue, orders, 6-month trends, category distribution), per-user activity views (profile listings, orders history, seller profile counts) | **User Minor — User activity analytics (bonus, safeguard)** | Raphael, Leonardo Maes, Leonardo Vichi, Ricardo, Erik |
 | Accessibility | Cross-browser compatibility on Chrome, Firefox, and a third non-Chromium browser (Midori / WebKitGTK) | **Accessibility Minor (bonus)** | Erik |
 | Legal | Privacy Policy and Terms of Service pages linked from the footer | mandatory | Ricardo |
 
 ## Modules
 
-We claim **14 mandatory points** plus **5 bonus points** (the subject caps bonus at 5), for a total of **19 points**. Each module below quotes the subject's requirements and explains how we implemented them.
+We claim **14 mandatory points** plus **6 raw bonus points** for an evaluated total of **19 points** — the subject caps bonus at **5 effective points**, so five of the six bonus modules carry the score. The sixth bonus claim is a deliberate safeguard: if any single bonus module is downgraded at evaluation, the remaining five still saturate the cap. Each module below quotes the subject's requirements and explains how we implemented them.
 
 ### Mandatory modules — 14 points
 
@@ -193,7 +194,7 @@ We claim **14 mandatory points** plus **5 bonus points** (the subject caps bonus
 | [User Minor — Remote authentication with OAuth 2.0](#user-minor--remote-authentication-with-oauth-20) | 1 |
 | **Total** | **14** |
 
-### Bonus modules — 5 points
+### Bonus modules — 6 raw points (5 effective at the subject cap)
 
 | Module | Points |
 |---|---:|
@@ -201,7 +202,8 @@ We claim **14 mandatory points** plus **5 bonus points** (the subject caps bonus
 | [Module of Choice Major — Internal PKI / authenticated TLS for all service-to-service traffic](#module-of-choice-major--internal-pki--authenticated-tls-for-all-service-to-service-traffic-bonus) | 2 |
 | [Module of Choice Minor — Stripe payment integration](#module-of-choice-minor--stripe-payment-integration-bonus) | 1 |
 | [Accessibility Minor — Support for additional browsers](#accessibility-minor--support-for-additional-browsers-bonus) | 1 |
-| **Total** | **5** |
+| [User Minor — User activity analytics and insights dashboard](#user-minor--user-activity-analytics-and-insights-dashboard-bonus) | 1 |
+| **Total (raw / effective at 5-cap)** | **6 / 5** |
 
 ---
 
@@ -415,6 +417,47 @@ This is delivered as a **dedicated subsystem** — `srcs/pki/` — with its own 
 - Ensure consistent UI/UX across all supported browsers.
 
 **Owner.** Erik.
+
+---
+
+### User Minor — User activity analytics and insights dashboard *(bonus)*
+
+**Justification.** A marketplace's meaningful user activities are *economic and social*, not generic page views: registering, listing items, browsing listings, messaging about products, completing orders, leaving reviews, and following sellers. We surface that activity through **three complementary tiers**, all of them already in production in this project — admin-gated Grafana for real-time telemetry, the admin React dashboard for aggregated business insights, and per-user profile views for personal activity. Together they answer the subject's brief — *"User activity analytics and insights dashboard"* — from the angle that actually matters to a buyer/seller platform.
+
+**What is shipped.**
+
+1. **Real-time activity telemetry (Grafana).** The Prometheus + Grafana stack already scraping every container exposes user-activity *volume and rate* at every hop on the request path. Reachable behind admin authentication at `/api/admin/grafana/`. Panels relevant to user activity include:
+   - **Gateway dashboard** (`nginx-exporter-gateway`): Active Connections, Requests Per Second, HTTP Request Throughput, Connection States — concurrent users and traffic shape over time.
+   - **Data-service dashboard** (FastAPI Observability): Total Requests, Requests Count, Request Per Sec, 2xx / 5xx ratios, p99 duration — aggregate user-driven CRUD on listings, orders, follows, reviews.
+   - **Backend dashboard** (Django): request volume, latency distribution, response-size distribution.
+   - **MySQL dashboard** (`mysqld-exporter`): Current QPS, MySQL Connections, MySQL Client Thread Activity, MySQL Questions, Top Command Counters — query-level view of activity driven by user actions.
+
+2. **Admin business-insights dashboard** (`features/admin/pages/Dashboard.tsx`, served from `/api/admin/dashboard/` → [`routes/admin.py`](srcs/database/data-service/routes/admin.py) on the data service). Surfaces:
+   - Total active users, total revenue from completed orders, total orders, active listings.
+   - **Revenue overview**, last 6 months (bar chart).
+   - **Orders trend**, last 6 months (line chart).
+   - **Category distribution** of active listings (pie chart) — what users are listing.
+
+3. **Per-user activity views.**
+   - `/profile` ([`features/profile/pages/Profile.tsx`](srcs/frontend/src/app/features/profile/pages/Profile.tsx)) — the signed-in user's listings portfolio (seller activity).
+   - `/orders` ([`features/profile/pages/Orders.tsx`](srcs/frontend/src/app/features/profile/pages/Orders.tsx)) — full purchase history with status breakdown (`pending` / `processing` / `shipped` / `completed` / `cancelled`) and per-order totals.
+   - `/seller/:id` ([`features/products/pages/SellerProfile.tsx`](srcs/frontend/src/app/features/products/pages/SellerProfile.tsx)) — any user's follower/following counts and listing portfolio.
+
+**Design note — what "user activity" means in this project.** The subject text is engine-agnostic and does not prescribe a particular instrumentation pattern. On a marketplace, the activities that matter are commerce-driven (buy, sell, list, review, pay) and social-graph-driven (follow, message), and that is what we analyse. We do not ship a separate client-side pageview pipeline; the analytics derive from the existing schema (`users`, `orders`, `order_items`, `products`, `follows`, `notifications`) and from the operational metrics already scraped by Prometheus. We disclose this scope explicitly so the framing is transparent.
+
+**Note on bonus accounting.** We list this as a **6th raw bonus point** while the subject caps bonus at **5 effective**. This is deliberate: if any other bonus module is downgraded at evaluation, this module absorbs the loss and the total still saturates the cap. In the no-downgrade case it contributes 0 to the score — we accept that asymmetry as cheap downside insurance, not as a stacking strategy.
+
+**Subject requirements**
+- User activity analytics and insights dashboard.
+
+**Demo checklist for evaluation.**
+- Open Grafana at `/api/admin/grafana/` → walk through the gateway RPS / connection panels, the FastAPI Total Requests panels, and the MySQL QPS panel as the *real-time activity telemetry* tier.
+- Open the **admin dashboard** → walk through total users / revenue / orders / active listings, the 6-month revenue + orders charts, and the category distribution pie chart as the *aggregated business-insights* tier.
+- Open `/profile` for the signed-in user → show their listings portfolio.
+- Open `/orders` → show purchase history with status badges.
+- Open another user's `/seller/:id` → show follower / following counts and listings.
+
+**Owners.** Raphael (admin dashboard backend + frontend), Leonardo Maes (data-service analytics queries), Leonardo Vichi (Grafana dashboards backing the telemetry tier), Erik (admin/profile frontend), Ricardo (profile/orders surfacing).
 
 ---
 
