@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { Message } from "@/app/core/types/chat";
+import { parseServerDate } from "@/app/shared/utils/time";
 
 type Props = {
   messages: Message[];
@@ -27,10 +28,10 @@ export default function MessageList({ messages, currentUserId }: Props) {
             <div className="chat-message-bubble">
               <div className="chat-message-content">{message.content}</div>
               <div className="chat-message-time">
-                {new Date(message.created_at).toLocaleTimeString([], {
+                {parseServerDate(message.created_at)?.toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
-                })}
+                }) ?? ""}
               </div>
             </div>
           </div>

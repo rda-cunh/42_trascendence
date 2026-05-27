@@ -3,6 +3,7 @@ import { MessageCircle, Send, X } from "lucide-react";
 import { useAuth } from "@/app/core/contexts/AuthContext";
 import { useProductChat } from "../hooks/useProductChat";
 import type { Message } from "@/app/core/types/chat";
+import { parseServerDate } from "@/app/shared/utils/time";
 
 type ProductChatWidgetProps = {
   listingId: number | null;
@@ -14,8 +15,8 @@ type ProductChatWidgetProps = {
 };
 
 function formatTime(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
+  const date = parseServerDate(value);
+  if (!date) return "";
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
