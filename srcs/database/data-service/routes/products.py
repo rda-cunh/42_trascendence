@@ -166,7 +166,7 @@ def	list_products(
 	db=Depends(get_db_dep)
 ):
 	conn, cursor = db
-	limit = 50
+	limit = 12
 	skip = (page - 1) * limit
 	if page < 1:
 		raise HTTPException(status_code=400, detail="Invalid page")
