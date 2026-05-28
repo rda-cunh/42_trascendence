@@ -37,7 +37,7 @@ export function Header() {
             </span>
           </Link>
 
-          <nav className="flex w-full flex-wrap items-center gap-1 overflow-x-hidden sm:w-auto sm:flex-nowrap sm:justify-end sm:gap-2">
+          <nav className="flex w-full flex-wrap items-center gap-1 overflow-visible sm:w-auto sm:flex-nowrap sm:justify-end sm:gap-2">
             {user && (
               <Link
                 to="/sell"
