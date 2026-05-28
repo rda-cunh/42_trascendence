@@ -82,6 +82,7 @@ def	list_products(
 	skip:	int = 0,
 	limit:	int = 50,
 	search:	str | None = Query(None, description='Product or description'),
+	sort_price: str | None = Query(None, pattern='^(asc|desc)$', description='Sort by price: asc or desc'),
 	db=Depends(get_db_dep)
 ):
 	conn, cursor = db
@@ -93,8 +94,12 @@ def	list_products(
 		sql += ' AND (name LIKE %s)'
 		params.extend([f'%{search}%'])
 
-	sql += ' ORDER BY created_at DESC LIMIT %s OFFSET %s'
-	params.extend([limit, skip])
+	if sort_price == 'asc':
+		sql += ' ORDER BY price ASC, created_at DESC'
+	elif sort_price == 'desc':
+		sql += ' ORDER BY price DESC, created_at DESC'
+	else:
+		sql += ' ORDER BY created_at DESC'
 
 	cursor.execute(sql, params)
 	products = cursor.fetchall()

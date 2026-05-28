@@ -162,10 +162,11 @@ def	list_products(
 	search:		str | None = Query(None, description='Name or description'),
 	status:		str | None = None,
 	seller_id:	int | None = None,
+	sort_price: str | None = Query(None, pattern='^(asc|desc)$', description='Sort by price: asc or desc'),
 	db=Depends(get_db_dep)
 ):
 	conn, cursor = db
-	limit = 50
+	limit = 12
 	skip = (page - 1) * limit
 	if page < 1:
 		raise HTTPException(status_code=400, detail="Invalid page")
@@ -184,7 +185,14 @@ def	list_products(
 		sql += ' AND seller_id = %s'
 		params.append(seller_id)
 
-	sql += ' ORDER BY created_at DESC LIMIT %s OFFSET %s'
+	if sort_price == 'asc':
+		sql += ' ORDER BY price ASC, created_at DESC'
+	elif sort_price == 'desc':
+		sql += ' ORDER BY price DESC, created_at DESC'
+	else:
+		sql += ' ORDER BY created_at DESC'
+
+	sql += ' LIMIT %s OFFSET %s'
 	params.extend([limit, skip])
 
 	cursor.execute(sql, params)
